@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Summonancer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+body { margin: 0; } [hidden] { display: none !important; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; height: 100%; }
+/* Layout: one-screen game. Phone = HUD / battlefield / summon bar stacked; desktop = battlefield beside a grimoire-style side panel. */
+:root {
+  --night: #15131c;      /* page ground, graveyard night */
+  --slate: #211e2b;      /* panels */
+  --line: #3a3547;       /* borders */
+  --bone: #ece3cf;       /* main text, bone white */
+  --dim: #a69eb3;        /* secondary text */
+  --mana: #6fa8ff;       /* mana blue */
+  --ember: #e0904a;      /* warnings, tower */
+  --moss: #8fbf6a;       /* enemies */
+  --display: "Grenze Gotisch", "Palatino Linotype", Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--night); color: var(--bone); font-family: var(--body); font-size: 15px;
+  overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: manipulation;
+}
+.app {
+  height: 100%; display: flex; flex-direction: column; gap: 8px;
+  padding-block: 8px;
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box; max-width: 1100px; margin: 0 auto;
+}
+.hud { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: .02em; line-height: 1; margin-right: auto; }
+.stat { display: flex; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; font-weight: 700; }
+.stat small { font-weight: 500; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+.manabar { height: 10px; border-radius: 5px; background: var(--slate); border: 1px solid var(--line); overflow: hidden; }
+.manabar > div { height: 100%; width: 0; background: var(--mana); transition: width .15s linear; }
+.main { flex: 1; min-height: 0; display: flex; gap: 16px; }
+.field { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; }
+canvas { display: block; border-radius: 6px; border: 1px solid var(--line); cursor: crosshair; touch-action: none; }
+.side { display: none; width: 280px; flex: none; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.45; color: var(--dim); }
+.side h2 { font-family: var(--display); font-weight: 500; color: var(--bone); font-size: 22px; margin: 0; }
+.side p { margin: 0; }
+.side kbd { font-family: var(--body); font-weight: 700; color: var(--bone); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.bar { display: flex; gap: 8px; align-items: stretch; }
+.card {
+  flex: 1; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px;
+  background: var(--slate); border: 2px solid var(--bone); color: var(--bone); font: inherit; text-align: left;
+}
+.card b { font-family: var(--display); font-weight: 500; font-size: 19px; display: block; line-height: 1.1; }
+.card span { color: var(--dim); font-size: 13px; }
+.card .cost { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; }
+.cost .m { color: var(--mana); } .cost .b { color: var(--bone); }
+.btn { background: var(--slate); color: var(--bone); border: 1px solid var(--line); border-radius: 8px; font: inherit; font-weight: 700; padding: 0 14px; cursor: pointer; }
+.btn:focus-visible, .card:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
+.toast { min-height: 20px; font-size: 14px; color: var(--dim); text-align: center; font-style: italic; }
+.over {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  background: rgba(21, 19, 28, .86); text-align: center; padding: 24px; border-radius: 6px;
+}
+.over h3 { font-family: var(--display); font-size: 40px; font-weight: 700; margin: 0; }
+.over p { margin: 0; color: var(--dim); max-width: 30ch; }
+.over .btn { padding: 10px 20px; font-size: 16px; }
+@media (min-width: 860px) { .side { display: flex; } .brand { font-size: 28px; } }
+@media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="hud">
+    <div class="brand">The Summonancer</div>
+    <div class="stat" title="Mana"><span id="mana" style="color:var(--mana)">0</span><small>mana</small></div>
+    <div class="stat" title="Bones"><span id="bones">0</span><small>bones</small></div>
+    <div class="stat" title="Ward"><span id="ward" style="color:var(--ember)">0</span><small>ward</small></div>
+    <div class="stat" title="Wave"><span id="wave">1</span><small>wave</small></div>
+  </div>
+  <div class="manabar" aria-hidden="true"><div id="manafill"></div></div>
+  <div class="main">
+    <div class="field" id="field">
+      <canvas id="cv" aria-label="Battlefield. Tap the lit rows at the bottom to summon a skeleton."></canvas>
+      <div class="over" id="over" hidden>
+        <h3 id="overTitle">The ward has fallen</h3>
+        <p id="overText"></p>
+        <button class="btn" id="restart" type="button">Summon again</button>
+      </div>
+    </div>
+    <aside class="side">
+      <h2>Field notes</h2>
+      <p>Goblins come down from the hills. Your ward at the bottom holds as long as they don't reach it.</p>
+      <p>Tap or click a tile in the lit summoning rows to call a <b style="color:var(--bone)">Skeleton Warrior</b>. Each one costs 5 mana and 1 bone.</p>
+      <p>Goblins drop bones. Skeletons walk around boulders and wade slowly through the swamp.</p>
+      <p>This is a summoning. Nobody is being raised from the dead. Please stop asking.</p>
+      <p><kbd>P</kbd> pauses.</p>
+      <p id="best"></p>
+    </aside>
+  </div>
+  <div class="toast" id="toast">Tap a lit tile to summon.</div>
+  <div class="bar">
+    <button class="card" id="unitCard" type="button" aria-pressed="true">
+      <div><b>Skeleton Warrior</b><span>Sturdy-ish. Mostly bones.</span></div>
+      <div class="cost"><span class="m">5 mana</span><br><span class="b">1 bone</span></div>
+    </button>
+    <button class="btn" id="pause" type="button">Pause</button>
+  </div>
+</div>
+
+<script>
+// ---------- Data: everything tunable lives here ----------
+const DATA = {
+  grid: { cols: 9, rows: 14, summonRows: 3 },
+  wizard: { manaMax: 20, manaRegen: 1.2, startBones: 5, ward: 10 },
+  units: {
+    skeleton_warrior: { name: "Skeleton Warrior", cost: { mana: 5, bone: 1 }, hp: 20, damage: 3, attackEvery: 0.8, speed: 1.6, range: 1.05, move: "ground" }
+  },
+  enemies: {
+    bog_goblin: { name: "Bog Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.05, aggro: 2.6, move: "ground", drops: [{ res: "bone", min: 1, max: 2 }] }
+  },
+  terrain: {
+    grass:   { moveCost: 1 },
+    boulder: { blocks: ["ground"], moveCost: 1 },
+    swamp:   { moveCost: 3, slow: 0.45 }
+  },
+  waves: { firstDelay: 4, gap: 14, baseCount: 2, growth: 1 }
+};
+// Map: . grass, # boulder, ~ swamp (14 rows x 9 cols)
+const MAP = [
+  ".........",
+  ".........",
+  "..#...#..",
+  "..#......",
+  ".....~~..",
+  "....~~~..",
+  ".#...~...",
+  ".#.......",
+  "......#..",
+  "..~~..#..",
+  "..~~.....",
+  ".........",
+  ".........",
+  "........."
+];
+const QUIPS = [
+  "Skeleton summoned. Not raised. Summoned.",
+  "A fine pile of bones, assembled with care.",
+  "Rattle rattle. That means 'ready'.",
+  "It came when called. Unlike the last apprentice.",
+  "One skeleton, freshly summoned, no resurrection involved."
+];
+
+// ---------- State ----------
+const C = DATA.grid.cols, R = DATA.grid.rows;
+let S, tile = 32, dpr = 1, paused = false, lastT = 0;
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const $ = id => document.getElementById(id);
+
+function newGame() {
+  S = {
+    mana: 6, bones: DATA.wizard.startBones, ward: DATA.wizard.ward,
+    wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
+    units: [], enemies: [], floaters: [], over: false,
+    terrain: MAP.map(row => row.split("").map(ch => ch === "#" ? "boulder" : ch === "~" ? "swamp" : "grass"))
+  };
+  $("over").hidden = true;
+  say("Tap a lit tile to summon.");
+}
+
+// ---------- Grid helpers ----------
+const inGrid = (x, y) => x >= 0 && y >= 0 && x < C && y < R;
+const terr = (x, y) => DATA.terrain[S.terrain[y][x]];
+const passable = (x, y, move) => inGrid(x, y) && !(terr(x, y).blocks || []).includes(move);
+const cellOf = e => ({ x: Math.round(e.x), y: Math.round(e.y) });
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+// A* with terrain move costs, 4-directional
+function findPath(sx, sy, goalFn, move) {
+  const key = (x, y) => y * C + x;
+  const open = [{ x: sx, y: sy, g: 0, f: 0 }], came = new Map(), g = new Map([[key(sx, sy), 0]]);
+  const h = (x, y) => goalFn.h ? goalFn.h(x, y) : 0;
+  let guard = 0;
+  while (open.length && guard++ < 2000) {
+    open.sort((a, b) => a.f - b.f);
+    const cur = open.shift();
+    if (goalFn(cur.x, cur.y)) {
+      const path = []; let k = key(cur.x, cur.y);
+      while (came.has(k)) { path.unshift({ x: k % C, y: Math.floor(k / C) }); k = came.get(k); }
+      return path;
+    }
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx = cur.x + dx, ny = cur.y + dy;
+      if (!passable(nx, ny, move)) continue;
+      const ng = cur.g + terr(nx, ny).moveCost, nk = key(nx, ny);
+      if (ng < (g.has(nk) ? g.get(nk) : Infinity)) {
+        g.set(nk, ng); came.set(nk, key(cur.x, cur.y));
+        open.push({ x: nx, y: ny, g: ng, f: ng + h(nx, ny) });
+      }
+    }
+  }
+  return null;
+}
+
+// ---------- Entities ----------
+function makeUnit(kind, x, y) {
+  const d = DATA.units[kind];
+  return { side: "ally", kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0 };
+}
+function makeEnemy(kind, x, y) {
+  const d = DATA.enemies[kind];
+  return { side: "foe", kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0 };
+}
+
+function summonAt(cx, cy) {
+  if (S.over || paused) return;
+  const cost = DATA.units.skeleton_warrior.cost;
+  if (cy < R - DATA.grid.summonRows) return say("You can only summon in the lit rows near your ward.");
+  if (!passable(cx, cy, "ground")) return say("There's a boulder there. Even skeletons respect boulders.");
+  if (S.mana < cost.mana) return say("Not enough mana. Wizards also need a moment.");
+  if (S.bones < cost.bone) return say("Out of bones. Goblins carry plenty.");
+  S.mana -= cost.mana; S.bones -= cost.bone;
+  S.units.push(makeUnit("skeleton_warrior", cx, cy));
+  float(cx, cy, "-1 bone", "#ece3cf");
+  say(QUIPS[Math.floor(Math.random() * QUIPS.length)]);
+}
+
+function spawnWave() {
+  S.wave++;
+  const n = DATA.waves.baseCount + (S.wave - 1) * DATA.waves.growth;
+  for (let i = 0; i < n; i++) {
+    let x, tries = 0;
+    do { x = Math.floor(Math.random() * C); } while (!passable(x, 0, "ground") && tries++ < 20);
+    const e = makeEnemy("bog_goblin", x, -0.6 - i * 0.7);
+    S.enemies.push(e);
+  }
+  say(S.wave === 1 ? "Goblins! They look hungry. And bony." : "Wave " + S.wave + ": " + n + " goblins coming down.");
+}
+
+function nearest(from, list, maxD) {
+  let best = null, bd = maxD;
+  for (const o of list) { if (o.hp <= 0) continue; const d = dist(from, o); if (d < bd) { bd = d; best = o; } }
+  return best;
+}
+
+function stepToward(e, dt) {
+  if (!e.path.length) return;
+  const n = e.path[0];
+  const c = cellOf(e);
+  const slow = inGrid(c.x, c.y) && terr(c.x, c.y).slow ? terr(c.x, c.y).slow : 1;
+  const sp = e.d.speed * slow * dt;
+  const dx = n.x - e.x, dy = n.y - e.y, d = Math.hypot(dx, dy);
+  if (d <= sp) { e.x = n.x; e.y = n.y; e.path.shift(); }
+  else { e.x += dx / d * sp; e.y += dy / d * sp; }
+}
+
+function updateActor(a, foes, dt) {
+  a.cd = Math.max(0, a.cd - dt); a.hit = Math.max(0, a.hit - dt);
+  // enemies still entering from above the map just walk down
+  if (a.y < 0) { a.y += a.d.speed * dt; return; }
+  const range = a.side === "ally" ? 99 : a.d.aggro;
+  const target = nearest(a, foes, range);
+  if (target && dist(a, target) <= a.d.range) {
+    if (a.cd === 0) {
+      target.hp -= a.d.damage; target.hit = 0.15; a.cd = a.d.attackEvery;
+      float(target.x, target.y, "-" + a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");
+    }
+    return;
+  }
+  a.repath -= dt;
+  if (a.repath <= 0 || !a.path.length) {
+    a.repath = 0.5;
+    const c = cellOf(a);
+    const sx = Math.max(0, Math.min(C - 1, c.x)), sy = Math.max(0, Math.min(R - 1, c.y));
+    let goal;
+    if (target) {
+      const tc = cellOf(target);
+      goal = (x, y) => Math.abs(x - tc.x) + Math.abs(y - tc.y) <= 1;
+      goal.h = (x, y) => Math.abs(x - tc.x) + Math.abs(y - tc.y);
+    } else if (a.side === "foe") {
+      goal = (x, y) => y === R - 1;
+      goal.h = (x, y) => R - 1 - y;
+    } else { a.path = []; return; }
+    const p = findPath(sx, sy, goal, a.d.move);
+    a.path = p || [];
+  }
+  stepToward(a, dt);
+}
+
+function float(x, y, text, color) { S.floaters.push({ x, y, text, color, t: 0 }); }
+
+function update(dt) {
+  if (S.over) return;
+  S.time += dt;
+  S.mana = Math.min(DATA.wizard.manaMax, S.mana + DATA.wizard.manaRegen * dt);
+  S.nextWave -= dt;
+  if (S.nextWave <= 0) { spawnWave(); S.nextWave = DATA.waves.gap; }
+
+  for (const u of S.units) updateActor(u, S.enemies, dt);
+  for (const e of S.enemies) updateActor(e, S.units, dt);
+
+  // goblins that reach the bottom row hit the ward
+  for (const e of S.enemies) {
+    if (e.hp > 0 && e.y >= R - 1 - 0.05 && !e.path.length && !nearest(e, S.units, e.d.aggro)) {
+      e.hp = 0; e.reached = true; S.ward -= 1;
+      float(e.x, e.y, "ward -1", "#e0904a");
+      say("A goblin reached the ward!");
+    }
+  }
+  // deaths and drops
+  for (const e of S.enemies) {
+    if (e.hp <= 0 && !e.dead) {
+      e.dead = true;
+      if (!e.reached) {
+        S.kills++;
+        for (const dr of e.d.drops) {
+          const n = dr.min + Math.floor(Math.random() * (dr.max - dr.min + 1));
+          S.bones += n; float(e.x, e.y - 0.3, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf");
+        }
+      }
+    }
+  }
+  S.enemies = S.enemies.filter(e => !e.dead);
+  S.units = S.units.filter(u => u.hp > 0);
+  for (const f of S.floaters) f.t += dt;
+  S.floaters = S.floaters.filter(f => f.t < 1);
+
+  if (S.ward <= 0) {
+    S.over = true;
+    let best = 0;
+    try { best = +localStorage.getItem("summonancer_best") || 0; if (S.wave > best) { localStorage.setItem("summonancer_best", S.wave); best = S.wave; } } catch (e) {}
+    $("overText").textContent = "You held until wave " + S.wave + " and defeated " + S.kills + " goblins. The goblins are now telling everyone you're a necromancer.";
+    $("over").hidden = false;
+    showBest(best);
+  }
+}
+
+// ---------- Rendering ----------
+function resize() {
+  const box = $("field").getBoundingClientRect();
+  tile = Math.max(16, Math.floor(Math.min(box.width / C, box.height / R)));
+  dpr = window.devicePixelRatio || 1;
+  cv.style.width = tile * C + "px"; cv.style.height = tile * R + "px";
+  cv.width = Math.round(tile * C * dpr); cv.height = Math.round(tile * R * dpr);
+}
+
+function draw() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const T = tile;
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
+    const t = S.terrain[y][x];
+    ctx.fillStyle = (x + y) % 2 ? "#232b22" : "#26301f";
+    if (t === "swamp") ctx.fillStyle = (x + y) % 2 ? "#253a3a" : "#28403d";
+    ctx.fillRect(x * T, y * T, T, T);
+    if (y >= R - DATA.grid.summonRows && t !== "boulder") { ctx.fillStyle = "rgba(111,168,255,0.10)"; ctx.fillRect(x * T, y * T, T, T); }
+    if (t === "swamp") {
+      ctx.strokeStyle = "rgba(160,210,200,0.25)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x * T + T * .2, y * T + T * .55); ctx.quadraticCurveTo(x * T + T * .5, y * T + T * .4, x * T + T * .8, y * T + T * .55); ctx.stroke();
+    }
+    if (t === "boulder") {
+      ctx.fillStyle = "#26301f"; ctx.fillRect(x * T, y * T, T, T);
+      ctx.fillStyle = "#6c6676"; ctx.beginPath(); ctx.ellipse(x * T + T / 2, y * T + T * .58, T * .42, T * .34, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#8a8495"; ctx.beginPath(); ctx.ellipse(x * T + T * .42, y * T + T * .48, T * .2, T * .13, -.4, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // ward line
+  ctx.fillStyle = "#e0904a"; ctx.fillRect(0, R * T - 3, C * T, 3);
+
+  const drawActor = (a) => {
+    const px = a.x * T + T / 2, py = a.y * T + T / 2, r = T * .32;
+    if (a.side === "ally") {
+      ctx.fillStyle = a.hit ? "#ffffff" : "#ece3cf";
+      ctx.beginPath(); ctx.arc(px, py - r * .15, r * .8, 0, Math.PI * 2); ctx.fill();          // skull
+      ctx.fillRect(px - r * .45, py + r * .35, r * .9, r * .45);                                 // jaw
+      ctx.fillStyle = "#15131c";
+      ctx.beginPath(); ctx.arc(px - r * .3, py - r * .2, r * .17, 0, Math.PI * 2); ctx.arc(px + r * .3, py - r * .2, r * .17, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#6fa8ff"; ctx.globalAlpha = .9;
+      ctx.beginPath(); ctx.arc(px - r * .3, py - r * .2, r * .07, 0, Math.PI * 2); ctx.arc(px + r * .3, py - r * .2, r * .07, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = a.hit ? "#d8ffc0" : "#8fbf6a";
+      ctx.beginPath(); ctx.ellipse(px, py, r * .85, r * .75, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(px - r * .7, py - r * .3); ctx.lineTo(px - r * 1.25, py - r * .75); ctx.lineTo(px - r * .45, py - r * .6); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(px + r * .7, py - r * .3); ctx.lineTo(px + r * 1.25, py - r * .75); ctx.lineTo(px + r * .45, py - r * .6); ctx.fill();
+      ctx.fillStyle = "#f5e05a"; ctx.beginPath(); ctx.arc(px - r * .28, py - r * .1, r * .13, 0, Math.PI * 2); ctx.arc(px + r * .28, py - r * .1, r * .13, 0, Math.PI * 2); ctx.fill();
+    }
+    // hp bar
+    const f = Math.max(0, a.hp / a.d.hp);
+    if (f < 1) {
+      ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(px - T * .35, py - T * .48, T * .7, 4);
+      ctx.fillStyle = a.side === "ally" ? "#ece3cf" : "#8fbf6a"; ctx.fillRect(px - T * .35, py - T * .48, T * .7 * f, 4);
+    }
+  };
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, C * T, R * T); ctx.clip();
+  S.enemies.forEach(drawActor); S.units.forEach(drawActor);
+  ctx.textAlign = "center"; ctx.font = "700 " + Math.max(11, Math.round(T * .34)) + "px 'Alegreya Sans', Arial, sans-serif";
+  for (const f of S.floaters) {
+    ctx.globalAlpha = 1 - f.t; ctx.fillStyle = f.color;
+    ctx.fillText(f.text, f.x * T + T / 2, f.y * T + T * .2 - f.t * T * .6);
+  }
+  ctx.globalAlpha = 1; ctx.restore();
+
+  if (paused && !S.over) {
+    ctx.fillStyle = "rgba(21,19,28,.6)"; ctx.fillRect(0, 0, C * T, R * T);
+    ctx.fillStyle = "#ece3cf"; ctx.font = "700 " + Math.round(T * .9) + "px 'Grenze Gotisch', Georgia, serif";
+    ctx.fillText("Paused", C * T / 2, R * T / 2);
+  }
+}
+
+function hud() {
+  const cost = DATA.units.skeleton_warrior.cost;
+  $("mana").textContent = Math.floor(S.mana) + "/" + DATA.wizard.manaMax;
+  $("manafill").style.width = (S.mana / DATA.wizard.manaMax * 100) + "%";
+  $("bones").textContent = S.bones;
+  $("ward").textContent = Math.max(0, S.ward);
+  $("wave").textContent = Math.max(1, S.wave);
+  const ok = S.mana >= cost.mana && S.bones >= cost.bone;
+  $("unitCard").style.opacity = ok ? 1 : .55;
+}
+
+let toastTimer = 0;
+function say(t) { $("toast").textContent = t; }
+function showBest(b) { $("best").textContent = b ? "Longest stand so far: wave " + b + "." : ""; }
+
+// ---------- Input & loop ----------
+cv.addEventListener("pointerdown", ev => {
+  const r = cv.getBoundingClientRect();
+  const x = Math.floor((ev.clientX - r.left) / tile), y = Math.floor((ev.clientY - r.top) / tile);
+  if (inGrid(x, y)) summonAt(x, y);
+});
+function togglePause() { if (S.over) return; paused = !paused; $("pause").textContent = paused ? "Resume" : "Pause"; }
+$("pause").addEventListener("click", togglePause);
+$("restart").addEventListener("click", () => { newGame(); paused = false; $("pause").textContent = "Pause"; });
+$("unitCard").addEventListener("click", () => say("Skeleton Warrior selected. Tap a lit tile to summon."));
+document.addEventListener("keydown", e => { if (e.key === "p" || e.key === "P") togglePause(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden && !paused) togglePause(); });
+window.addEventListener("resize", resize);
+
+function loop(t) {
+  const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t;
+  if (!paused) update(dt);
+  draw(); hud();
+  requestAnimationFrame(loop);
+}
+
+try { showBest(+localStorage.getItem("summonancer_best") || 0); } catch (e) {}
+newGame(); resize();
+requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
+</script>
+</body>
+</html>
