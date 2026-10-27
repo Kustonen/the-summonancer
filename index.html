@@ -10,7 +10,7 @@
 <style>
 body { margin: 0; } [hidden] { display: none !important; }
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; height: 100%; }
-/* Layout: one-screen game. Phone = HUD / battlefield / summon bar stacked; desktop = battlefield beside a grimoire-style side panel. */
+/* Layout: one-screen game. Phone = HUD / battlefield / summon bar stacked; desktop = battlefield beside a field-notes side panel. Single deliberate night look. */
 :root {
   --night: #15131c;      /* page ground, graveyard night */
   --slate: #211e2b;      /* panels */
@@ -18,7 +18,7 @@ body { margin: 0; } [hidden] { display: none !important; }
   --bone: #ece3cf;       /* main text, bone white */
   --dim: #a69eb3;        /* secondary text */
   --mana: #6fa8ff;       /* mana blue */
-  --ember: #e0904a;      /* warnings, tower */
+  --ember: #e0904a;      /* the ward */
   --moss: #8fbf6a;       /* enemies */
   --display: "Grenze Gotisch", "Palatino Linotype", Georgia, serif;
   --body: "Alegreya Sans", "Segoe UI", Arial, sans-serif;
@@ -32,8 +32,8 @@ body {
 .app {
   height: 100%; display: flex; flex-direction: column; gap: 8px;
   padding-block: 8px;
-  padding-left: max(12px, env(safe-area-inset-left, 0px));
-  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
   box-sizing: border-box; max-width: 1100px; margin: 0 auto;
 }
 .hud { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -42,24 +42,32 @@ body {
 .stat small { font-weight: 500; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
 .manabar { height: 10px; border-radius: 5px; background: var(--slate); border: 1px solid var(--line); overflow: hidden; }
 .manabar > div { height: 100%; width: 0; background: var(--mana); transition: width .15s linear; }
+.levels { display: flex; gap: 6px; }
+.lvl {
+  flex: 1; background: transparent; color: var(--dim); border: 1px solid var(--line); border-radius: 999px;
+  font: inherit; font-size: 13px; font-weight: 700; padding: 4px 8px; cursor: pointer;
+}
+.lvl[aria-pressed="true"] { color: var(--night); background: var(--bone); border-color: var(--bone); }
 .main { flex: 1; min-height: 0; display: flex; gap: 16px; }
 .field { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; }
 canvas { display: block; border-radius: 6px; border: 1px solid var(--line); cursor: crosshair; touch-action: none; }
 .side { display: none; width: 280px; flex: none; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.45; color: var(--dim); }
 .side h2 { font-family: var(--display); font-weight: 500; color: var(--bone); font-size: 22px; margin: 0; }
 .side p { margin: 0; }
+.side b { color: var(--bone); }
 .side kbd { font-family: var(--body); font-weight: 700; color: var(--bone); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
 .bar { display: flex; gap: 8px; align-items: stretch; }
 .card {
-  flex: 1; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px;
-  background: var(--slate); border: 2px solid var(--bone); color: var(--bone); font: inherit; text-align: left;
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px;
+  background: var(--slate); border: 2px solid var(--line); color: var(--bone); font: inherit; text-align: left; cursor: pointer;
 }
-.card b { font-family: var(--display); font-weight: 500; font-size: 19px; display: block; line-height: 1.1; }
-.card span { color: var(--dim); font-size: 13px; }
-.card .cost { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; }
+.card[aria-pressed="true"] { border-color: var(--bone); }
+.card b { font-family: var(--display); font-weight: 500; font-size: 18px; display: block; line-height: 1.1; }
+.card span { color: var(--dim); font-size: 12px; }
+.card .cost { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; white-space: nowrap; }
 .cost .m { color: var(--mana); } .cost .b { color: var(--bone); }
-.btn { background: var(--slate); color: var(--bone); border: 1px solid var(--line); border-radius: 8px; font: inherit; font-weight: 700; padding: 0 14px; cursor: pointer; }
-.btn:focus-visible, .card:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
+.btn { background: var(--slate); color: var(--bone); border: 1px solid var(--line); border-radius: 8px; font: inherit; font-weight: 700; padding: 0 12px; cursor: pointer; }
+.btn:focus-visible, .card:focus-visible, .lvl:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
 .toast { min-height: 20px; font-size: 14px; color: var(--dim); text-align: center; font-style: italic; }
 .over {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
@@ -68,6 +76,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .over h3 { font-family: var(--display); font-size: 40px; font-weight: 700; margin: 0; }
 .over p { margin: 0; color: var(--dim); max-width: 30ch; }
 .over .btn { padding: 10px 20px; font-size: 16px; }
+@media (max-width: 380px) { .card span { display: none; } }
 @media (min-width: 860px) { .side { display: flex; } .brand { font-size: 28px; } }
 @media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } }
 </style>
@@ -83,29 +92,35 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div class="stat" title="Wave"><span id="wave">1</span><small>wave</small></div>
   </div>
   <div class="manabar" aria-hidden="true"><div id="manafill"></div></div>
+  <div class="levels" id="levels"></div>
   <div class="main">
     <div class="field" id="field">
-      <canvas id="cv" aria-label="Battlefield. Tap the lit rows at the bottom to summon a skeleton."></canvas>
+      <canvas id="cv" aria-label="Battlefield. Tap the lit tiles near your ward to summon."></canvas>
       <div class="over" id="over" hidden>
-        <h3 id="overTitle">The ward has fallen</h3>
+        <h3>The ward has fallen</h3>
         <p id="overText"></p>
         <button class="btn" id="restart" type="button">Summon again</button>
       </div>
     </div>
     <aside class="side">
       <h2>Field notes</h2>
-      <p>Goblins come down from the hills. Your ward at the bottom holds as long as they don't reach it.</p>
-      <p>Tap or click a tile in the lit summoning rows to call a <b style="color:var(--bone)">Skeleton Warrior</b>. Each one costs 5 mana and 1 bone.</p>
-      <p>Goblins drop bones. Skeletons walk around boulders and wade slowly through the swamp.</p>
+      <p>Goblins are coming. Your ward holds as long as they don't reach it.</p>
+      <p>Pick a summon below and tap a lit tile near the ward.</p>
+      <p><b>Wisp</b> costs only mana and floats through boulders and swamp. It hits softly, but it's how you collect your first bones.</p>
+      <p><b>Skeleton Warrior</b> needs a bone, walks around boulders and wades slowly through swamp. It hits much harder.</p>
       <p>This is a summoning. Nobody is being raised from the dead. Please stop asking.</p>
-      <p><kbd>P</kbd> pauses.</p>
+      <p><kbd>1</kbd> <kbd>2</kbd> pick a summon, <kbd>P</kbd> pauses.</p>
       <p id="best"></p>
     </aside>
   </div>
-  <div class="toast" id="toast">Tap a lit tile to summon.</div>
+  <div class="toast" id="toast"></div>
   <div class="bar">
-    <button class="card" id="unitCard" type="button" aria-pressed="true">
-      <div><b>Skeleton Warrior</b><span>Sturdy-ish. Mostly bones.</span></div>
+    <button class="card" id="card_wisp" type="button" aria-pressed="true">
+      <div><b>Wisp</b><span>Drifts through anything.</span></div>
+      <div class="cost"><span class="m">10 mana</span></div>
+    </button>
+    <button class="card" id="card_skeleton_warrior" type="button" aria-pressed="false">
+      <div><b>Skeleton</b><span>Mostly bones.</span></div>
       <div class="cost"><span class="m">5 mana</span><br><span class="b">1 bone</span></div>
     </button>
     <button class="btn" id="pause" type="button">Pause</button>
@@ -115,91 +130,128 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 <script>
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
-  grid: { cols: 9, rows: 14, summonRows: 3 },
-  wizard: { manaMax: 20, manaRegen: 1.2, startBones: 5, ward: 10 },
+  grid: { cols: 9, rows: 14 },
+  wizard: { manaMax: 20, manaStart: 10, manaRegen: 1.2, startBones: 0, ward: 10 },
   units: {
-    skeleton_warrior: { name: "Skeleton Warrior", cost: { mana: 5, bone: 1 }, hp: 20, damage: 3, attackEvery: 0.8, speed: 1.6, range: 1.05, move: "ground" }
+    wisp: { name: "Wisp", cost: { mana: 10, bone: 0 }, hp: 24, damage: 1, attackEvery: 0.8, speed: 1.8, range: 1.15, move: "incorporeal", ignoresTerrain: true },
+    skeleton_warrior: { name: "Skeleton Warrior", cost: { mana: 5, bone: 1 }, hp: 20, damage: 3, attackEvery: 0.8, speed: 1.6, range: 1.15, move: "ground" }
   },
   enemies: {
-    bog_goblin: { name: "Bog Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.05, aggro: 2.6, move: "ground", drops: [{ res: "bone", min: 1, max: 2 }] }
+    bog_goblin: { name: "Bog Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.15, aggro: 2.6, move: "ground", drops: [{ res: "bone", min: 1, max: 2 }] }
   },
   terrain: {
-    grass:   { moveCost: 1 },
-    boulder: { blocks: ["ground"], moveCost: 1 },
-    swamp:   { moveCost: 3, slow: 0.45 }
+    grass:     { moveCost: 1 },
+    boulder:   { blocks: ["ground"], moveCost: 1 },
+    swamp:     { moveCost: 3, slow: 0.45 },
+    structure: { blocks: ["ground", "incorporeal"], moveCost: 1 }
   },
-  waves: { firstDelay: 4, gap: 14, baseCount: 2, growth: 1 }
+  waves: { firstDelay: 6, gap: 14, baseCount: 2, growth: 1 },
+  // Map legend: . grass, # boulder, ~ swamp, W ward structure (wizard or outpost)
+  levels: {
+    hillside: {
+      name: "Hillside", spawn: ["top"], summonRange: 3,
+      note: "Goblins come down from the hills. The ward runs along the bottom edge.",
+      map: [
+        ".........", ".........", "..#...#..", "..#......", ".....~~..", "....~~~..", ".#...~...",
+        ".#.......", "......#..", "..~~..#..", "..~~.....", ".........", ".........", "........."
+      ]
+    },
+    crossroads: {
+      name: "Crossroads", spawn: ["top", "bottom", "left", "right"], summonRange: 2,
+      note: "You stand in the middle. Goblins come from every side.",
+      map: [
+        ".........", "...#.....", "......#..", ".~~......", ".~~...#..", ".........", "..#......",
+        "....W....", "......#..", ".........", "..#...~~.", "......~~.", ".....#...", "........."
+      ]
+    },
+    outpost: {
+      name: "Outpost", spawn: ["top", "left", "right"], summonRange: 3,
+      note: "A small outpost on the southern edge. Goblins come from three sides.",
+      map: [
+        ".........", "..#...#..", ".........", "....~~...", "...~~~...", ".#.....#.", ".........",
+        "...#.....", "......~~.", ".~~...~~.", ".........", ".........", "...WWW...", "...WWW..."
+      ]
+    }
+  }
 };
-// Map: . grass, # boulder, ~ swamp (14 rows x 9 cols)
-const MAP = [
-  ".........",
-  ".........",
-  "..#...#..",
-  "..#......",
-  ".....~~..",
-  "....~~~..",
-  ".#...~...",
-  ".#.......",
-  "......#..",
-  "..~~..#..",
-  "..~~.....",
-  ".........",
-  ".........",
-  "........."
-];
-const QUIPS = [
-  "Skeleton summoned. Not raised. Summoned.",
-  "A fine pile of bones, assembled with care.",
-  "Rattle rattle. That means 'ready'.",
-  "It came when called. Unlike the last apprentice.",
-  "One skeleton, freshly summoned, no resurrection involved."
-];
+const QUIPS = {
+  skeleton_warrior: [
+    "Skeleton summoned. Not raised. Summoned.",
+    "A fine pile of bones, assembled with care.",
+    "Rattle rattle. That means 'ready'.",
+    "It came when called. Unlike the last apprentice."
+  ],
+  wisp: [
+    "A wisp drifts in, faintly judging everyone.",
+    "Wisp summoned. It refuses to touch the ground on principle.",
+    "Glowing, hovering, mildly helpful."
+  ]
+};
 
 // ---------- State ----------
 const C = DATA.grid.cols, R = DATA.grid.rows;
-let S, tile = 32, dpr = 1, paused = false, lastT = 0;
+let S, L, levelKey = "hillside", selected = "wisp", tile = 32, dpr = 1, paused = false, lastT = 0;
 const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
 const $ = id => document.getElementById(id);
 
+function buildLevel(key) {
+  const d = DATA.levels[key];
+  const terrain = d.map.map(row => row.split("").map(ch => ch === "#" ? "boulder" : ch === "~" ? "swamp" : ch === "W" ? "structure" : "grass"));
+  const structs = [];
+  terrain.forEach((row, y) => row.forEach((t, x) => { if (t === "structure") structs.push({ x, y }); }));
+  // distance from a tile to the ward: to the structure, or to the bottom edge on Hillside
+  const wardDist = structs.length
+    ? (x, y) => Math.min(...structs.map(s => Math.max(Math.abs(s.x - x), Math.abs(s.y - y))))
+    : (x, y) => R - 1 - y;
+  const reachAt = structs.length ? 1 : 0;
+  let cx = (C - 1) / 2, cy = R - 1;
+  if (structs.length) { cx = structs.reduce((a, s) => a + s.x, 0) / structs.length; cy = structs.reduce((a, s) => a + s.y, 0) / structs.length; }
+  return { key, d, terrain, structs, wardDist, core: { x: cx, y: cy },
+    reach: (x, y) => terrain[y][x] !== "structure" && wardDist(x, y) <= reachAt,
+    summon: (x, y) => terrain[y][x] !== "structure" && wardDist(x, y) <= d.summonRange };
+}
+
 function newGame() {
+  L = buildLevel(levelKey);
   S = {
-    mana: 6, bones: DATA.wizard.startBones, ward: DATA.wizard.ward,
+    mana: DATA.wizard.manaStart, bones: DATA.wizard.startBones, ward: DATA.wizard.ward,
     wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
-    units: [], enemies: [], floaters: [], over: false,
-    terrain: MAP.map(row => row.split("").map(ch => ch === "#" ? "boulder" : ch === "~" ? "swamp" : "grass"))
+    units: [], enemies: [], floaters: [], over: false
   };
   $("over").hidden = true;
-  say("Tap a lit tile to summon.");
+  paused = false; $("pause").textContent = "Pause";
+  say(L.d.note + " Start with a wisp.");
+  showBest();
 }
 
 // ---------- Grid helpers ----------
 const inGrid = (x, y) => x >= 0 && y >= 0 && x < C && y < R;
-const terr = (x, y) => DATA.terrain[S.terrain[y][x]];
+const terr = (x, y) => DATA.terrain[L.terrain[y][x]];
 const passable = (x, y, move) => inGrid(x, y) && !(terr(x, y).blocks || []).includes(move);
 const cellOf = e => ({ x: Math.round(e.x), y: Math.round(e.y) });
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // A* with terrain move costs, 4-directional
-function findPath(sx, sy, goalFn, move) {
+function findPath(sx, sy, goal, h, d) {
   const key = (x, y) => y * C + x;
-  const open = [{ x: sx, y: sy, g: 0, f: 0 }], came = new Map(), g = new Map([[key(sx, sy), 0]]);
-  const h = (x, y) => goalFn.h ? goalFn.h(x, y) : 0;
+  const open = [{ x: sx, y: sy, f: 0 }], came = new Map(), g = new Map([[key(sx, sy), 0]]);
   let guard = 0;
-  while (open.length && guard++ < 2000) {
-    open.sort((a, b) => a.f - b.f);
-    const cur = open.shift();
-    if (goalFn(cur.x, cur.y)) {
+  while (open.length && guard++ < 3000) {
+    let bi = 0; for (let i = 1; i < open.length; i++) if (open[i].f < open[bi].f) bi = i;
+    const cur = open.splice(bi, 1)[0];
+    if (goal(cur.x, cur.y)) {
       const path = []; let k = key(cur.x, cur.y);
       while (came.has(k)) { path.unshift({ x: k % C, y: Math.floor(k / C) }); k = came.get(k); }
       return path;
     }
+    const cg = g.get(key(cur.x, cur.y));
     for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
       const nx = cur.x + dx, ny = cur.y + dy;
-      if (!passable(nx, ny, move)) continue;
-      const ng = cur.g + terr(nx, ny).moveCost, nk = key(nx, ny);
+      if (!passable(nx, ny, d.move)) continue;
+      const ng = cg + (d.ignoresTerrain ? 1 : terr(nx, ny).moveCost), nk = key(nx, ny);
       if (ng < (g.has(nk) ? g.get(nk) : Infinity)) {
         g.set(nk, ng); came.set(nk, key(cur.x, cur.y));
-        open.push({ x: nx, y: ny, g: ng, f: ng + h(nx, ny) });
+        open.push({ x: nx, y: ny, f: ng + h(nx, ny) });
       }
     }
   }
@@ -207,88 +259,130 @@ function findPath(sx, sy, goalFn, move) {
 }
 
 // ---------- Entities ----------
-function makeUnit(kind, x, y) {
-  const d = DATA.units[kind];
-  return { side: "ally", kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0 };
-}
-function makeEnemy(kind, x, y) {
-  const d = DATA.enemies[kind];
-  return { side: "foe", kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0 };
+function makeActor(side, kind, x, y) {
+  const d = side === "ally" ? DATA.units[kind] : DATA.enemies[kind];
+  return { side, kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0, enter: null };
 }
 
 function summonAt(cx, cy) {
   if (S.over || paused) return;
-  const cost = DATA.units.skeleton_warrior.cost;
-  if (cy < R - DATA.grid.summonRows) return say("You can only summon in the lit rows near your ward.");
-  if (!passable(cx, cy, "ground")) return say("There's a boulder there. Even skeletons respect boulders.");
-  if (S.mana < cost.mana) return say("Not enough mana. Wizards also need a moment.");
-  if (S.bones < cost.bone) return say("Out of bones. Goblins carry plenty.");
-  S.mana -= cost.mana; S.bones -= cost.bone;
-  S.units.push(makeUnit("skeleton_warrior", cx, cy));
-  float(cx, cy, "-1 bone", "#ece3cf");
-  say(QUIPS[Math.floor(Math.random() * QUIPS.length)]);
+  const d = DATA.units[selected];
+  if (!L.summon(cx, cy)) return say("You can only summon on the lit tiles near your ward.");
+  if (!passable(cx, cy, d.move)) return say("There's a boulder there. Skeletons respect boulders. Wisps don't.");
+  if (S.mana < d.cost.mana) return say("Not enough mana. Wizards also need a moment.");
+  if (S.bones < d.cost.bone) return say("Out of bones. Send a wisp to fetch some from the goblins.");
+  S.mana -= d.cost.mana; S.bones -= d.cost.bone;
+  S.units.push(makeActor("ally", selected, cx, cy));
+  if (d.cost.bone) float(cx, cy, "-" + d.cost.bone + " bone", "#ece3cf");
+  const q = QUIPS[selected]; say(q[Math.floor(Math.random() * q.length)]);
 }
+
+function edgeSpot(side) {
+  for (let tries = 0; tries < 30; tries++) {
+    let x, y;
+    if (side === "top") { x = rnd(C); y = 0; }
+    else if (side === "bottom") { x = rnd(C); y = R - 1; }
+    else if (side === "left") { x = 0; y = rnd(L.structs.length && levelKey === "outpost" ? R - 4 : R); }
+    else { x = C - 1; y = rnd(L.structs.length && levelKey === "outpost" ? R - 4 : R); }
+    if (passable(x, y, "ground") && L.wardDist(x, y) > L.d.summonRange) return { x, y };
+  }
+  return null;
+}
+const rnd = n => Math.floor(Math.random() * n);
 
 function spawnWave() {
   S.wave++;
   const n = DATA.waves.baseCount + (S.wave - 1) * DATA.waves.growth;
+  const out = { top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0] };
   for (let i = 0; i < n; i++) {
-    let x, tries = 0;
-    do { x = Math.floor(Math.random() * C); } while (!passable(x, 0, "ground") && tries++ < 20);
-    const e = makeEnemy("bog_goblin", x, -0.6 - i * 0.7);
+    const side = L.d.spawn[i % L.d.spawn.length];
+    const spot = edgeSpot(side); if (!spot) continue;
+    const off = 1 + Math.floor(i / L.d.spawn.length) * 0.8, [ox, oy] = out[side];
+    const e = makeActor("foe", "bog_goblin", spot.x + ox * off, spot.y + oy * off);
+    e.enter = spot;
     S.enemies.push(e);
   }
-  say(S.wave === 1 ? "Goblins! They look hungry. And bony." : "Wave " + S.wave + ": " + n + " goblins coming down.");
+  say(S.wave === 1 ? "Goblins! They look hungry. And bony." : "Wave " + S.wave + ": " + n + " goblins coming.");
 }
 
 function nearest(from, list, maxD) {
   let best = null, bd = maxD;
-  for (const o of list) { if (o.hp <= 0) continue; const d = dist(from, o); if (d < bd) { bd = d; best = o; } }
+  for (const o of list) { if (o.hp <= 0 || o.enter) continue; const d = dist(from, o); if (d < bd) { bd = d; best = o; } }
   return best;
 }
 
-function stepToward(e, dt) {
-  if (!e.path.length) return;
-  const n = e.path[0];
-  const c = cellOf(e);
-  const slow = inGrid(c.x, c.y) && terr(c.x, c.y).slow ? terr(c.x, c.y).slow : 1;
-  const sp = e.d.speed * slow * dt;
-  const dx = n.x - e.x, dy = n.y - e.y, d = Math.hypot(dx, dy);
-  if (d <= sp) { e.x = n.x; e.y = n.y; e.path.shift(); }
-  else { e.x += dx / d * sp; e.y += dy / d * sp; }
+function speedAt(a) {
+  const c = cellOf(a);
+  if (a.d.ignoresTerrain || !inGrid(c.x, c.y)) return a.d.speed;
+  return a.d.speed * (terr(c.x, c.y).slow || 1);
+}
+
+// move straight toward a point, refusing to enter tiles this mover can't stand on
+function moveDirect(a, tx, ty, dt, checkTiles) {
+  const dx = tx - a.x, dy = ty - a.y, d = Math.hypot(dx, dy), sp = speedAt(a) * dt;
+  if (d < 1e-6) return true;
+  const nx = d <= sp ? tx : a.x + dx / d * sp, ny = d <= sp ? ty : a.y + dy / d * sp;
+  if (checkTiles && !passable(Math.round(nx), Math.round(ny), a.d.move)) return false;
+  a.x = nx; a.y = ny;
+  return d <= sp;
 }
 
 function updateActor(a, foes, dt) {
   a.cd = Math.max(0, a.cd - dt); a.hit = Math.max(0, a.hit - dt);
-  // enemies still entering from above the map just walk down
-  if (a.y < 0) { a.y += a.d.speed * dt; return; }
-  const range = a.side === "ally" ? 99 : a.d.aggro;
-  const target = nearest(a, foes, range);
-  if (target && dist(a, target) <= a.d.range) {
-    if (a.cd === 0) {
-      target.hp -= a.d.damage; target.hit = 0.15; a.cd = a.d.attackEvery;
-      float(target.x, target.y, "-" + a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");
+  if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false)) a.enter = null; return; }
+
+  const target = nearest(a, foes, a.side === "ally" ? 99 : a.d.aggro);
+  if (target) {
+    const d = dist(a, target);
+    if (d <= a.d.range) {
+      if (a.cd === 0) {
+        target.hp -= a.d.damage; target.hit = 0.15; a.cd = a.d.attackEvery;
+        float(target.x, target.y, "-" + a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");
+      }
+      a.path = [];
+      return;
     }
-    return;
+    // close enough: walk straight at the target instead of trusting tile adjacency
+    if (d < 1.9 && moveDirect(a, target.x, target.y, dt, true) !== false) { a.path = []; return; }
   }
+
   a.repath -= dt;
   if (a.repath <= 0 || !a.path.length) {
     a.repath = 0.5;
     const c = cellOf(a);
     const sx = Math.max(0, Math.min(C - 1, c.x)), sy = Math.max(0, Math.min(R - 1, c.y));
-    let goal;
+    let goal, h;
     if (target) {
       const tc = cellOf(target);
       goal = (x, y) => Math.abs(x - tc.x) + Math.abs(y - tc.y) <= 1;
-      goal.h = (x, y) => Math.abs(x - tc.x) + Math.abs(y - tc.y);
+      h = (x, y) => Math.abs(x - tc.x) + Math.abs(y - tc.y);
     } else if (a.side === "foe") {
-      goal = (x, y) => y === R - 1;
-      goal.h = (x, y) => R - 1 - y;
+      goal = (x, y) => L.reach(x, y);
+      h = (x, y) => L.wardDist(x, y);
     } else { a.path = []; return; }
-    const p = findPath(sx, sy, goal, a.d.move);
+    let p = findPath(sx, sy, goal, h, a.d);
+    // a goblin that can't reach its target (e.g. a wisp over a boulder) heads for the ward instead
+    if (!p && a.side === "foe" && target) p = findPath(sx, sy, (x, y) => L.reach(x, y), (x, y) => L.wardDist(x, y), a.d);
     a.path = p || [];
   }
-  stepToward(a, dt);
+  if (a.path.length) {
+    const n = a.path[0];
+    if (moveDirect(a, n.x, n.y, dt, false)) a.path.shift();
+  }
+}
+
+// keep same-side actors from stacking on one spot
+function separate(list) {
+  for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+    const a = list[i], b = list[j];
+    if (a.enter || b.enter) continue;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+    if (d < 0.5 && d > 1e-4) {
+      const push = (0.5 - d) / 2, ux = dx / d * push, uy = dy / d * push;
+      if (passable(Math.round(a.x - ux), Math.round(a.y - uy), a.d.move)) { a.x -= ux; a.y -= uy; }
+      if (passable(Math.round(b.x + ux), Math.round(b.y + uy), b.d.move)) { b.x += ux; b.y += uy; }
+    } else if (d <= 1e-4) { b.x += 0.05; }
+  }
 }
 
 function float(x, y, text, color) { S.floaters.push({ x, y, text, color, t: 0 }); }
@@ -302,10 +396,13 @@ function update(dt) {
 
   for (const u of S.units) updateActor(u, S.enemies, dt);
   for (const e of S.enemies) updateActor(e, S.units, dt);
+  separate(S.units); separate(S.enemies);
 
-  // goblins that reach the bottom row hit the ward
+  // goblins that reach the ward damage it
   for (const e of S.enemies) {
-    if (e.hp > 0 && e.y >= R - 1 - 0.05 && !e.path.length && !nearest(e, S.units, e.d.aggro)) {
+    if (e.hp <= 0 || e.enter) continue;
+    const c = cellOf(e);
+    if (inGrid(c.x, c.y) && L.reach(c.x, c.y) && dist(e, c) < 0.15) {
       e.hp = 0; e.reached = true; S.ward -= 1;
       float(e.x, e.y, "ward -1", "#e0904a");
       say("A goblin reached the ward!");
@@ -318,7 +415,7 @@ function update(dt) {
       if (!e.reached) {
         S.kills++;
         for (const dr of e.d.drops) {
-          const n = dr.min + Math.floor(Math.random() * (dr.max - dr.min + 1));
+          const n = dr.min + rnd(dr.max - dr.min + 1);
           S.bones += n; float(e.x, e.y - 0.3, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf");
         }
       }
@@ -331,11 +428,10 @@ function update(dt) {
 
   if (S.ward <= 0) {
     S.over = true;
-    let best = 0;
-    try { best = +localStorage.getItem("summonancer_best") || 0; if (S.wave > best) { localStorage.setItem("summonancer_best", S.wave); best = S.wave; } } catch (e) {}
-    $("overText").textContent = "You held until wave " + S.wave + " and defeated " + S.kills + " goblins. The goblins are now telling everyone you're a necromancer.";
+    saveBest(S.wave);
+    $("overText").textContent = "You held " + L.d.name + " until wave " + S.wave + " and defeated " + S.kills + " goblins. The goblins are now telling everyone you're a necromancer.";
     $("over").hidden = false;
-    showBest(best);
+    showBest();
   }
 }
 
@@ -348,39 +444,66 @@ function resize() {
   cv.width = Math.round(tile * C * dpr); cv.height = Math.round(tile * R * dpr);
 }
 
+function drawWizard(px, py, T) {
+  ctx.fillStyle = "#5b3f8f"; ctx.beginPath(); ctx.moveTo(px, py - T * .42); ctx.lineTo(px - T * .3, py + T * .38); ctx.lineTo(px + T * .3, py + T * .38); ctx.fill();
+  ctx.fillStyle = "#ece3cf"; ctx.beginPath(); ctx.arc(px, py - T * .02, T * .12, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#3e2b66"; ctx.beginPath(); ctx.moveTo(px - T * .24, py - T * .12); ctx.lineTo(px + T * .24, py - T * .12); ctx.lineTo(px + T * .04, py - T * .5); ctx.fill();
+  ctx.fillStyle = "#6fa8ff"; ctx.beginPath(); ctx.arc(px + T * .3, py - T * .25, T * .07, 0, Math.PI * 2); ctx.fill();
+}
+
 function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const T = tile;
   for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
-    const t = S.terrain[y][x];
+    const t = L.terrain[y][x];
     ctx.fillStyle = (x + y) % 2 ? "#232b22" : "#26301f";
     if (t === "swamp") ctx.fillStyle = (x + y) % 2 ? "#253a3a" : "#28403d";
     ctx.fillRect(x * T, y * T, T, T);
-    if (y >= R - DATA.grid.summonRows && t !== "boulder") { ctx.fillStyle = "rgba(111,168,255,0.10)"; ctx.fillRect(x * T, y * T, T, T); }
+    if (t !== "structure" && L.summon(x, y) && t !== "boulder") { ctx.fillStyle = "rgba(111,168,255,0.10)"; ctx.fillRect(x * T, y * T, T, T); }
+    if (t !== "structure" && L.reach(x, y)) { ctx.fillStyle = "rgba(224,144,74,0.14)"; ctx.fillRect(x * T, y * T, T, T); }
     if (t === "swamp") {
       ctx.strokeStyle = "rgba(160,210,200,0.25)"; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x * T + T * .2, y * T + T * .55); ctx.quadraticCurveTo(x * T + T * .5, y * T + T * .4, x * T + T * .8, y * T + T * .55); ctx.stroke();
     }
     if (t === "boulder") {
-      ctx.fillStyle = "#26301f"; ctx.fillRect(x * T, y * T, T, T);
       ctx.fillStyle = "#6c6676"; ctx.beginPath(); ctx.ellipse(x * T + T / 2, y * T + T * .58, T * .42, T * .34, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#8a8495"; ctx.beginPath(); ctx.ellipse(x * T + T * .42, y * T + T * .48, T * .2, T * .13, -.4, 0, Math.PI * 2); ctx.fill();
     }
+    if (t === "structure") {
+      ctx.fillStyle = "#4a4553"; ctx.fillRect(x * T, y * T, T, T);
+      ctx.strokeStyle = "#2c2934"; ctx.lineWidth = 1;
+      ctx.strokeRect(x * T + .5, y * T + .5, T - 1, T / 2 - 1); ctx.strokeRect(x * T + .5, y * T + T / 2 + .5, T - 1, T / 2 - 1);
+    }
   }
-  // ward line
-  ctx.fillStyle = "#e0904a"; ctx.fillRect(0, R * T - 3, C * T, 3);
+  // the ward: an ember outline around the structure, or along the bottom on Hillside
+  ctx.strokeStyle = "#e0904a"; ctx.lineWidth = 2;
+  if (L.structs.length) {
+    const xs = L.structs.map(s => s.x), ys = L.structs.map(s => s.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs) + 1, y0 = Math.min(...ys), y1 = Math.max(...ys) + 1;
+    ctx.setLineDash([4, 3]); ctx.strokeRect(x0 * T - 2, y0 * T - 2, (x1 - x0) * T + 4, (y1 - y0) * T + 4); ctx.setLineDash([]);
+    if (L.structs.length === 1) { ctx.fillStyle = "#26301f"; ctx.fillRect(x0 * T, y0 * T, T, T); drawWizard(x0 * T + T / 2, y0 * T + T / 2, T); }
+    else {
+      ctx.fillStyle = "#4a4553";
+      for (let x = x0; x < x1; x += 0.5) if (Math.round(x * 2) % 2 === 0) ctx.fillRect(x * T + 2, y0 * T - T * .18, T * .3, T * .2);
+      drawWizard((x0 + x1) / 2 * T, (y0 + y1) / 2 * T, T * 1.2);
+    }
+  } else { ctx.fillStyle = "#e0904a"; ctx.fillRect(0, R * T - 3, C * T, 3); }
 
   const drawActor = (a) => {
     const px = a.x * T + T / 2, py = a.y * T + T / 2, r = T * .32;
-    if (a.side === "ally") {
+    if (a.kind === "wisp") {
+      const pulse = 1 + Math.sin((S.time + a.x) * 5) * .08;
+      const g = ctx.createRadialGradient(px, py, 0, px, py, r * 1.4 * pulse);
+      g.addColorStop(0, a.hit ? "#ffffff" : "#d9ecff"); g.addColorStop(.35, "rgba(111,168,255,.85)"); g.addColorStop(1, "rgba(111,168,255,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 1.4 * pulse, 0, Math.PI * 2); ctx.fill();
+    } else if (a.side === "ally") {
       ctx.fillStyle = a.hit ? "#ffffff" : "#ece3cf";
-      ctx.beginPath(); ctx.arc(px, py - r * .15, r * .8, 0, Math.PI * 2); ctx.fill();          // skull
-      ctx.fillRect(px - r * .45, py + r * .35, r * .9, r * .45);                                 // jaw
+      ctx.beginPath(); ctx.arc(px, py - r * .15, r * .8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(px - r * .45, py + r * .35, r * .9, r * .45);
       ctx.fillStyle = "#15131c";
       ctx.beginPath(); ctx.arc(px - r * .3, py - r * .2, r * .17, 0, Math.PI * 2); ctx.arc(px + r * .3, py - r * .2, r * .17, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#6fa8ff"; ctx.globalAlpha = .9;
+      ctx.fillStyle = "#6fa8ff";
       ctx.beginPath(); ctx.arc(px - r * .3, py - r * .2, r * .07, 0, Math.PI * 2); ctx.arc(px + r * .3, py - r * .2, r * .07, 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = 1;
     } else {
       ctx.fillStyle = a.hit ? "#d8ffc0" : "#8fbf6a";
       ctx.beginPath(); ctx.ellipse(px, py, r * .85, r * .75, 0, 0, Math.PI * 2); ctx.fill();
@@ -388,11 +511,10 @@ function draw() {
       ctx.beginPath(); ctx.moveTo(px + r * .7, py - r * .3); ctx.lineTo(px + r * 1.25, py - r * .75); ctx.lineTo(px + r * .45, py - r * .6); ctx.fill();
       ctx.fillStyle = "#f5e05a"; ctx.beginPath(); ctx.arc(px - r * .28, py - r * .1, r * .13, 0, Math.PI * 2); ctx.arc(px + r * .28, py - r * .1, r * .13, 0, Math.PI * 2); ctx.fill();
     }
-    // hp bar
     const f = Math.max(0, a.hp / a.d.hp);
     if (f < 1) {
-      ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(px - T * .35, py - T * .48, T * .7, 4);
-      ctx.fillStyle = a.side === "ally" ? "#ece3cf" : "#8fbf6a"; ctx.fillRect(px - T * .35, py - T * .48, T * .7 * f, 4);
+      ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(px - T * .35, py - T * .5, T * .7, 4);
+      ctx.fillStyle = a.side === "ally" ? (a.kind === "wisp" ? "#6fa8ff" : "#ece3cf") : "#8fbf6a"; ctx.fillRect(px - T * .35, py - T * .5, T * .7 * f, 4);
     }
   };
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, C * T, R * T); ctx.clip();
@@ -406,27 +528,47 @@ function draw() {
 
   if (paused && !S.over) {
     ctx.fillStyle = "rgba(21,19,28,.6)"; ctx.fillRect(0, 0, C * T, R * T);
-    ctx.fillStyle = "#ece3cf"; ctx.font = "700 " + Math.round(T * .9) + "px 'Grenze Gotisch', Georgia, serif";
+    ctx.fillStyle = "#ece3cf"; ctx.textAlign = "center"; ctx.font = "700 " + Math.round(T * .9) + "px 'Grenze Gotisch', Georgia, serif";
     ctx.fillText("Paused", C * T / 2, R * T / 2);
   }
 }
 
 function hud() {
-  const cost = DATA.units.skeleton_warrior.cost;
   $("mana").textContent = Math.floor(S.mana) + "/" + DATA.wizard.manaMax;
   $("manafill").style.width = (S.mana / DATA.wizard.manaMax * 100) + "%";
   $("bones").textContent = S.bones;
   $("ward").textContent = Math.max(0, S.ward);
   $("wave").textContent = Math.max(1, S.wave);
-  const ok = S.mana >= cost.mana && S.bones >= cost.bone;
-  $("unitCard").style.opacity = ok ? 1 : .55;
+  for (const k in DATA.units) {
+    const c = DATA.units[k].cost;
+    $("card_" + k).style.opacity = S.mana >= c.mana && S.bones >= c.bone ? 1 : .55;
+  }
 }
 
-let toastTimer = 0;
 function say(t) { $("toast").textContent = t; }
-function showBest(b) { $("best").textContent = b ? "Longest stand so far: wave " + b + "." : ""; }
+function bestKey() { return "summonancer_best_" + levelKey; }
+function saveBest(w) { try { if (w > (+localStorage.getItem(bestKey()) || 0)) localStorage.setItem(bestKey(), w); } catch (e) {} }
+function showBest() {
+  let b = 0; try { b = +localStorage.getItem(bestKey()) || 0; } catch (e) {}
+  $("best").textContent = b ? "Longest stand on " + L.d.name + ": wave " + b + "." : "";
+}
 
 // ---------- Input & loop ----------
+function select(kind) {
+  selected = kind;
+  for (const k in DATA.units) $("card_" + k).setAttribute("aria-pressed", k === kind ? "true" : "false");
+}
+for (const k in DATA.units) $("card_" + k).addEventListener("click", () => { select(k); say(DATA.units[k].name + " selected. Tap a lit tile to summon."); });
+
+const lv = $("levels");
+for (const k in DATA.levels) {
+  const b = document.createElement("button");
+  b.className = "lvl"; b.type = "button"; b.id = "lvl_" + k; b.textContent = DATA.levels[k].name;
+  b.addEventListener("click", () => { levelKey = k; markLevel(); newGame(); });
+  lv.appendChild(b);
+}
+function markLevel() { for (const k in DATA.levels) $("lvl_" + k).setAttribute("aria-pressed", k === levelKey ? "true" : "false"); }
+
 cv.addEventListener("pointerdown", ev => {
   const r = cv.getBoundingClientRect();
   const x = Math.floor((ev.clientX - r.left) / tile), y = Math.floor((ev.clientY - r.top) / tile);
@@ -434,9 +576,12 @@ cv.addEventListener("pointerdown", ev => {
 });
 function togglePause() { if (S.over) return; paused = !paused; $("pause").textContent = paused ? "Resume" : "Pause"; }
 $("pause").addEventListener("click", togglePause);
-$("restart").addEventListener("click", () => { newGame(); paused = false; $("pause").textContent = "Pause"; });
-$("unitCard").addEventListener("click", () => say("Skeleton Warrior selected. Tap a lit tile to summon."));
-document.addEventListener("keydown", e => { if (e.key === "p" || e.key === "P") togglePause(); });
+$("restart").addEventListener("click", newGame);
+document.addEventListener("keydown", e => {
+  if (e.key === "p" || e.key === "P") togglePause();
+  if (e.key === "1") select("wisp");
+  if (e.key === "2") select("skeleton_warrior");
+});
 document.addEventListener("visibilitychange", () => { if (document.hidden && !paused) togglePause(); });
 window.addEventListener("resize", resize);
 
@@ -447,8 +592,7 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 
-try { showBest(+localStorage.getItem("summonancer_best") || 0); } catch (e) {}
-newGame(); resize();
+markLevel(); newGame(); resize();
 requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
 </script>
 </body>

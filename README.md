@@ -9,7 +9,8 @@ Open `index.html` in a browser. No build step, no install.
 Current prototype:
 - Grid battlefield with boulders (block movement) and swamp (slows movement)
 - Mana that regenerates over time
-- Skeleton Warrior summoning (5 mana + 1 bone) in the lit rows near the ward
+- Two summons: Wisp (10 mana, floats through terrain, weak hits) and Skeleton Warrior (5 mana + 1 bone)
+- Three maps: Hillside (ward along one edge), Crossroads (wizard in the middle, goblins from every side), Outpost (outpost on one edge, goblins from three sides)
 - Bog Goblin waves that drop bones
 - Smooth movement with A* pathfinding around terrain
 
