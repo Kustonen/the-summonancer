@@ -10,7 +10,7 @@
 <style>
 body { margin: 0; } [hidden] { display: none !important; }
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; height: 100%; }
-/* Layout: one-screen game. Phone = HUD / map chips / battlefield / summon cards stacked; desktop = battlefield beside a field-notes panel. Single deliberate night look. */
+/* Layout: one-screen game with two views. Town = resources, three building tiles and the open building's panel. Battle = HUD / battlefield / summon cards, with field notes beside it on desktop. Single deliberate night look. */
 :root {
   --night: #15131c;      /* page ground, graveyard night */
   --slate: #211e2b;      /* panels */
@@ -19,6 +19,9 @@ body { margin: 0; } [hidden] { display: none !important; }
   --dim: #a69eb3;        /* secondary text */
   --mana: #6fa8ff;       /* mana blue */
   --ember: #e0904a;      /* the ward */
+  --gold: #e8c45a;       /* gold coins */
+  --exp: #b79cff;        /* experience */
+  --heal: #7fd67a;       /* healing */
   --display: "Grenze Gotisch", "Palatino Linotype", Georgia, serif;
   --body: "Alegreya Sans", "Segoe UI", Arial, sans-serif;
   color-scheme: dark;
@@ -28,7 +31,7 @@ body {
   background: var(--night); color: var(--bone); font-family: var(--body); font-size: 15px;
   overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: manipulation;
 }
-.app {
+.view {
   height: 100%; display: flex; flex-direction: column; gap: 8px;
   padding-block: 8px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -42,12 +45,8 @@ body {
 .manabar { height: 10px; border-radius: 5px; background: var(--slate); border: 1px solid var(--line); overflow: hidden; }
 .manabar > div { height: 100%; width: 0; background: var(--mana); transition: width .15s linear; }
 .row { display: flex; gap: 6px; align-items: center; }
-.levels { display: flex; gap: 6px; flex: 1; min-width: 0; }
-.lvl {
-  flex: 1; min-width: 0; background: transparent; color: var(--dim); border: 1px solid var(--line); border-radius: 999px;
-  font: inherit; font-size: 13px; font-weight: 700; padding: 4px 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.lvl[aria-pressed="true"] { color: var(--night); background: var(--bone); border-color: var(--bone); }
+.mapname { flex: 1; min-width: 0; color: var(--dim); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mapname b { color: var(--bone); font-family: var(--display); font-weight: 500; font-size: 18px; }
 .mini { background: var(--slate); color: var(--bone); border: 1px solid var(--line); border-radius: 999px; font: inherit; font-size: 13px; font-weight: 700; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
 .main { flex: 1; min-height: 0; display: flex; gap: 16px; }
 .field { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; }
@@ -67,34 +66,127 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .card span.d { color: var(--dim); font-size: 12px; }
 .card .cost { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; white-space: nowrap; }
 .cost .m { color: var(--mana); } .cost .b { color: var(--bone); }
-.btn { background: var(--slate); color: var(--bone); border: 1px solid var(--line); border-radius: 8px; font: inherit; font-weight: 700; padding: 0 12px; cursor: pointer; }
-.btn:focus-visible, .card:focus-visible, .lvl:focus-visible, .mini:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
+.btn { background: var(--slate); color: var(--bone); border: 1px solid var(--line); border-radius: 8px; font: inherit; font-weight: 700; padding: 8px 14px; cursor: pointer; }
+.btn.primary { background: var(--bone); color: var(--night); border-color: var(--bone); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:focus-visible, .card:focus-visible, .mini:focus-visible, .bld:focus-visible, .mapbtn:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
 .toast { min-height: 20px; font-size: 14px; color: var(--dim); text-align: center; font-style: italic; }
 .over {
-  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-  background: rgba(21, 19, 28, .86); text-align: center; padding: 24px; border-radius: 6px;
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: rgba(21, 19, 28, .93); text-align: center; padding: 16px; border-radius: 6px; overflow-y: auto;
 }
-.over h3 { font-family: var(--display); font-size: 40px; font-weight: 700; margin: 0; }
-.over p { margin: 0; color: var(--dim); max-width: 30ch; }
-.over .btn { padding: 10px 20px; font-size: 16px; }
+.over h3 { font-family: var(--display); font-size: 34px; font-weight: 700; margin: 0; }
+.over p { margin: 0; color: var(--dim); max-width: 32ch; }
+.tally { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; min-width: 240px; }
+.tally td { padding: 3px 6px; text-align: right; color: var(--dim); }
+.tally td:first-child { text-align: left; color: var(--bone); }
+.tally tr.sum td { border-top: 1px solid var(--line); color: var(--bone); font-weight: 700; }
+.tally tr.total td { font-size: 18px; color: var(--exp); font-weight: 700; border-top: 1px solid var(--line); }
+.tally .g { color: var(--gold); }
+
+/* Town */
+.town { overflow-y: auto; }
+.res { display: flex; gap: 14px; flex-wrap: wrap; }
+.towns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.bld {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px 8px; border-radius: 10px;
+  background: var(--slate); border: 2px solid var(--line); color: var(--bone); font: inherit; cursor: pointer;
+}
+.bld[aria-pressed="true"] { border-color: var(--bone); }
+.bld svg { width: 64px; height: 64px; max-width: 100%; }
+.bld b { font-family: var(--display); font-weight: 500; font-size: 18px; line-height: 1.1; text-align: center; }
+.panel { background: var(--slate); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.panel h2 { font-family: var(--display); font-weight: 500; font-size: 26px; margin: 0; }
+.panel p { margin: 0; color: var(--dim); line-height: 1.45; max-width: 60ch; }
+.opt { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); }
+.opt .what { flex: 1; min-width: 180px; }
+.opt .what b { font-size: 16px; }
+.opt .what span { display: block; color: var(--dim); font-size: 14px; font-variant-numeric: tabular-nums; }
+.maps { display: grid; gap: 8px; }
+.mapbtn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 10px 12px; border-radius: 8px;
+  background: var(--night); border: 1px solid var(--line); color: var(--bone); font: inherit; cursor: pointer;
+}
+.mapbtn b { font-family: var(--display); font-weight: 500; font-size: 20px; }
+.mapbtn span { color: var(--dim); font-size: 14px; }
+.foot { color: var(--dim); font-size: 13px; }
 @media (max-width: 560px) { .card span.d { display: none; } }
-@media (min-width: 860px) { .side { display: flex; } .brand { font-size: 28px; } }
+@media (min-width: 860px) { .side { display: flex; } .brand { font-size: 28px; } .maps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } }
 </style>
 </head>
 <body>
 
-<div class="app">
+<!-- ============ TOWN ============ -->
+<div class="view town" id="townView">
+  <div class="hud">
+    <div class="brand">The Summonancer</div>
+    <div class="res">
+      <div class="stat"><span id="tGold" style="color:var(--gold)">0</span><small>gold</small></div>
+      <div class="stat"><span id="tExp" style="color:var(--exp)">0</span><small>exp</small></div>
+      <div class="stat"><span id="tBones">0</span><small>stored bones</small></div>
+    </div>
+  </div>
+  <div class="towns">
+    <button class="bld" id="b_gate" type="button" aria-pressed="true">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="18" width="14" height="40" fill="#4a4553"/><rect x="44" y="18" width="14" height="40" fill="#4a4553"/><rect x="6" y="12" width="4" height="8" fill="#4a4553"/><rect x="13" y="12" width="4" height="8" fill="#4a4553"/><rect x="44" y="12" width="4" height="8" fill="#4a4553"/><rect x="51" y="12" width="4" height="8" fill="#4a4553"/><rect x="18" y="26" width="28" height="32" fill="#3a3547"/><path d="M22 58V38a10 10 0 0 1 20 0v20z" fill="#15131c"/><path d="M24 58V40M28 58V36M32 58V35M36 58V36M40 58V40" stroke="#e0904a" stroke-width="1.5"/></svg>
+      <b>Town Gate</b>
+    </button>
+    <button class="bld" id="b_tower" type="button" aria-pressed="false">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 58V24h20v34z" fill="#4a4553"/><path d="M16 26 32 4l16 22z" fill="#5b3f8f"/><rect x="28" y="32" width="8" height="10" rx="4" fill="#6fa8ff"/><rect x="28" y="48" width="8" height="10" fill="#15131c"/><circle cx="32" cy="8" r="2" fill="#e8c45a"/></svg>
+      <b>Wizard's Tower</b>
+    </button>
+    <button class="bld" id="b_market" type="button" aria-pressed="false">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="30" width="44" height="26" fill="#4a4553"/><path d="M6 30h52l-6-14H12z" fill="#b0563f"/><path d="M14 30l3-14M24 30l2-14M34 30v-14M44 30l-2-14" stroke="#ece3cf" stroke-width="2" opacity=".5"/><rect x="16" y="38" width="32" height="6" fill="#15131c"/><circle cx="22" cy="40" r="3" fill="#ece3cf"/><circle cx="30" cy="40" r="3" fill="#ece3cf"/><circle cx="40" cy="41" r="3" fill="#e8c45a"/></svg>
+      <b>Market</b>
+    </button>
+  </div>
+
+  <section class="panel" id="p_gate">
+    <h2>Town Gate</h2>
+    <p>Pick a battlefield. Whatever you gather out there comes back as gold and experience when the ward finally falls.</p>
+    <div class="maps" id="maps"></div>
+  </section>
+
+  <section class="panel" id="p_tower" hidden>
+    <h2>Wizard's Tower</h2>
+    <p>Spend experience on the wizard. A bigger mana pool means more summons at once; faster regeneration means more summons over time.</p>
+    <div class="opt">
+      <div class="what"><b>Mana Reservoir</b><span id="upManaInfo"></span></div>
+      <button class="btn" id="upMana" type="button"></button>
+    </div>
+    <div class="opt">
+      <div class="what"><b>Mana Flow</b><span id="upRegenInfo"></span></div>
+      <button class="btn" id="upRegen" type="button"></button>
+    </div>
+  </section>
+
+  <section class="panel" id="p_market" hidden>
+    <h2>Market</h2>
+    <p>Bones, ethically sourced and slightly overpriced. Bought bones go with you to the next battle and are used when you summon skeletons. Whatever you don't use comes back home with you.</p>
+    <div class="opt">
+      <div class="what"><b>Bone</b><span id="boneInfo"></span></div>
+      <button class="btn" id="buy1" type="button">Buy 1</button>
+      <button class="btn" id="buy5" type="button">Buy 5</button>
+    </div>
+  </section>
+
+  <div class="foot">Progress is saved in this browser.</div>
+</div>
+
+<!-- ============ BATTLE ============ -->
+<div class="view" id="battleView" hidden>
   <div class="hud">
     <div class="brand">The Summonancer</div>
     <div class="stat" title="Mana"><span id="mana" style="color:var(--mana)">0</span><small>mana</small></div>
     <div class="stat" title="Bones"><span id="bones">0</span><small>bones</small></div>
+    <div class="stat" title="Gold"><span id="gold" style="color:var(--gold)">0</span><small>gold</small></div>
     <div class="stat" title="Ward"><span id="ward" style="color:var(--ember)">0</span><small>ward</small></div>
     <div class="stat" title="Wave"><span id="wave">1</span><small>wave</small></div>
   </div>
   <div class="manabar" aria-hidden="true"><div id="manafill"></div></div>
   <div class="row">
-    <div class="levels" id="levels"></div>
+    <div class="mapname" id="mapname"></div>
     <button class="mini" id="music" type="button" aria-pressed="true">Music on</button>
     <button class="mini" id="pause" type="button">Pause</button>
   </div>
@@ -104,7 +196,8 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <div class="over" id="over" hidden>
         <h3>The ward has fallen</h3>
         <p id="overText"></p>
-        <button class="btn" id="restart" type="button">Summon again</button>
+        <table class="tally" id="tally"></table>
+        <button class="btn primary" id="toTown" type="button">Return to town</button>
       </div>
     </div>
     <aside class="side">
@@ -112,7 +205,8 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <p>Pick a summon below and tap a lit tile near the ward. The ward holds as long as nothing reaches it.</p>
       <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead.</p>
       <p><b>Skeleton</b> walks around boulders and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile.</p>
-      <p><b>Goblins</b> lose their nerve when four of them fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. <b>Kobolds</b> scatter whenever one of their own drops.</p>
+      <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. From wave 10, they arrive in tight packs.</p>
+      <p>Bones you collect here turn into a little extra experience at the end. Bought bones are used only after the ones you find.</p>
       <p>This is a summoning. Nobody is being raised from the dead. Please stop asking.</p>
       <p><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> pick a summon, <kbd>P</kbd> pauses.</p>
       <p id="best"></p>
@@ -140,7 +234,18 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
-  wizard: { manaMax: 20, manaStart: 10, manaRegen: 1.2, startBones: 0, ward: 10 },
+  wizard: { manaMax: 15, manaStart: 10, manaRegen: 1.0, ward: 5 },
+  tower: {
+    mana:  { per: 5,    cost: lv => 2 + lv * 2 },   // +5 max mana per level
+    regen: { per: 0.15, cost: lv => 3 + lv * 3 }    // +0.15 mana/s per level
+  },
+  market: { bonePrice: 10 },
+  exp: {
+    perKill: { kobold: 0.5, bog_goblin: 1, orc: 2 },
+    perUnusedBone: 0.01,                            // +0.01 exp per unused field bone
+    waveMult: [ { upTo: 3, m: 0.2 }, { upTo: 10, m: 0.5 }, { upTo: 20, m: 0.7 }, { upTo: 40, m: 1.0 }, { upTo: 60, m: 1.2 } ],
+    beyondStep: 0.2                                 // +0.2 for every further 20 waves
+  },
   units: {
     wisp: { name: "Wisp", cost: { mana: 10, bone: 0 }, hp: 24, damage: 1, attackEvery: 0.8, speed: 1.8, range: 1.15,
             move: "incorporeal", ignoresTerrain: true, heal: { amount: 1, every: 1.6, range: 1.2 } },
@@ -148,12 +253,13 @@ const DATA = {
     skeleton_archer: { name: "Skeleton Archer", cost: { mana: 10, bone: 2 }, hp: 13, damage: 3, attackEvery: 1.0, speed: 1.1, range: 2.1, move: "ground", ranged: true }
   },
   enemies: {
-    bog_goblin: { name: "Bog Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.15, aggro: 2.6, move: "ground",
-                  drops: [{ res: "bone", min: 1, max: 2 }], panic: { deaths: 4, window: 5, min: 1, max: 5, steadiedBy: "orc", steadyRange: 3 } },
     kobold: { name: "Kobold", hp: 7, damage: 1, attackEvery: 0.9, speed: 1.15, range: 1.15, aggro: 2.4, move: "ground",
-              drops: [{ res: "bone", min: 1, max: 1 }], panicOnKinDeath: 1 },
+              drops: [{ res: "bone", chance: 1, min: 1, max: 1 }, { res: "gold", chance: 0.10, min: 1, max: 1 }], panicOnKinDeath: 1 },
+    bog_goblin: { name: "Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.15, aggro: 2.6, move: "ground",
+                  drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.20, min: 1, max: 2 }],
+                  panic: { deaths: 4, window: 5, min: 1, max: 5, steadiedBy: "orc", steadyRange: 3 } },
     orc: { name: "Orc", hp: 32, damage: 4, attackEvery: 1.3, speed: 0.65, range: 1.15, aggro: 2.8, move: "ground",
-           drops: [{ res: "bone", min: 2, max: 3 }] }
+           drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.25, min: 2, max: 5 }] }
   },
   terrain: {
     grass:     { moveCost: 1 },
@@ -162,11 +268,12 @@ const DATA = {
     structure: { blocks: ["ground", "incorporeal"], moveCost: 1 }
   },
   waves: {
-    firstDelay: 6, gap: 14,
-    sizes: [2, 2, 3],          // waves 1-3 stay small
+    firstDelay: 6, gap: 12,
+    sizes: [2, 3, 4],          // waves 1-3
     growthAfter: 2,            // then +2 enemies per wave
-    koboldsFrom: 2, koboldShare: 0.35,
-    orcsFrom: 4, orcEvery: 3   // one orc from wave 4, one more every 3 waves
+    goblinsFrom: 3, goblinShare: 0.4,
+    orcsFrom: 5, orcEvery: 3,
+    packsFrom: 10              // from here enemies arrive in tight packs
   },
   // Map legend: . grass, # boulder, ~ swamp, W ward structure (wizard or outpost)
   levels: {
@@ -202,9 +309,17 @@ const QUIPS = {
   wisp: ["A wisp drifts in, faintly judging everyone.", "Wisp summoned. It refuses to touch the ground on principle.", "Glowing, hovering, mildly helpful."]
 };
 
+// ---------- Saved progress (this browser only) ----------
+const SAVE_KEY = "summonancer_save_v1";
+let META = { gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, best: {} };
+try { const raw = localStorage.getItem(SAVE_KEY); if (raw) META = Object.assign(META, JSON.parse(raw)); } catch (e) {}
+function saveMeta() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(META)); } catch (e) {} }
+const wizManaMax = () => DATA.wizard.manaMax + META.manaLv * DATA.tower.mana.per;
+const wizRegen = () => DATA.wizard.manaRegen + META.regenLv * DATA.tower.regen.per;
+
 // ---------- State ----------
 const C = DATA.grid.cols, R = DATA.grid.rows;
-let S, L, levelKey = "hillside", selected = "wisp", tile = 32, dpr = 1, paused = false, lastT = 0;
+let S = null, L = null, levelKey = "hillside", selected = "wisp", tile = 32, dpr = 1, paused = false, lastT = 0, inBattle = false;
 const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
 const $ = id => document.getElementById(id);
 const rnd = n => Math.floor(Math.random() * n);
@@ -223,16 +338,22 @@ function buildLevel(key) {
     summon: (x, y) => terrain[y][x] !== "structure" && wardDist(x, y) <= d.summonRange };
 }
 
-function newGame() {
+function startBattle(key) {
+  levelKey = key;
   L = buildLevel(levelKey);
+  const carried = META.bones; META.bones = 0; saveMeta();   // bought bones march out with you
   S = {
-    mana: DATA.wizard.manaStart, bones: DATA.wizard.startBones, ward: DATA.wizard.ward,
+    mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(),
+    bones: 0, carried, gold: 0, ward: DATA.wizard.ward,
     wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
+    slain: { kobold: 0, bog_goblin: 0, orc: 0 },
     units: [], enemies: [], shots: [], floaters: [], goblinDeaths: [], over: false
   };
   $("over").hidden = true;
   paused = false; $("pause").textContent = "Pause";
-  say(L.d.note + " Start with a wisp.");
+  $("mapname").innerHTML = "<b>" + L.d.name + "</b>";
+  say(L.d.note + (carried ? " You brought " + carried + " bones from the market." : " Start with a wisp."));
+  showView("battle");
   showBest();
 }
 
@@ -286,8 +407,11 @@ function summonAt(cx, cy) {
   if (!L.summon(cx, cy)) return say("You can only summon on the lit tiles near your ward.");
   if (!passable(cx, cy, d.move)) return say("There's a boulder there. Skeletons respect boulders. Wisps don't.");
   if (S.mana < d.cost.mana) return say("Not enough mana. Wizards also need a moment.");
-  if (S.bones < d.cost.bone) return say("Not enough bones. Send a wisp to fetch some.");
-  S.mana -= d.cost.mana; S.bones -= d.cost.bone;
+  if (S.bones + S.carried < d.cost.bone) return say("Not enough bones. Send a wisp to fetch some.");
+  S.mana -= d.cost.mana;
+  // spend bones found on this field first, then the ones bought at the market
+  const fromField = Math.min(S.bones, d.cost.bone);
+  S.bones -= fromField; S.carried -= d.cost.bone - fromField;
   S.units.push(makeActor("ally", selected, cx, cy));
   if (d.cost.bone) float(cx, cy, "-" + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : ""), "#ece3cf");
   const q = QUIPS[selected]; say(q[rnd(q.length)]);
@@ -310,29 +434,33 @@ function waveRoster(w) {
   const W = DATA.waves;
   const total = w <= W.sizes.length ? W.sizes[w - 1] : W.sizes[W.sizes.length - 1] + (w - W.sizes.length) * W.growthAfter;
   const orcs = w >= W.orcsFrom ? 1 + Math.floor((w - W.orcsFrom) / W.orcEvery) : 0;
-  const kobolds = w >= W.koboldsFrom ? Math.max(1, Math.floor(total * W.koboldShare)) : 0;
-  const goblins = Math.max(0, total - orcs - kobolds);
+  const goblins = w >= W.goblinsFrom ? Math.max(1, Math.floor(total * W.goblinShare)) : 0;
+  const kobolds = Math.max(0, total - orcs - goblins);
   const list = [];
-  for (let i = 0; i < goblins; i++) list.push("bog_goblin");
   for (let i = 0; i < kobolds; i++) list.push("kobold");
+  for (let i = 0; i < goblins; i++) list.push("bog_goblin");
   for (let i = 0; i < orcs; i++) list.push("orc");
   return list.sort(() => Math.random() - 0.5);
 }
 
 function spawnWave() {
   S.wave++;
-  const roster = waveRoster(S.wave);
+  const roster = waveRoster(S.wave), packs = S.wave >= DATA.waves.packsFrom;
   const out = { top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0] };
+  const packSpot = {};
   roster.forEach((kind, i) => {
     const side = L.d.spawn[i % L.d.spawn.length];
-    const spot = edgeSpot(side); if (!spot) return;
-    const off = 1 + Math.floor(i / L.d.spawn.length) * 0.8, [ox, oy] = out[side];
-    const e = makeActor("foe", kind, spot.x + ox * off, spot.y + oy * off);
+    const spot = packs ? (packSpot[side] || (packSpot[side] = edgeSpot(side))) : edgeSpot(side);
+    if (!spot) return;
+    const n = Math.floor(i / L.d.spawn.length), [ox, oy] = out[side];
+    const off = packs ? 1 + n * 0.3 : 1 + n * 0.8, jitter = packs ? (Math.random() - 0.5) * 0.6 : 0;
+    const e = makeActor("foe", kind, spot.x + ox * off + oy * jitter, spot.y + oy * off + ox * jitter);
     e.enter = spot;
     S.enemies.push(e);
   });
   const orcs = roster.filter(k => k === "orc").length;
-  say(S.wave === 1 ? "Goblins! They look hungry. And bony." :
+  say(S.wave === 1 ? "Kobolds! Small, loud and full of bones." :
+      (S.wave === DATA.waves.packsFrom ? "They're coming in packs now. " : "") +
       "Wave " + S.wave + ": " + roster.length + " enemies" + (orcs ? ", including " + (orcs > 1 ? orcs + " orcs" : "an orc") : "") + ".");
 }
 
@@ -402,7 +530,7 @@ function updateAlly(a, dt) {
       const H = a.d.heal;
       if (a.cd === 0) {
         const near = others.filter(u => u.hp < u.d.hp && dist(a, u) <= H.range).sort((p, q) => p.hp / p.d.hp - q.hp / q.d.hp)[0];
-        if (near) { near.hp = Math.min(near.d.hp, near.hp + H.amount); a.cd = H.every; float(near.x, near.y, "+" + H.amount, "#6fa8ff"); }
+        if (near) { near.hp = Math.min(near.d.hp, near.hp + H.amount); a.cd = H.every; float(near.x, near.y, "+" + H.amount, "#7fd67a"); }
       }
       return;
     }
@@ -418,8 +546,7 @@ function updateFoe(e, dt) {
   const target = nearest(e, S.units, e.d.aggro);
   if (target) {
     if (dist(e, target) <= e.d.range) { e.path = []; if (e.cd === 0) strike(e, target); return; }
-    // a target it can't reach (a wisp over a boulder) is ignored in favour of the ward
-    if (approach(e, target, dt)) return;
+    if (approach(e, target, dt)) return;   // an unreachable target (a wisp over a boulder) is ignored
   }
   travel(e, (x, y) => L.reach(x, y), (x, y) => L.wardDist(x, y), dt);
 }
@@ -458,7 +585,7 @@ function float(x, y, text, color) { S.floaters.push({ x, y, text, color, t: 0 })
 function update(dt) {
   if (S.over) return;
   S.time += dt;
-  S.mana = Math.min(DATA.wizard.manaMax, S.mana + DATA.wizard.manaRegen * dt);
+  S.mana = Math.min(S.manaMax, S.mana + S.regen * dt);
   S.nextWave -= dt;
   if (S.nextWave <= 0) { spawnWave(); S.nextWave = DATA.waves.gap; }
 
@@ -494,10 +621,14 @@ function update(dt) {
     if (e.hp > 0 || e.dead) continue;
     e.dead = true;
     if (e.reached) continue;
-    S.kills++;
+    S.kills++; S.slain[e.kind] = (S.slain[e.kind] || 0) + 1;
+    let lift = 0.3;
     for (const dr of e.d.drops) {
+      if (Math.random() >= dr.chance) continue;
       const n = dr.min + rnd(dr.max - dr.min + 1);
-      S.bones += n; float(e.x, e.y - 0.3, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf");
+      if (dr.res === "bone") { S.bones += n; float(e.x, e.y - lift, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf"); }
+      else { S.gold += n; float(e.x, e.y - lift, "+" + n + " gold", "#e8c45a"); }
+      lift += 0.35;
     }
     if (e.kind === "bog_goblin") S.goblinDeaths.push(S.time);
     if (e.kind === "kobold") koboldFell = true;
@@ -512,13 +643,41 @@ function update(dt) {
   for (const f of S.floaters) f.t += dt;
   S.floaters = S.floaters.filter(f => f.t < 1);
 
-  if (S.ward <= 0) {
-    S.over = true;
-    saveBest(S.wave);
-    $("overText").textContent = "You held " + L.d.name + " until wave " + S.wave + " and defeated " + S.kills + " enemies. They are now telling everyone you're a necromancer.";
-    $("over").hidden = false;
-    showBest();
+  if (S.ward <= 0) endBattle();
+}
+
+// ---------- End of battle: tally and rewards ----------
+function waveMultiplier(w) {
+  for (const s of DATA.exp.waveMult) if (w <= s.upTo) return s.m;
+  const last = DATA.exp.waveMult[DATA.exp.waveMult.length - 1];
+  return last.m + Math.ceil((w - last.upTo) / 20) * DATA.exp.beyondStep;
+}
+const fmt = n => (Math.round(n * 100) / 100).toLocaleString("en-US");
+
+function endBattle() {
+  S.over = true;
+  const E = DATA.exp, rows = [];
+  let killExp = 0;
+  for (const k of ["kobold", "bog_goblin", "orc"]) {
+    const n = S.slain[k] || 0, x = n * E.perKill[k];
+    killExp += x;
+    rows.push("<tr><td>" + DATA.enemies[k].name + (n === 1 ? "" : "s") + "</td><td>" + n + " × " + fmt(E.perKill[k]) + "</td><td>" + fmt(x) + " exp</td></tr>");
   }
+  const boneExp = S.bones * E.perUnusedBone, wm = waveMultiplier(S.wave);
+  const subtotal = killExp + boneExp, total = Math.ceil(subtotal * wm - 1e-9);
+  rows.push("<tr><td>Unused bones</td><td>" + S.bones + " × " + fmt(E.perUnusedBone) + "</td><td>" + fmt(boneExp) + " exp</td></tr>");
+  rows.push("<tr class='sum'><td>Battle total</td><td></td><td>" + fmt(subtotal) + " exp</td></tr>");
+  rows.push("<tr><td>Reached wave " + S.wave + "</td><td></td><td>× " + fmt(wm) + "</td></tr>");
+  rows.push("<tr class='total'><td>Experience</td><td></td><td>+" + total + "</td></tr>");
+  rows.push("<tr><td>Gold found</td><td></td><td class='g'>+" + S.gold + "</td></tr>");
+  if (S.carried) rows.push("<tr><td>Bought bones returned</td><td></td><td>" + S.carried + "</td></tr>");
+  $("tally").innerHTML = rows.join("");
+
+  META.exp += total; META.gold += S.gold; META.bones += S.carried;
+  META.best[levelKey] = Math.max(META.best[levelKey] || 0, S.wave);
+  saveMeta();
+  $("overText").textContent = "You held " + L.d.name + " until wave " + S.wave + ". The survivors are telling everyone you're a necromancer.";
+  $("over").hidden = false;
 }
 
 // keep same-side actors from stacking on one spot
@@ -537,6 +696,7 @@ function separate(list) {
 
 // ---------- Rendering ----------
 function resize() {
+  if (!inBattle) return;
   const box = $("field").getBoundingClientRect();
   tile = Math.max(16, Math.floor(Math.min(box.width / C, box.height / R)));
   dpr = window.devicePixelRatio || 1;
@@ -672,26 +832,71 @@ function draw() {
 }
 
 function hud() {
-  $("mana").textContent = Math.floor(S.mana) + "/" + DATA.wizard.manaMax;
-  $("manafill").style.width = (S.mana / DATA.wizard.manaMax * 100) + "%";
-  $("bones").textContent = S.bones;
+  $("mana").textContent = Math.floor(S.mana) + "/" + S.manaMax;
+  $("manafill").style.width = (S.mana / S.manaMax * 100) + "%";
+  $("bones").textContent = S.bones + (S.carried ? " +" + S.carried : "");
+  $("gold").textContent = S.gold;
   $("ward").textContent = Math.max(0, S.ward);
   $("wave").textContent = Math.max(1, S.wave);
   for (const k in DATA.units) {
     const c = DATA.units[k].cost;
-    $("card_" + k).style.opacity = S.mana >= c.mana && S.bones >= c.bone ? 1 : .55;
+    $("card_" + k).style.opacity = S.mana >= c.mana && S.bones + S.carried >= c.bone ? 1 : .55;
   }
 }
 
 function say(t) { $("toast").textContent = t; }
-function bestKey() { return "summonancer_best_" + levelKey; }
-function saveBest(w) { try { if (w > (+localStorage.getItem(bestKey()) || 0)) localStorage.setItem(bestKey(), w); } catch (e) {} }
 function showBest() {
-  let b = 0; try { b = +localStorage.getItem(bestKey()) || 0; } catch (e) {}
+  const b = META.best[levelKey] || 0;
   $("best").textContent = b ? "Longest stand on " + L.d.name + ": wave " + b + "." : "";
 }
 
-// ---------- Input ----------
+// ---------- Town ----------
+const BUILDINGS = ["gate", "tower", "market"];
+function openBuilding(k) {
+  for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
+}
+for (const b of BUILDINGS) $("b_" + b).addEventListener("click", () => openBuilding(b));
+
+const maps = $("maps");
+for (const k in DATA.levels) {
+  const b = document.createElement("button");
+  b.className = "mapbtn"; b.type = "button"; b.id = "map_" + k;
+  b.innerHTML = "<b>" + DATA.levels[k].name + "</b><span>" + DATA.levels[k].note + "</span><span class='bestline'></span>";
+  b.addEventListener("click", () => startBattle(k));
+  maps.appendChild(b);
+}
+
+function renderTown() {
+  $("tGold").textContent = META.gold; $("tExp").textContent = META.exp; $("tBones").textContent = META.bones;
+  const T = DATA.tower;
+  const mCost = T.mana.cost(META.manaLv), rCost = T.regen.cost(META.regenLv);
+  $("upManaInfo").textContent = "Level " + META.manaLv + " · max mana " + wizManaMax() + " → " + (wizManaMax() + T.mana.per);
+  $("upMana").textContent = "Upgrade · " + mCost + " exp"; $("upMana").disabled = META.exp < mCost;
+  $("upRegenInfo").textContent = "Level " + META.regenLv + " · " + fmt(wizRegen()) + " → " + fmt(wizRegen() + T.regen.per) + " mana per second";
+  $("upRegen").textContent = "Upgrade · " + rCost + " exp"; $("upRegen").disabled = META.exp < rCost;
+  const P = DATA.market.bonePrice;
+  $("boneInfo").textContent = P + " gold each · you have " + META.bones + " stored";
+  $("buy1").disabled = META.gold < P; $("buy5").disabled = META.gold < P * 5;
+  $("buy1").textContent = "Buy 1 · " + P + " gold"; $("buy5").textContent = "Buy 5 · " + P * 5 + " gold";
+  for (const k in DATA.levels) {
+    const b = META.best[k] || 0;
+    $("map_" + k).querySelector(".bestline").textContent = b ? "Longest stand: wave " + b : "Not yet attempted";
+  }
+}
+$("upMana").addEventListener("click", () => { const c = DATA.tower.mana.cost(META.manaLv); if (META.exp >= c) { META.exp -= c; META.manaLv++; saveMeta(); renderTown(); } });
+$("upRegen").addEventListener("click", () => { const c = DATA.tower.regen.cost(META.regenLv); if (META.exp >= c) { META.exp -= c; META.regenLv++; saveMeta(); renderTown(); } });
+function buyBones(n) { const c = DATA.market.bonePrice * n; if (META.gold >= c) { META.gold -= c; META.bones += n; saveMeta(); renderTown(); } }
+$("buy1").addEventListener("click", () => buyBones(1));
+$("buy5").addEventListener("click", () => buyBones(5));
+$("toTown").addEventListener("click", () => showView("town"));
+
+function showView(v) {
+  inBattle = v === "battle";
+  $("townView").hidden = inBattle; $("battleView").hidden = !inBattle;
+  if (inBattle) resize(); else { renderTown(); openBuilding("gate"); }
+}
+
+// ---------- Battle input ----------
 const UNIT_KEYS = Object.keys(DATA.units);
 function select(kind) {
   selected = kind;
@@ -699,31 +904,22 @@ function select(kind) {
 }
 for (const k of UNIT_KEYS) $("card_" + k).addEventListener("click", () => { select(k); say(DATA.units[k].name + " selected. Tap a lit tile to summon."); });
 
-const lv = $("levels");
-for (const k in DATA.levels) {
-  const b = document.createElement("button");
-  b.className = "lvl"; b.type = "button"; b.id = "lvl_" + k; b.textContent = DATA.levels[k].name;
-  b.addEventListener("click", () => { levelKey = k; markLevel(); newGame(); });
-  lv.appendChild(b);
-}
-function markLevel() { for (const k in DATA.levels) $("lvl_" + k).setAttribute("aria-pressed", k === levelKey ? "true" : "false"); }
-
 cv.addEventListener("pointerdown", ev => {
   const r = cv.getBoundingClientRect();
   const x = Math.floor((ev.clientX - r.left) / tile), y = Math.floor((ev.clientY - r.top) / tile);
   if (inGrid(x, y)) summonAt(x, y);
 });
 function togglePause() {
-  if (S.over) return; paused = !paused; $("pause").textContent = paused ? "Resume" : "Pause";
+  if (!inBattle || S.over) return; paused = !paused; $("pause").textContent = paused ? "Resume" : "Pause";
   if (paused) bgm.pause(); else playMusic();
 }
 $("pause").addEventListener("click", togglePause);
-$("restart").addEventListener("click", newGame);
 document.addEventListener("keydown", e => {
+  if (!inBattle) return;
   if (e.key === "p" || e.key === "P") togglePause();
   const i = "123".indexOf(e.key); if (i >= 0 && UNIT_KEYS[i]) select(UNIT_KEYS[i]);
 });
-document.addEventListener("visibilitychange", () => { if (document.hidden && !paused) togglePause(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden && inBattle && !paused) togglePause(); });
 window.addEventListener("resize", resize);
 
 // ---------- Music: browsers only allow sound after the first tap ----------
@@ -744,12 +940,11 @@ markMusic();
 // ---------- Loop ----------
 function loop(t) {
   const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t;
-  if (!paused) update(dt);
-  draw(); hud();
+  if (inBattle && S) { if (!paused) update(dt); draw(); hud(); }
   requestAnimationFrame(loop);
 }
 
-markLevel(); newGame(); resize();
+showView("town");
 requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
 </script>
 </body>
