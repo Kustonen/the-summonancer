@@ -123,10 +123,12 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <div><b>Skeleton</b><span>Mostly bones.</span></div>
       <div class="cost"><span class="m">5 mana</span><br><span class="b">1 bone</span></div>
     </button>
+    <button class="btn" id="music" type="button" aria-pressed="true" title="Music">Music on</button>
     <button class="btn" id="pause" type="button">Pause</button>
   </div>
 </div>
 
+<audio id="bgm" src="music/ghost_of_sherwood.mp3" loop preload="auto"></audio>
 <script>
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
@@ -574,7 +576,10 @@ cv.addEventListener("pointerdown", ev => {
   const x = Math.floor((ev.clientX - r.left) / tile), y = Math.floor((ev.clientY - r.top) / tile);
   if (inGrid(x, y)) summonAt(x, y);
 });
-function togglePause() { if (S.over) return; paused = !paused; $("pause").textContent = paused ? "Resume" : "Pause"; }
+function togglePause() {
+  if (S.over) return; paused = !paused; $("pause").textContent = paused ? "Resume" : "Pause";
+  if (typeof bgm !== "undefined") { if (paused) bgm.pause(); else playMusic(); }
+}
 $("pause").addEventListener("click", togglePause);
 $("restart").addEventListener("click", newGame);
 document.addEventListener("keydown", e => {
@@ -591,6 +596,21 @@ function loop(t) {
   draw(); hud();
   requestAnimationFrame(loop);
 }
+
+// ---------- Music: browsers only allow sound after the first tap ----------
+const bgm = $("bgm"); bgm.volume = 0.45;
+let musicOn = true;
+try { musicOn = localStorage.getItem("summonancer_music") !== "off"; } catch (e) {}
+function markMusic() { $("music").textContent = musicOn ? "Music on" : "Music off"; $("music").setAttribute("aria-pressed", musicOn ? "true" : "false"); }
+function playMusic() { if (musicOn && !paused && bgm.paused) { const p = bgm.play(); if (p && p.catch) p.catch(() => {}); } }
+$("music").addEventListener("click", () => {
+  musicOn = !musicOn; markMusic();
+  try { localStorage.setItem("summonancer_music", musicOn ? "on" : "off"); } catch (e) {}
+  if (musicOn) playMusic(); else bgm.pause();
+});
+document.addEventListener("pointerdown", playMusic);
+document.addEventListener("keydown", playMusic);
+markMusic();
 
 markLevel(); newGame(); resize();
 requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });

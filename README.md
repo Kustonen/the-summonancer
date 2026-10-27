@@ -17,3 +17,7 @@ Current prototype:
 All tunable values live in the `DATA` object at the top of the script.
 
 Design decisions are kept in the design document; code lives here.
+
+## Music
+
+`music/ghost_of_sherwood.mp3` – "Ghost of Sherwood", made by the project owner with Suno.
