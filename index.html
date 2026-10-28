@@ -490,7 +490,7 @@ div.mapbtn { cursor: default; }
       <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
       <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow, very tough and takes two summon slots: nearby enemies can't help attacking it, and every fourth blow is a ground slam that shoves them back. New summons are bound at the Summoning Septagram in town.</p>
       <h3>Spells</h3>
-      <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward. A <b>Guardstone</b> keeps the first summons to step into its circle on guard there.</p>
+      <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward. A <b>Guardstone</b> keeps the first summons to step into its circle on guard there. <b>Freeze</b> chills an area and slows everything in it; <b>Nurture</b> grows bare earth into grass, grass into bushes and bushes into trees.</p>
       <h3>Assault</h3>
       <p>On the Assault field the enemies pour out of a <b>red ward</b> at the top. Summons with nothing to fight nearby march up and attack it. It is armoured (wisps barely scratch it; wards are built to keep spirits out), it pulses to hurt summons right next to it, and every third of its health lost it spits out a squad of defenders. Break it to win; spells that hit a tile can't touch it.</p>
       <h3>Enemies</h3>
@@ -509,6 +509,7 @@ div.mapbtn { cursor: default; }
     <button class="spell" id="spell_nemesis" type="button" aria-pressed="false"><b>Nemesis</b><span>20 mana</span></button>
     <button class="spell" id="spell_firebolt" type="button" aria-pressed="false" hidden><b>Firebolt</b><span>2 mana</span></button>
     <button class="spell" id="spell_freeze" type="button" aria-pressed="false" hidden><b>Freeze</b><span>25 mana</span></button>
+    <button class="spell" id="spell_nurture" type="button" aria-pressed="false" hidden><b>Nurture</b><span>10 mana</span></button>
     <button class="spell" id="spell_guardstone" type="button" aria-pressed="false" hidden><b>Guardstone</b><span>10 mana</span></button>
     <button class="spell" id="spell_shove" type="button" aria-pressed="false" hidden><b>Shove</b><span>ready</span></button>
   </div>
@@ -592,7 +593,9 @@ const DATA = {
       { key: "speed", name: "Hollow Bones",       max: 8,  gold: 8,  fx: lv => "+" + lv * 5 + " % move speed" },
       { key: "armor", name: "Calcium Plating",    max: 8,  gold: 12, fx: lv => "blocks " + fmt(lv * 0.3) + " damage per hit" },
       { key: "hp",    name: "Extra Ribs",         max: 10, gold: 10, fx: lv => "+" + lv * 10 + " % health" },
-      { key: "range", name: "Keen Sockets",       max: 10, gold: 15, fx: lv => "archers shoot " + fmt(DATA.units.skeleton_archer.range * (1 + 0.1 * lv)) + " tiles" }
+      { key: "range", name: "Keen Sockets",       max: 10, gold: 15, fx: lv => "archers shoot " + fmt(DATA.units.skeleton_archer.range * (1 + 0.1 * lv)) + " tiles" },
+      { key: "pierce", name: "Piercing Arrows",   max: 5,  gold: 20, fx: lv => lv ? lv * 10 + " % chance an arrow goes through and hits the next enemy behind" : "arrows stop at the first enemy" },
+      { key: "flame",  name: "Flaming Arrows",    max: 3,  gold: 30, fx: lv => lv ? "every 5th arrow is on fire: " + (20 + 20 * lv) + " % chance to set the enemy ablaze" : "no fire arrows" }
     ],
     well: [
       { key: "charm", name: "Swamp Resolve",  max: 8,  gold: 8,  fx: lv => "swamp daydreams last " + Math.max(2, 10 - lv) + " s" },
@@ -616,6 +619,10 @@ const DATA = {
       { key: "nemDur",  name: "Grudge Ledger",   max: 6, gold: 10, fx: lv => "Nemesis lasts " + (5 + lv) + " s" },
       { key: "nemCost", name: "Bulk Borrowing",  max: 5, gold: 12, fx: lv => "Nemesis costs " + (20 - 2 * lv) + " mana" },
       { key: "exposed", name: "Exposed",         max: 8, gold: 14, fx: lv => lv ? "the marked enemy takes +" + lv * 10 + " % damage" : "no extra damage" },
+      { key: "frRadius", name: "Wider Frost",     max: 4, gold: 25, needsSpell: "freeze", fx: lv => { const n = 3 + 2 * Math.floor(lv / 2); return lv % 2 ? "a " + n + " x " + n + " area, a little more" : "a " + n + " x " + n + " area"; } },
+      { key: "frSlow",   name: "Deep Chill",      max: 5, gold: 20, needsSpell: "freeze", fx: lv => (60 + 5 * lv) + " % slower" },
+      { key: "frCost",   name: "Cold Efficiency", max: 5, gold: 20, needsSpell: "freeze", fx: lv => "Freeze costs " + (25 - 3 * lv) + " mana" },
+      { key: "frDur",    name: "Lasting Frost",   max: 5, gold: 20, needsSpell: "freeze", fx: lv => "the chill lasts " + (5 + lv) + " s" },
       { key: "gsKeep",   name: "Garrison",        max: 3, gold: 30, needsSpell: "guardstone", fx: lv => (1 + lv) + " summon" + (lv ? "s" : "") + " per Guardstone" },
       { key: "gsRadius", name: "Wider Watch",     max: 4, gold: 25, needsSpell: "guardstone", fx: lv => "a circle of " + fmt(2 + 0.5 * lv) + " tiles" },
       { key: "gsStones", name: "Standing Stones", max: 2, gold: 60, needsSpell: "guardstone", fx: lv => (1 + lv) + " Guardstone" + (lv ? "s" : "") + " on the field at once" },
@@ -638,13 +645,16 @@ const DATA = {
     // hits one tile for 1 damage and sets flammable ground alight: anyone walking on it burns for 5 s (1 damage a second) and panics
     firebolt: { name: "Firebolt", mana: 2, damage: 1, tileBurn: 8, burn: 5, burnDps: 1 },
     // a ring of cold spreads over 3 x 3 tiles: everything it touches freezes for 8 s and stops burning (trees keep burning)
-    freeze:   { name: "Freeze", mana: 25, duration: 8, radius: 1.5, spread: 0.45 },
+    freeze:   { name: "Freeze", mana: 25, duration: 5, radius: 1.5, slow: 0.6, spread: 0.45 },
     // a crystal on one tile with a glowing circle around it: the first summons to step inside stay and guard it
+    // grows one tile a step: bare earth (or burnt ground) to grass, grass to bush, bush to tree
+    nurture:  { name: "Nurture", mana: 10, grows: { dirt: "grass", grass: "bush", bush: "tree" } },
     guardstone: { name: "Guardstone", mana: 10, radius: 2, keepers: 1, stones: 1, aggro: 3, leash: 4 }
   },
   // spells the Overdue Library can teach
   spellBook: {
-    freeze:   { cost: { gold: 100, crystal: 5 }, about: "25 mana. A ring of blue cold spreads over a 3 x 3 area and freezes everything it touches in place for 8 seconds. It also puts out fires, except burning trees. Skeletons and wisps are immune." },
+    freeze:   { cost: { gold: 100, crystal: 5 }, about: "25 mana. A ring of blue cold spreads over a 3 x 3 area and chills everything it touches: 60 % slower for 5 seconds. It also puts out fires, except burning trees. Skeletons and wisps are immune. The Library can improve it further." },
+    nurture:  { cost: { gold: 200, wood: 50 }, about: "10 mana. Grows one tile a step: bare or burnt earth becomes grass, grass becomes a bush and a bush becomes a tree. A tree won't grow where it would block the last way to the ward." },
     guardstone: { cost: { gold: 100, crystal: 5 }, about: "10 mana. Places a crystal on a tile with a glowing circle 2 tiles around it. The first summon to step inside (or be summoned there) stays and wanders the circle, goes after any enemy that comes close and walks back once the fight is over. One stone on the field at a time to begin with; a new one replaces the old. The Library can improve it further." },
     firebolt: { cost: { gold: 80 }, about: "2 mana. Hits one tile for 1 damage and sets grass, bushes and trees on fire. Anything walking through the flames burns for 5 seconds, takes 1 damage a second and panics (if it can)." }
   },
@@ -852,7 +862,9 @@ function spellsNow() {
     command: { name: "Command", mana: 10 - rlv("library", "cmdCost"), duration: 1 + 0.25 * rlv("library", "cmdDur") },
     nemesis: { name: "Nemesis", mana: 20 - 2 * rlv("library", "nemCost"), duration: 5 + rlv("library", "nemDur"), exposed: 0.1 * rlv("library", "exposed") },
     firebolt: Object.assign({}, DATA.spells.firebolt),
-    freeze: Object.assign({}, DATA.spells.freeze),
+    nurture: Object.assign({}, DATA.spells.nurture),
+    freeze: Object.assign({}, DATA.spells.freeze, { radius: 1.5 + 0.5 * rlv("library", "frRadius"), slow: 0.6 + 0.05 * rlv("library", "frSlow"),
+      mana: 25 - 3 * rlv("library", "frCost"), duration: 5 + rlv("library", "frDur") }),
     guardstone: Object.assign({}, DATA.spells.guardstone, { radius: 2 + 0.5 * rlv("library", "gsRadius"), keepers: 1 + rlv("library", "gsKeep"),
       stones: 1 + rlv("library", "gsStones"), armor: 0.3 * rlv("library", "gsArmor"), healEvery: rlv("library", "gsHeal") ? 6 - rlv("library", "gsHeal") : 0 })
   };
@@ -967,6 +979,7 @@ const SFX = (() => {
     thunder(t) { noise(t, 0.01, 0.12, 0.5, "highpass", 2000); noise(t + 0.05, 0.08, 1.8, 0.7, "lowpass", 500, 0.7, 120); tone("sine", 50, 30, t + 0.05, 0.1, 1.2, 0.4); },
     puff(t) { noise(t, 0.01, 0.35, 0.45, "bandpass", 3500, 1.5, 500); for (let i = 0; i < 5; i++) tone("sine", 2000 + Math.random() * 3000, null, t + 0.05 + i * 0.04, 0.002, 0.15, 0.05); },
     appear(t) { noise(t, 0.12, 0.2, 0.3, "bandpass", 600, 1.5, 3500); for (let i = 0; i < 4; i++) tone("sine", 1800 + i * 600, null, t + 0.12 + i * 0.04, 0.002, 0.14, 0.05); },
+    grow(t) { [523, 659, 784, 1047, 1319].forEach((f, i) => tone("sine", f, null, t + i * 0.05, 0.005, 0.3, 0.06)); noise(t, 0.05, 0.3, 0.12, "bandpass", 2500, 1.2, 4500); },
     guard(t) { [1320, 1760, 2640].forEach((f, i) => { tone("sine", f, null, t + i * 0.07, 0.003, 0.6, 0.08); tone("triangle", f * 1.01, null, t + i * 0.07, 0.003, 0.3, 0.03); }); tone("sine", 220, 160, t, 0.01, 0.3, 0.2); },
     freeze(t) {
       noise(t, 0.01, 0.6, 0.35, "highpass", 4000, 1, 9000);
@@ -1135,7 +1148,7 @@ function startBattle(key, diff) {
     bones: 0, carried, skulls: 0, gold: 0, loot: { stone: 0, iron: 0, wood: 0, crystal: 0 }, foeDefs: {},
     gathered: { bones: 0, skulls: 0, gold: 0, stone: 0, iron: 0, wood: 0, crystal: 0 }, ward: DATA.wizard.ward + rlv("stones", "ward"), wardMax: DATA.wizard.ward + rlv("stones", "ward"),
     sp: spellsNow(), shoveLv: rlv("stones", "shove"), shoveCd: 0, mendLv: rlv("stones", "mend"), mendT: 0, shoveFx: 0,
-    tutorial: META.stage === "intro", fire: {}, bolts: [], freezes: [], stones: [], hinted: {}, cheered: true, overShown: false,
+    tutorial: META.stage === "intro", fire: {}, bolts: [], freezes: [], stones: [], grows: [], hinted: {}, cheered: true, overShown: false,
     wiz: { st: wizLook(), seq: { kind: "appear", e: 0 }, until: 0 },
     assault: L.foeWard ? DATA.assault[diff || "easy"] : null, diff: L.foeWard ? diff || "easy" : null, wardFlash: 0,
     wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
@@ -1161,8 +1174,8 @@ function startBattle(key, diff) {
   for (const k of UNIT_KEYS) $("card_" + k).hidden = !META.unlocked[k];
   document.querySelector(".bar").style.setProperty("--n", open.length);
   select("wisp");
-  for (const k of ["command", "nemesis", "firebolt", "freeze", "guardstone"]) $("spell_" + k).querySelector("span").textContent = S.sp[k].mana + " mana";
-  for (const k of ["firebolt", "freeze", "guardstone"]) $("spell_" + k).hidden = !META.spells[k];
+  for (const k of ["command", "nemesis", "firebolt", "freeze", "nurture", "guardstone"]) $("spell_" + k).querySelector("span").textContent = S.sp[k].mana + " mana";
+  for (const k of ["firebolt", "freeze", "nurture", "guardstone"]) $("spell_" + k).hidden = !META.spells[k];
   $("spell_shove").hidden = !S.shoveLv;
   document.querySelector(".spells").style.setProperty("--n", 2 + (S.shoveLv ? 1 : 0) + (META.spells.firebolt ? 1 : 0) + (META.spells.freeze ? 1 : 0));
   say(S.tutorial ? "You wake up mid-battle on a strange hillside. Tap a lit tile near the bottom to summon a wisp!" : L.d.note + " Start with a wisp.");
@@ -1233,7 +1246,11 @@ function unitDef(kind) {
     d.speed = b.speed * (1 + 0.05 * lv("lab", "speed"));
     d.armor = 0.3 * lv("lab", "armor");
     d.hp = Math.round(b.hp * (1 + 0.1 * lv("lab", "hp")));
-    if (kind === "skeleton_archer") d.range = b.range * (1 + 0.1 * lv("lab", "range"));   // Keen Sockets: twice the reach at level 10
+    if (kind === "skeleton_archer") {
+      d.range = b.range * (1 + 0.1 * lv("lab", "range"));    // Keen Sockets: twice the reach at level 10
+      d.pierce = 0.1 * lv("lab", "pierce");                  // Piercing Arrows
+      d.flame = lv("lab", "flame") ? 0.2 + 0.2 * lv("lab", "flame") : 0;   // Flaming Arrows: every 5th arrow
+    }
   }
   return d;
 }
@@ -1268,6 +1285,23 @@ const slotsUsed = () => S.units.reduce((n, u) => n + (u.d.slots || 1), 0);   // 
 function castAt(fx, fy) {
   const sp = S.sp[spellMode];
   if (S.mana < sp.mana) { say("Not enough mana for " + sp.name + "."); return; }
+  if (spellMode === "nurture") {
+    const x = Math.max(0, Math.min(C - 1, Math.floor(fx))), y = Math.max(0, Math.min(R - 1, Math.floor(fy))), from = L.terrain[y][x], to = sp.grows[from];
+    if (!to) { say("Nothing to nurture there. It works on bare earth, grass and bushes."); return; }
+    if (S.fire[y * C + x] > 0) { say("Let it stop burning first. Even gardeners have limits."); return; }
+    if (to === "tree") {
+      if (S.units.concat(S.enemies).some(a => !a.d.ignoresTerrain && Math.round(a.x) === x && Math.round(a.y) === y)) { say("Someone is standing there. Trees and toes don't mix."); return; }
+      L.terrain[y][x] = "tree";
+      const ok = connected(L.terrain, L.d, L.wardDist);
+      L.terrain[y][x] = from;
+      if (!ok) { say("A tree there would cut off the last way to the ward. The roots refuse."); return; }
+    }
+    S.mana -= sp.mana; L.terrain[y][x] = to; S.grows.push({ x, y, t: 0 });
+    for (const a of S.units.concat(S.enemies)) a.repath = 0;
+    wizDo("cast", 1.6, true); SFX.play("grow");
+    say(from === "dirt" ? "Grass! Fresh and green, at least until the next firebolt." : to === "bush" ? "A bush. Enemies hate pushing through these." : "A tree! Solid, leafy and in the way.");
+    setSpell("nurture"); return;
+  }
   if (spellMode === "guardstone") {
     const x = Math.max(0, Math.min(C - 1, Math.floor(fx))), y = Math.max(0, Math.min(R - 1, Math.floor(fy)));
     if (L.terrain[y][x] === "foeward") { say("The enemy ward won't hold a Guardstone. Try your own side of the field."); return; }
@@ -1283,7 +1317,7 @@ function castAt(fx, fy) {
     if (L.terrain[y][x] === "foeward") { say("The enemy ward shrugs the cold off. Spells that hit a tile can't touch it."); return; }
     S.mana -= sp.mana; S.freezes.push({ x, y, t: 0, hit: new Set() });
     wizDo("cast", 1.6, true); SFX.play("freeze");
-    say("Freeze! Everything in there is about to have a very cold moment.");
+    say("Freeze! Everything in there is about to have a very slow, very cold moment.");
     setSpell(null); return;
   }
   if (spellMode === "firebolt") {
@@ -1338,7 +1372,7 @@ function knock(e, fromX, fromY, d) {
 for (const s in DATA.spells) $("spell_" + s).addEventListener("click", () => {
   if (spellMode === s) { setSpell(null); say("Spell cancelled."); return; }
   setSpell(s);
-  say(s === "command" ? "Command: tap any tile to call your summons there." : s === "guardstone" ? "Guardstone: tap a tile for the crystal. Summons that step into its circle stay and guard it." : s === "freeze" ? "Freeze: tap the middle of a 3 x 3 area to freeze." : s === "firebolt" ? "Firebolt: tap a tile. Grass, bushes and trees catch fire. Tap the button again to stop." : "Nemesis: tap the enemy you want hunted down.");
+  say(s === "command" ? "Command: tap any tile to call your summons there." : s === "nurture" ? "Nurture: tap bare earth, grass or a bush to grow it a step. Tap the button again to stop." : s === "guardstone" ? "Guardstone: tap a tile for the crystal. Summons that step into its circle stay and guard it." : s === "freeze" ? "Freeze: tap the middle of the area to chill." : s === "firebolt" ? "Firebolt: tap a tile. Grass, bushes and trees catch fire. Tap the button again to stop." : "Nemesis: tap the enemy you want hunted down.");
 });
 
 // ---------- Waves ----------
@@ -1423,11 +1457,11 @@ function nearest(from, list, maxD, filter) {
 }
 
 function speedAt(a) {
-  const c = cellOf(a);
-  if (a.d.ignoresTerrain || !inGrid(c.x, c.y)) return a.d.speed;
+  const c = cellOf(a), chill = a.chill > 0 ? 1 - a.chillSlow : 1;       // Freeze slows, it doesn't stop
+  if (a.d.ignoresTerrain || !inGrid(c.x, c.y)) return a.d.speed * chill;
   const t = terr(c.x, c.y);
-  if (t.slowsOnly && t.slowsOnly !== a.side) return a.d.speed;
-  return a.d.speed * (t.slow || 1);
+  if (t.slowsOnly && t.slowsOnly !== a.side) return a.d.speed * chill;
+  return a.d.speed * (t.slow || 1) * chill;
 }
 
 // steer toward a point: turn at a limited rate, speed up gradually and slow down in sharp turns.
@@ -1497,7 +1531,11 @@ function strike(a, target) {
     if (a.lastMove === "punch" || target.isWard) { hurt(target, a.d.damage, "#ece3cf"); if (target.isWard) return; }
     if (a.lastMove === "punch") return;
   } else SFX.play("attack", a.kind);
-  if (a.d.ranged) { S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage }); return; }
+  if (a.d.ranged) {
+    a.shotN = (a.shotN || 0) + 1;
+    S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage, pierce: a.d.pierce || 0, fire: a.d.flame && a.shotN % 5 === 0 ? a.d.flame : 0 });
+    return;
+  }
   if (a.d.slam) {           // the ground slam: everything close in front takes the blow and gets shoved back
     const fx = (a.x + target.x) / 2, fy = (a.y + target.y) / 2;
     for (const e of S.enemies) {
@@ -1534,14 +1572,15 @@ function guardDuty(a, dt) {
     if (dist(a, foe) <= a.d.range) { a.path = []; if (a.cd === 0) strike(a, foe); return; }
     approach(a, foe, dt); return;
   }
-  if (!a.wander || a.wander.wait <= 0 && dist(a, a.wander) < 0.4) {
+  if (!a.wander || a.wander.wait <= 0) {
     for (let i = 0; i < 12; i++) {
-      const ang = Math.random() * Math.PI * 2, rr = Math.random() * g.r * 0.75, x = Math.round(g.x + Math.cos(ang) * rr), y = Math.round(g.y + Math.sin(ang) * rr);
-      if (passable(x, y, a.d.move) && L.terrain[y][x] !== "foeward" && (x !== g.x || y !== g.y)) { a.wander = { x, y, wait: 1 + Math.random() * 2.5 }; break; }
+      const ang = Math.random() * Math.PI * 2, rr = g.r * (0.35 + Math.random() * 0.55), x = Math.round(g.x + Math.cos(ang) * rr), y = Math.round(g.y + Math.sin(ang) * rr);
+      if (passable(x, y, a.d.move) && L.terrain[y][x] !== "foeward" && (x !== g.x || y !== g.y)) { a.wander = { x, y, wait: 0.3 + Math.random() * 0.9, t: 0 }; break; }
     }
-    if (!a.wander) a.wander = { x: g.x, y: g.y, wait: 2 };
+    if (!a.wander) a.wander = { x: g.x, y: g.y, wait: 1, t: 0 };
   }
-  if (dist(a, a.wander) < 0.4) { a.wander.wait -= dt; a.path = []; return; }
+  // patrol: walk to a spot, look around for a moment, pick the next (give up on spots that can't be reached)
+  if (dist(a, a.wander) < 0.65 || (a.wander.t += dt) > 6) { a.wander.wait -= dt; a.path = []; return; }
   goToTile(a, a.wander.x, a.wander.y, dt);
 }
 function updateStones(dt) {
@@ -1702,9 +1741,7 @@ function update(dt) {
   for (const a of S.units.concat(S.enemies)) {
     a.cd = Math.max(0, a.cd - dt); a.hit = Math.max(0, a.hit - dt); a.panic = Math.max(0, a.panic - dt); a.charm = Math.max(0, a.charm - dt);
     a.moved = false;
-    if (a.frozen > 0) {    // frozen solid: no moving, no hitting
-      a.frozen = Math.max(0, a.frozen - dt); a.spd = 0; a.cd = Math.max(a.cd, 0.2); continue;
-    }
+    if (a.chill > 0) a.chill = Math.max(0, a.chill - dt);
     if (a.kb) {            // being shoved: slide back, stopping at anything solid
       const nx = a.x + a.kb.vx * dt, ny = a.y + a.kb.vy * dt;
       if (passable(Math.round(nx), Math.round(ny), a.d.move)) { a.x = nx; a.y = ny; }
@@ -1722,7 +1759,24 @@ function update(dt) {
   for (const s of S.shots) {
     const t = s.target, dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy), sp = 9 * dt;
     s.ang = Math.atan2(dy, dx);
-    if (d <= sp || t.hp <= 0) { if (t.hp > 0) { hurt(t, s.dmg, "#ece3cf"); SFX.play("thunk"); } s.done = true; }
+    if (d <= sp || t.hp <= 0) {
+      if (t.hp > 0) {
+        hurt(t, s.dmg, "#ece3cf"); SFX.play("thunk");
+        if (s.fire && !t.isWard && chance(s.fire)) ignite(t);
+        // a piercing arrow carries on and hits the next enemy behind, if there is one
+        if (s.pierce && !t.isWard && chance(s.pierce)) {
+          const ux = Math.cos(s.ang), uy = Math.sin(s.ang);
+          let next = null, best = 2.5;
+          for (const e of S.enemies) {
+            if (e === t || e.hp <= 0 || e.enter || (s.hit && s.hit.includes(e))) continue;
+            const ax = e.x - t.x, ay = e.y - t.y, along = ax * ux + ay * uy, side = Math.abs(ax * uy - ay * ux);
+            if (along > 0.1 && along < best && side < 0.6) { best = along; next = e; }
+          }
+          if (next) { S.shots.push({ x: t.x, y: t.y, target: next, dmg: s.dmg, pierce: s.pierce, fire: s.fire, hit: (s.hit || []).concat(t) }); float(t.x, t.y - 0.5, "pierce!", "#ece3cf"); }
+        }
+      }
+      s.done = true;
+    }
     else { s.x += dx / d * sp; s.y += dy / d * sp; }
   }
   S.shots = S.shots.filter(s => !s.done);
@@ -1794,7 +1848,7 @@ function updateFire(dt) {
   }
   S.bolts = S.bolts.filter(b => !b.done);
   // the freeze ring: spreads out from the middle tile and catches everything in the 3 x 3 square as it passes
-  const Z = DATA.spells.freeze;
+  const Z = S.sp.freeze;
   for (const f of S.freezes) {
     f.t += dt;
     const r = Math.min(1, f.t / Z.spread) * Z.radius * 1.42;
@@ -1803,16 +1857,19 @@ function updateFire(dt) {
       f.hit.add(a);
       if (a.burn > 0) { a.burn = 0; a.burnT = 0; float(a.x, a.y - 0.3, "fizz", "#9fd0ff"); }
       if (a.d.freezeImmune) continue;
-      a.frozen = Z.duration; a.panic = 0; a.path = []; a.fleeTo = null;
-      float(a.x, a.y - 0.3, "frozen!", "#9fd0ff");
+      a.chill = Z.duration; a.chillSlow = Z.slow;
+      float(a.x, a.y - 0.3, "chilled!", "#9fd0ff");
     }
-    for (let yy = f.y - 1; yy <= f.y + 1; yy++) for (let xx = f.x - 1; xx <= f.x + 1; xx++) {
+    const ri = Math.floor(Z.radius);
+    for (let yy = f.y - ri; yy <= f.y + ri; yy++) for (let xx = f.x - ri; xx <= f.x + ri; xx++) {
       const k = yy * C + xx;
       if (inGrid(xx, yy) && S.fire[k] > 0 && L.terrain[yy][xx] !== "tree" && Math.hypot(xx - f.x, yy - f.y) <= r) delete S.fire[k];   // trees keep burning
     }
-    if (f.t > 1.2) f.done = true;
+    if (f.t > 1.2 + Z.radius * 0.2) f.done = true;
   }
   S.freezes = S.freezes.filter(f => !f.done);
+  for (const g of S.grows) g.t += dt;
+  S.grows = S.grows.filter(g => g.t < 0.9);
   if (S.flash && (S.flash.t -= dt) <= 0) S.flash = null;
   for (const k in S.fire) {
     if ((S.fire[k] -= dt) > 0) continue;
@@ -1836,6 +1893,14 @@ function updateFire(dt) {
       if (a.burn <= 0) { a.burn = 0; a.burnT = 0; }
     }
   }
+}
+// set a creature alight, as if it had walked through fire
+function ignite(a) {
+  const F = DATA.spells.firebolt;
+  if (a.d.fireImmune || a.d.ignoresTerrain) return;
+  if (!(a.burn > 0)) float(a.x, a.y - 0.3, "on fire!", "#ff9a3c");
+  a.burn = F.burn;
+  if (a.side === "foe") { a.panic = Math.max(a.panic, F.burn); a.path = []; a.fleeTo = null; }
 }
 function drawFlame(px, py, r, t) {
   for (let i = 0; i < 3; i++) {
@@ -2042,6 +2107,16 @@ function drawActor(a) {
     ctx.beginPath(); ctx.moveTo(px - r * .5, py - r * .5); ctx.lineTo(px - r * .3, py - r * 1.2); ctx.lineTo(px - r * .1, py - r * .6); ctx.fill();
     ctx.beginPath(); ctx.moveTo(px + r * .5, py - r * .5); ctx.lineTo(px + r * .3, py - r * 1.2); ctx.lineTo(px + r * .1, py - r * .6); ctx.fill();
     ctx.fillStyle = "#f5e05a"; ctx.beginPath(); ctx.arc(px - r * .3, py - r * .1, r * .14, 0, Math.PI * 2); ctx.arc(px + r * .3, py - r * .1, r * .14, 0, Math.PI * 2); ctx.fill();
+  } else if (a.kind === "golem") {
+    r *= 1.35;
+    const sq = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r * 0.18) : ctx.rect(x, y, w, h); ctx.fill(); };
+    sq(px - r * 1.05, py - r * 0.25, r * 0.42, r * 0.42, a.hit ? "#ffffff" : "#8a8477");            // fists
+    sq(px + r * 0.63, py - r * 0.25, r * 0.42, r * 0.42, a.hit ? "#ffffff" : "#8a8477");
+    sq(px - r * 0.62, py - r * 0.55, r * 1.24, r * 1.15, a.hit ? "#ffffff" : "#a8a293");            // body
+    sq(px - r * 0.38, py - r * 0.95, r * 0.76, r * 0.5, a.hit ? "#ffffff" : "#b8b2a3");              // head
+    ctx.fillStyle = "#6f9a4a"; ctx.beginPath(); ctx.ellipse(px - r * 0.1, py - r * 0.95, r * 0.24, r * 0.09, 0, 0, Math.PI * 2); ctx.fill();   // moss
+    ctx.fillStyle = "#ffd75a"; ctx.beginPath(); ctx.arc(px - r * 0.15, py - r * 0.7, r * 0.08, 0, Math.PI * 2); ctx.arc(px + r * 0.16, py - r * 0.72, r * 0.06, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#6fa8ff"; ctx.lineWidth = Math.max(1, T * 0.04); ctx.beginPath(); ctx.arc(px, py, r * 0.22, 0, Math.PI * 2); ctx.stroke();   // the Septagram glow
   } else if (a.kind === "orc") {
     r *= 1.25;
     ctx.fillStyle = a.hit ? "#c6dcb0" : "#4f6b3a";
@@ -2078,6 +2153,7 @@ function drawActor(a) {
 
 // the new character art on the battlefield; the classic shapes stay available through the Art toggle
 const ART_SCALE = { kobold: 0.86, orc: 1.3, golem: 1.3 };
+const ICE = document.createElement("canvas");      // scratch layer for tinting chilled creatures
 function drawActorArt(a) {
   const T = tile, s = T / 112, px = a.x * T + T / 2, gy = a.y * T + T * 0.8;
   if (!a.look) a.look = ART.looks(a.kind);
@@ -2098,12 +2174,17 @@ function drawActorArt(a) {
     t = per * ((S.time - a.lastStrike) / a.d.attackEvery + imp);
   }
   if (a.moved && a.heading !== null && Math.abs(Math.cos(a.heading)) > 0.35) a.flip = Math.cos(a.heading) < 0;
-  if (a.frozen > 0) m = "idle";
-  ART.drawAt(a.kind, ctx, px, gy, s, a.frozen > 0 ? (a.iceT = a.iceT === undefined ? t : a.iceT) : (a.iceT = undefined, t), a.look, m, a.flip);
-  if (a.frozen > 0 && "filter" in ctx) {
-    ctx.save(); ctx.globalAlpha = Math.min(1, a.frozen / 2) * 0.85; ctx.filter = "grayscale(.6) sepia(1) hue-rotate(165deg) saturate(2.2) brightness(1.15)";
-    ART.drawAt(a.kind, ctx, px, gy, s, a.iceT, a.look, m, a.flip); ctx.restore();
-  }
+  if (a.chill > 0) {
+    if (a.moved) t = S.time * (1 - a.chillSlow) + a.phase;       // chilled creatures move in slow motion
+    const bw = T * 2.4, bh = T * 2.8, ox = px - bw / 2, oy = gy - bh + T * 0.35, W = Math.ceil(bw * dpr), H = Math.ceil(bh * dpr);
+    if (ICE.width !== W || ICE.height !== H) { ICE.width = W; ICE.height = H; }
+    const ic = ICE.getContext("2d"); ic.setTransform(1, 0, 0, 1, 0, 0); ic.clearRect(0, 0, W, H); ic.globalCompositeOperation = "source-over";
+    ic.setTransform(dpr, 0, 0, dpr, -ox * dpr, -oy * dpr);
+    ART.drawAt(a.kind, ic, px, gy, s, t, a.look, m, a.flip);
+    ic.setTransform(1, 0, 0, 1, 0, 0); ic.globalCompositeOperation = "source-atop";
+    ic.fillStyle = "rgba(120,190,255," + (Math.min(1, a.chill / 2) * 0.55) + ")"; ic.fillRect(0, 0, W, H);
+    ctx.drawImage(ICE, ox, oy, bw, bh);
+  } else ART.drawAt(a.kind, ctx, px, gy, s, t, a.look, m, a.flip);
   if (a.burn > 0) drawFlame(px, gy - 60 * s * (ART_SCALE[a.kind] || 1), T * 0.22, S.time * 1.3 + a.phase);
   if (a.guard) { ctx.fillStyle = "#e8c45a"; ctx.strokeStyle = "#2a1f2e"; ctx.lineWidth = 1; const yy = (a.kind === "wisp" ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1)) - 12; ctx.beginPath(); ctx.moveTo(px, yy - 4); ctx.lineTo(px + 3, yy); ctx.lineTo(px, yy + 4); ctx.lineTo(px - 3, yy); ctx.closePath(); ctx.fill(); ctx.stroke(); }
   // health bar and nemesis mark on top
@@ -2188,8 +2269,11 @@ function draw() {
   ctx.strokeStyle = "#ece3cf"; ctx.lineWidth = 2;
   for (const s of S.shots) {
     const px = s.x * T + T / 2, py = s.y * T + T / 2, l = T * .25, a = s.ang || 0;
+    ctx.strokeStyle = s.fire ? "#ff9a3c" : "#ece3cf";
     ctx.beginPath(); ctx.moveTo(px - Math.cos(a) * l, py - Math.sin(a) * l); ctx.lineTo(px, py); ctx.stroke();
+    if (s.fire) { ctx.fillStyle = "rgba(255,200,90,.9)"; ctx.beginPath(); ctx.arc(px, py, T * 0.07, 0, Math.PI * 2); ctx.fill(); }
   }
+  ctx.strokeStyle = "#ece3cf";
   ctx.textAlign = "center"; ctx.font = "700 " + Math.max(11, Math.round(T * .34)) + "px 'Alegreya Sans', Arial, sans-serif";
   for (const f of S.floaters) {
     ctx.globalAlpha = 1 - f.t; ctx.fillStyle = f.color;
@@ -2200,12 +2284,21 @@ function draw() {
     g.addColorStop(0, "#fff3c0"); g.addColorStop(0.4, "rgba(255,140,50,.9)"); g.addColorStop(1, "rgba(255,80,30,0)");
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, T * 0.4, 0, Math.PI * 2); ctx.fill();
   }
+  for (const g of S.grows) {                // a green flash and sparks flying up from the tile that grew
+    const cx = g.x * T + T / 2, cy = g.y * T + T / 2;
+    if (g.t < 0.25) { ctx.fillStyle = "rgba(140,230,120," + (0.6 * (1 - g.t / 0.25)) + ")"; ctx.fillRect(g.x * T, g.y * T, T, T); }
+    for (let i = 0; i < 8; i++) {
+      const a = i * 0.785 + g.x, d = g.t * T * (0.6 + (i % 3) * 0.25), sx = cx + Math.cos(a) * d * 0.7, sy = cy - g.t * T * 0.9 + Math.sin(a) * d * 0.3, r = T * 0.07 * (1 - g.t / 0.9);
+      ctx.fillStyle = i % 2 ? "rgba(170,255,140," + (1 - g.t / 0.9) + ")" : "rgba(110,220,90," + (1 - g.t / 0.9) + ")";
+      ctx.beginPath(); ctx.moveTo(sx, sy - r * 1.6); ctx.lineTo(sx + r, sy); ctx.lineTo(sx, sy + r * 1.6); ctx.lineTo(sx - r, sy); ctx.closePath(); ctx.fill();
+    }
+  }
   for (const f of S.freezes) {
-    const k = Math.min(1, f.t / DATA.spells.freeze.spread), r = k * DATA.spells.freeze.radius * 1.42 * T, cx = f.x * T + T / 2, cy = f.y * T + T / 2, fade = f.t < 0.5 ? 1 : Math.max(0, 1 - (f.t - 0.5) / 0.7);
+    const Z = S.sp.freeze, ri = Math.floor(Z.radius), k = Math.min(1, f.t / Z.spread), r = k * Z.radius * 1.42 * T, cx = f.x * T + T / 2, cy = f.y * T + T / 2, fade = f.t < 0.5 ? 1 : Math.max(0, 1 - (f.t - 0.5) / 0.7);
     ctx.save(); ctx.globalAlpha = fade;
-    ctx.fillStyle = "rgba(140,200,255,.18)"; ctx.fillRect((f.x - 1) * T, (f.y - 1) * T, 3 * T, 3 * T);
-    ctx.shadowColor = "#9fd0ff"; ctx.shadowBlur = 12; ctx.strokeStyle = "rgba(170,220,255,.95)"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(cx, cy, Math.max(1, r), 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = "rgba(140,200,255,.18)"; ctx.fillRect((f.x - ri) * T, (f.y - ri) * T, (2 * ri + 1) * T, (2 * ri + 1) * T);
+    ctx.strokeStyle = "rgba(120,190,255,.35)"; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(cx, cy, Math.max(1, r), 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "rgba(190,230,255,.95)"; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
   }
   if (S.flash) { ctx.fillStyle = "rgba(255,170,80," + S.flash.t * 2 + ")"; ctx.beginPath(); ctx.arc(S.flash.x * T + T / 2, S.flash.y * T + T / 2, T * (0.9 - S.flash.t), 0, Math.PI * 2); ctx.fill(); }
   if (S.shoveFx > 0) {
@@ -2628,7 +2721,7 @@ function renderSpellBook() {
     const k = btn.dataset.learn, b = DATA.spellBook[k];
     if (META.spells[k] || !canPay(b.cost)) return;
     pay(b.cost); META.spells[k] = true; SFX.play("coins"); saveMeta(); renderTown();
-    talk(wizSays(k === "guardstone" ? "Guardstone! Finally, a way to make the skeletons stay put. Usually they wander off to find their other leg." : k === "firebolt" ? "Firebolt! Small, cheap and wonderfully irresponsible around dry grass." : k === "freeze" ? "Freeze! For when the grass fire got slightly out of hand. Again." : "A new spell. Lovely."));
+    talk(wizSays(k === "guardstone" ? "Guardstone! Finally, a way to make the skeletons stay put. Usually they wander off to find their other leg." : k === "firebolt" ? "Firebolt! Small, cheap and wonderfully irresponsible around dry grass." : k === "freeze" ? "Freeze! For when the grass fire got slightly out of hand. Again." : k === "nurture" ? "Nurture! Grass, bushes, trees... I'm basically a gardener now. A gardener with skeletons." : "A new spell. Lovely."));
   });
 }
 // the Septagram: bind each kind of summon once
@@ -4262,6 +4355,7 @@ document.addEventListener("keydown", e => {
   if (k === "r" && META.spells.firebolt) $("spell_firebolt").click();
   if (k === "t" && META.spells.freeze) $("spell_freeze").click();
   if (k === "g" && META.spells.guardstone) $("spell_guardstone").click();
+  if (k === "n" && META.spells.nurture) $("spell_nurture").click();
   if (k === "escape") setSpell(null);
   if (k === "e") shove();
   const i = "1234".indexOf(e.key), open = UNIT_KEYS.filter(u => META.unlocked[u]); if (i >= 0 && open[i]) select(open[i]);
