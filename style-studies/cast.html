@@ -69,6 +69,11 @@ button:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
         <button id="w_cheer" type="button" aria-pressed="false">Victory</button>
         <button id="w_despair" type="button" aria-pressed="false">Defeat</button>
       </div>
+      <div class="controls" role="group" aria-label="Wizard sequences">
+        <span>Sequences</span>
+        <button id="s_defeat" type="button">Ward breaks → town</button>
+        <button id="s_battle" type="button">Town gate → battle</button>
+      </div>
       <div class="controls" role="group" aria-label="Beard by prestige">
         <span>Beard (prestige)</span>
         <button id="b_0" type="button" aria-pressed="false">Apprentice fuzz</button>
@@ -971,8 +976,8 @@ function wizard(ctx, cx, gy, s, t, st) {
   let look = (t % 3.7) < 0.13 ? "blink" : "open", eyeDy = 0, boost = 1, flutter = 0;
   let hF = [31, -50], hB = [-33, -48], staffA = -0.05, orbGlow = 0.55 + 0.15 * Math.sin(t * 3), c = 0, r = 0, ph = 0, hop = 0, j = 0;
   if (m === "cast") {
-    ph = (t / 1.6) % 1;
-    c = ph < 0.55 ? ease(ph / 0.55) : ph < 0.7 ? 1 : 1 - ease((ph - 0.7) / 0.3);
+    ph = st.castHold != null ? 0 : (t / 1.6) % 1;
+    c = st.castHold != null ? st.castHold : ph < 0.55 ? ease(ph / 0.55) : ph < 0.7 ? 1 : 1 - ease((ph - 0.7) / 0.3);
     r = ph >= 0.55 && ph < 0.7 ? Math.sin((ph - 0.55) / 0.15 * Math.PI) : 0;
     hF = [31 + 4 * c + 8 * r, -50 - 26 * c]; hB = [-33 + 6 * c, -48 - 30 * c];
     staffA = -0.05 + 0.3 * c + 0.3 * r; lean = -0.04 * c + 0.14 * r; orbGlow = 0.5 + 0.9 * c;
@@ -1063,11 +1068,7 @@ function wizard(ctx, cx, gy, s, t, st) {
   }
   if (m === "flinch") { if (ph < 0.3) burst(ctx, 48, -66, 1, 1 - ph / 0.3, "#ff8a8a"); if (j > 0.2) sweat(ctx, -14, -108 - lift, 1, t); }
   if (m === "cheer") for (let i = 0; i < 6; i++) { const a = t * 3 + i * 1.047; sparkle(ctx, ob[0] + Math.cos(a) * 20, ob[1] + Math.sin(a) * 15, 3, 0.5 + 0.5 * Math.sin(t * 6 + i)); }
-  if (m === "despair") {
-    const cyx = 2, cyy = -172;
-    for (let i = 0; i < 3; i++) { const f = ((t * 1.1 + i / 3) % 1); ctx.save(); ctx.globalAlpha = 1 - f; ctx.strokeStyle = "#8fb8ff"; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(cyx - 10 + i * 10, cyy + 8 + f * 26); ctx.lineTo(cyx - 11 + i * 10, cyy + 13 + f * 26); ctx.stroke(); ctx.restore(); }
-    puffs(ctx, [{ x: cyx - 12, y: cyy + 2, r: 7 }, { x: cyx - 3, y: cyy - 4, r: 9 }, { x: cyx + 9, y: cyy, r: 8 }, { x: cyx + 2, y: cyy + 4, r: 7 }], "#77718a", "#5f5a72");
-  }
+  if (m === "despair" && !st.cloud) rainCloud(ctx, 2, -172, t, { grow: 1, rain: 1, bolt: 0, fade: 1 });
   ctx.restore(); LW = LW0;
 }
 
@@ -1110,7 +1111,7 @@ const ARCH = setup("cvArch", (ctx, cx, gy, s, t, st) => skeleton(st, cx, gy, s, 
 const WISP = setup("cvWisp", wisp, 0.6, { noShadowScale: true });
 const GOBS = setup("cvGob", goblin, 0.5), KOBS = setup("cvKob", kobold, 0.15), ORCS = setup("cvOrc", orc, 0.4);
 const GOLM = setup("cvGolem", golem, 0.7, { quarry: 0 });
-const WIZ = setup("cvWiz", wizard, 0, { wmode: "idle", beard: 2, gear: "starter" });
+const WIZ = setup("cvWiz", wizard, 0, { wmode: "idle", beard: 2, gear: "starter", scene: "battle" });
 const STAGES = [SKEL, ARCH, WISP, GOLM, GOBS, KOBS, ORCS];
 function reroll() {
   for (const st of [SKEL, ARCH]) {
@@ -1177,27 +1178,149 @@ function septagram(ctx, cx, gy, s, t) {
   ctx.restore();
 }
 
+// the little raincloud of defeat: grows, rumbles a small lightning bolt into the air, then rains on his hat
+function rainCloud(ctx, x, y, t, cl) {
+  const g = cl.grow * cl.fade; if (g <= 0.01) return;
+  ctx.save(); ctx.globalAlpha = cl.fade;
+  if (cl.rain) for (let i = 0; i < 6; i++) {
+    const f = (t * 1.6 + i / 6) % 1;
+    ctx.save(); ctx.globalAlpha = (1 - f) * cl.fade * cl.rain; ctx.strokeStyle = "#8fb8ff"; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x - 13 + i * 5.4, y + 8 + f * 32); ctx.lineTo(x - 14 + i * 5.4, y + 13 + f * 32); ctx.stroke(); ctx.restore();
+  }
+  if (cl.bolt > 0) {
+    const pts = [[x + 4, y - 8], [x, y - 17], [x + 8, y - 20], [x + 3, y - 31], [x + 12, y - 27], [x + 9, y - 42]];
+    ctx.save(); ctx.globalAlpha = cl.bolt; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.shadowColor = "#fff6a0"; ctx.shadowBlur = 14;
+    ctx.strokeStyle = INK; ctx.lineWidth = 5 * LW; ctx.beginPath(); pts.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); ctx.stroke();
+    ctx.strokeStyle = "#ffe95a"; ctx.lineWidth = 2.4 * LW; ctx.stroke(); ctx.restore();
+  }
+  const dark = cl.bolt > 0 ? ["#9a95ad", "#7d7892"] : ["#77718a", "#5f5a72"];
+  puffs(ctx, [[-12, 2, 7], [-3, -4, 9], [9, 0, 8], [2, 4, 7]].map(([a, b, r]) => ({ x: x + a * g, y: y + b * g, r: r * g })), dark[0], dark[1]);
+  ctx.restore();
+}
+// teleport: stars and mystic symbols flung out in a burst
+function spawnTwinkles(st, x, y, s) {
+  st.parts = st.parts || [];
+  for (let i = 0; i < 16; i++) {
+    const a = Math.random() * Math.PI * 2, v = (60 + Math.random() * 90) * s;
+    st.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30 * s, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 8,
+                    kind: ["star", "hept", "moon", "rune"][i % 4], hue: Math.random() * 360, r: (4 + Math.random() * 3) * s, life: 0 });
+  }
+}
+function drawTwinkles(ctx, st, dt) {
+  for (const p of st.parts || []) {
+    p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.97; p.vy *= 0.97; p.rot += p.vr * dt;
+    const r = p.r, col = "hsl(" + p.hue + ",90%,72%)";
+    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - p.life / 1.1); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    ctx.shadowColor = col; ctx.shadowBlur = 8; ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1.6 * LW; ctx.lineJoin = "round";
+    ctx.beginPath();
+    if (p.kind === "star") { for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r; k ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); }
+    else if (p.kind === "hept") { for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7; k ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.stroke(); }
+    else if (p.kind === "moon") { ctx.moveTo(0, -r); ctx.quadraticCurveTo(r * 1.5, 0, 0, r); ctx.quadraticCurveTo(r * 0.6, 0, 0, -r); ctx.fill(); }
+    else { ctx.moveTo(0, -r); ctx.lineTo(r * 0.9, r * 0.7); ctx.lineTo(-r * 0.9, r * 0.7); ctx.closePath(); ctx.moveTo(0, -r * 0.2); ctx.lineTo(0, r * 0.4); ctx.stroke(); }
+    ctx.restore();
+  }
+  st.parts = (st.parts || []).filter(p => p.life < 1.1);
+}
+// scripted sequences: the ward breaks (defeat, cloud, bolt, rain, vanish, reappear in town) and leaving town for battle
+const clamp01 = x => Math.max(0, Math.min(1, x));
+function runSeq(st, t) {
+  const out = { shimmer: 0, squash: 0, flash: 0, black: 0, burstAt: null };
+  if (!st.seq) return out;
+  const e = t - st.seq.t0, S = st.seq, once = (key, at) => { if (e >= at && !S[key]) { S[key] = true; return true; } return false; };
+  const vanish = (t0) => {                       // shimmer like a wisp, collapse into a line, gone
+    out.shimmer = clamp01((e - t0) / 0.6); out.squash = clamp01((e - t0 - 0.55) / 0.25);
+    out.flash = Math.max(0, 1 - Math.abs(e - t0 - 0.8) / 0.15);
+    if (once("v", t0 + 0.78)) out.burstAt = "v";
+  };
+  const appear = (t0) => {
+    out.squash = e < t0 ? 1 : 1 - clamp01((e - t0) / 0.3); out.shimmer = e < t0 ? 1 : 1 - clamp01((e - t0 - 0.1) / 0.6);
+    out.flash = Math.max(0, 1 - Math.abs(e - t0 - 0.05) / 0.15);
+    if (once("a", t0)) out.burstAt = "a";
+  };
+  const fadeScene = (t0, next) => { out.black = e < t0 + 0.35 ? clamp01((e - t0) / 0.35) : clamp01(1 - (e - t0 - 0.35) / 0.35); if (e >= t0 + 0.35) st.scene = next; };
+  if (S.kind === "defeat") {
+    if (e < 4.95) {
+      st.scene = "battle"; st.wmode = "despair";
+      st.cloud = { grow: ease(clamp01((e - 0.2) / 0.9)), bolt: e > 1.3 && e < 1.8 ? (e < 1.42 || e > 1.5 ? 1 : 0.25) * (1 - clamp01((e - 1.6) / 0.2)) : 0, rain: clamp01((e - 1.8) / 0.2), fade: 1 - clamp01((e - 3.9) / 0.6) };
+      if (e > 3.2) vanish(3.2);
+      if (e > 4.1) out.squash = 1;
+      if (e > 4.4) fadeScene(4.6, "town");
+    } else {
+      st.cloud = null; st.wmode = "idle"; fadeScene(4.6, "town");
+      appear(5.4);
+      if (e > 6.2) { st.seq = null; pick("w_", WMODES, "idle"); }
+    }
+  } else if (S.kind === "battle") {
+    if (e < 2.0) {
+      st.scene = "town"; st.wmode = "cast"; st.castHold = ease(clamp01(e / 0.9));
+      if (e > 1.0) vanish(1.0);
+      if (e > 1.85) out.squash = 1;
+    } else {
+      st.castHold = null; st.wmode = "idle"; out.squash = 1;
+      fadeScene(2.0, "battle");
+      if (e > 2.7) appear(2.9);
+      if (e > 3.7) { st.seq = null; pick("w_", WMODES, "idle"); }
+    }
+  }
+  return out;
+}
+// a cosy corner of town: cobbles and a couple of houses
+function townBack(ctx, W, gy, s) {
+  ctx.fillStyle = "#2a2433";
+  ctx.beginPath(); ctx.moveTo(W * 0.62, gy - 4 * s); ctx.lineTo(W * 0.62, gy - 70 * s); ctx.lineTo(W * 0.72, gy - 100 * s); ctx.lineTo(W * 0.82, gy - 70 * s); ctx.lineTo(W * 0.82, gy - 4 * s); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W * 0.02, gy - 4 * s); ctx.lineTo(W * 0.02, gy - 58 * s); ctx.lineTo(W * 0.1, gy - 84 * s); ctx.lineTo(W * 0.18, gy - 58 * s); ctx.lineTo(W * 0.18, gy - 4 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#ffcf6a"; for (const [x, y] of [[0.68, 60], [0.75, 60], [0.07, 40], [0.12, 40]]) ctx.fillRect(W * x, gy - y * s, 7 * s, 9 * s);
+  ctx.fillStyle = "#3a3540"; ctx.fillRect(0, gy - 4 * s, W, W - gy + 4 * s);
+  ctx.fillStyle = "#4a4452";
+  for (let row = 0; row < 3; row++) for (let i = -1; i < W / (18 * s) + 1; i++) { ctx.beginPath(); ctx.ellipse((i + (row % 2) * 0.5) * 18 * s, gy + (2 + row * 8) * s, 7 * s, 3 * s, 0, 0, Math.PI * 2); ctx.fill(); }
+}
+
 // the wizard's hillside
-function wizFrame(st, t) {
+function wizFrame(st, t, dt) {
   const ctx = st.ctx, W = st.w, s = W / 250, gy = W * 0.92;
   LW = Math.max(0.55, s);
+  const fx = runSeq(st, t);
   ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0); ctx.clearRect(0, 0, W, W);
   ctx.fillStyle = "#f1e8d4"; for (const [x, y, r] of [[0.12, 0.12, 1.2], [0.8, 0.08, 1], [0.9, 0.3, 1.4], [0.3, 0.22, 0.9], [0.62, 0.18, 1.1]]) { ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 1.5 + x * 9); ctx.beginPath(); ctx.arc(x * W, y * W, r * s * 1.5, 0, Math.PI * 2); ctx.fill(); }
   ctx.globalAlpha = 1;
-  ctx.fillStyle = GROUND; ctx.beginPath(); ctx.moveTo(0, gy + 14 * s); ctx.quadraticCurveTo(W / 2, gy - 22 * s, W, gy + 14 * s); ctx.lineTo(W, W); ctx.lineTo(0, W); ctx.closePath(); ctx.fill();
+  if (st.scene === "town") townBack(ctx, W, gy, s);
+  else { ctx.fillStyle = GROUND; ctx.beginPath(); ctx.moveTo(0, gy + 14 * s); ctx.quadraticCurveTo(W / 2, gy - 22 * s, W, gy + 14 * s); ctx.lineTo(W, W); ctx.lineTo(0, W); ctx.closePath(); ctx.fill(); }
   const cx = W * 0.45, lev = st.lev || 0, hover = lev ? 16 + Math.sin(t * 1.8) * 3 : 0;
   if (lev === 2) septagram(ctx, cx, gy, s, t);
-  const shrink = 1 - hover / 60;
+  const shrink = (1 - hover / 60) * (1 - fx.squash);
   ctx.fillStyle = "rgba(0,0,0," + (0.25 * shrink) + ")"; ctx.beginPath(); ctx.ellipse(cx, gy, 38 * s * shrink, 7 * s * shrink, 0, 0, Math.PI * 2); ctx.fill();
-  if (lev) motes(ctx, cx, gy, s, t, hover, lev);
-  ctx.save(); ctx.translate(0, -hover * s); wizard(ctx, cx, gy, s, t, st); ctx.restore();
+  if (lev && fx.squash < 1) motes(ctx, cx, gy, s, t, hover, lev);
+  // the wizard is drawn on his own layer so he can shimmer and collapse when he teleports
+  if (!st.off) st.off = document.createElement("canvas");
+  const off = st.off, D = st.dpr; if (off.width !== st.cv.width) { off.width = st.cv.width; off.height = st.cv.height; }
+  const o = off.getContext("2d"); o.setTransform(D, 0, 0, D, 0, 0); o.clearRect(0, 0, W, W);
+  if (fx.squash < 1) {
+    o.save(); o.translate(0, -hover * s); wizard(o, cx, gy, s, t, st); o.restore(); LW = Math.max(0.55, s);
+    if (fx.shimmer > 0) { o.globalCompositeOperation = "source-atop"; o.fillStyle = "hsla(" + ((t * 420) % 360) + ",95%,62%," + (0.6 * fx.shimmer) + ")"; o.fillRect(0, 0, W, W); o.globalCompositeOperation = "source-over"; }
+    const ccy = gy - (hover + 70) * s;
+    ctx.save(); ctx.translate(cx, ccy); ctx.scale(Math.max(0.001, 1 - fx.squash), 1 + fx.squash * 0.8); ctx.translate(-cx, -ccy);
+    const sh = 4 * s;
+    for (let y = 0; y < W; y += sh) { const dx = Math.sin(y * 0.15 + t * 22) * 5 * s * fx.shimmer; ctx.drawImage(off, 0, y * D, W * D, sh * D, dx, y, W, sh); }
+    ctx.restore();
+  }
+  if (st.cloud) { ctx.save(); ctx.translate(cx, gy - hover * s); ctx.scale(s, s); const L0 = LW; LW = L0 / s; rainCloud(ctx, 2, -172, t, st.cloud); LW = L0; ctx.restore(); }
+  if (fx.burstAt) spawnTwinkles(st, cx, gy - (hover + 70) * s, s);
+  drawTwinkles(ctx, st, dt);
+  if (fx.flash > 0) {
+    const g = ctx.createRadialGradient(cx, gy - (hover + 70) * s, 0, cx, gy - (hover + 70) * s, 90 * s);
+    g.addColorStop(0, "rgba(255,255,255," + fx.flash + ")"); g.addColorStop(0.4, "rgba(200,170,255," + (0.6 * fx.flash) + ")"); g.addColorStop(1, "rgba(160,120,255,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, W);
+  }
+  if (st.cloud && st.cloud.bolt > 0) { ctx.fillStyle = "rgba(255,250,220," + (0.18 * st.cloud.bolt) + ")"; ctx.fillRect(0, 0, W, W); }
+  if (fx.black > 0) { ctx.fillStyle = "rgba(10,8,14," + fx.black + ")"; ctx.fillRect(0, 0, W, W); }
 }
 
-let last = 0;
+let last = 0, lastT = 0;
 function loop(ms) {
   const t = ms / 1000, dt = Math.min(0.05, t - last || 0); last = t;
   for (const st of STAGES) frame(st, t, dt);
-  wizFrame(WIZ, t);
+  wizFrame(WIZ, t, dt); lastT = t;
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -1209,7 +1332,10 @@ document.getElementById("reroll").addEventListener("click", reroll);
 setMode(mode);
 function pick(prefix, keys, val) { for (const k of keys) document.getElementById(prefix + k).setAttribute("aria-pressed", String(k) === String(val) ? "true" : "false"); }
 const WMODES = ["idle", "cast", "flinch", "cheer", "despair"];
-for (const k of WMODES) document.getElementById("w_" + k).addEventListener("click", () => { WIZ.wmode = k; pick("w_", WMODES, k); });
+const stopSeq = () => { WIZ.seq = null; WIZ.cloud = null; WIZ.castHold = null; };
+for (const k of WMODES) document.getElementById("w_" + k).addEventListener("click", () => { stopSeq(); WIZ.wmode = k; pick("w_", WMODES, k); });
+document.getElementById("s_defeat").addEventListener("click", () => { stopSeq(); WIZ.seq = { kind: "defeat", t0: lastT }; pick("w_", WMODES, null); });
+document.getElementById("s_battle").addEventListener("click", () => { stopSeq(); WIZ.seq = { kind: "battle", t0: lastT }; pick("w_", WMODES, null); });
 for (const k of [0, 1, 2, 3, 4]) document.getElementById("b_" + k).addEventListener("click", () => { WIZ.beard = k; pick("b_", [0, 1, 2, 3, 4], k); });
 for (const k of [0, 1, 2]) document.getElementById("l_" + k).addEventListener("click", () => { WIZ.lev = k; pick("l_", [0, 1, 2], k); });
 for (const k of Object.keys(GEAR)) document.getElementById("g_" + k).addEventListener("click", () => { WIZ.gear = k; pick("g_", Object.keys(GEAR), k); });
