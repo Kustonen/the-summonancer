@@ -29,6 +29,7 @@ Current prototype:
   - Sand and puddles slow a little, swamp a lot, bushes slow enemies only
   - Boulders, trees, lakes and rivers block walkers; wisps float over everything
   - Grass, bushes and trees are flagged flammable and dirt diggable for future spells
+- Retreat button (tap twice to confirm): leave a battle early and keep everything gathered so far; the wizard goes through his defeat animation and blinks back to town
 - Spells: Command (10 mana, every summon heads to a tile for 1 s), Nemesis (20 mana, every summon attacks one marked enemy for 5 s) and Shove once the Stone Circle teaches it
 - The wizard is on the battlefield: at the bottom of the Hillside, inside the ward elsewhere. He casts when you summon or cast, flinches when the ward is hit and cheers when a wave is cleared. When the ward falls a raincloud forms over him, lightning strikes beside him, it rains on his hat and he blinks back to town.
 - Steering movement: units keep their momentum between targets, turn at a limited rate (about 90° in a quarter second), slow down in sharp turns, reach full speed in 0.8 s and brake in 0.3 s when they hold still

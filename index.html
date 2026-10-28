@@ -422,6 +422,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <button class="mini" id="music" type="button" aria-pressed="true">Music on</button>
     <button class="mini" id="sfx" type="button" aria-pressed="true">Sound on</button>
     <button class="mini" id="pause" type="button">Pause</button>
+    <button class="mini" id="retreat" type="button" title="Leave the battle and keep what you've gathered">Retreat</button>
   </div>
   <div class="main">
     <div class="field" id="field">
@@ -1487,8 +1488,9 @@ function waveMultiplier(w) {
 }
 const fmt = n => (Math.round(n * 100) / 100).toLocaleString("en-US");
 
-function endBattle() {
+function endBattle(retreated) {
   S.over = true; setSpell(null);
+  $("overTitle").textContent = retreated ? "You retreated" : "The ward has fallen";
   S.wiz.seq = { kind: "defeat", e: 0 }; S.wiz.until = 0;
   const E = DATA.exp, rows = [];
   let killExp = 0;
@@ -1515,6 +1517,7 @@ function endBattle() {
   if (first) META.stage = "monologue";
   saveMeta();
   $("overText").textContent = first ? "Wherever this is, you're going to need more than wisps. The wizard blinked back to the nearest town."
+    : retreated ? "You left " + L.d.name + " at wave " + S.wave + ", with everything you'd gathered. The enemies are calling it a victory. They would."
     : "You held " + L.d.name + " until wave " + S.wave + ". The survivors are telling everyone you're a necromancer.";
 }
 
@@ -3437,6 +3440,19 @@ function togglePause() {
   if (paused) bgm.pause(); else playMusic();
 }
 $("pause").addEventListener("click", togglePause);
+// Retreat: a second tap within three seconds confirms; the wizard sulks under his raincloud and blinks back to town
+let retreatArm = 0;
+$("retreat").addEventListener("click", () => {
+  if (!S || S.over) return;
+  if (performance.now() - retreatArm > 3000) {
+    retreatArm = performance.now(); $("retreat").textContent = "Sure? Tap again";
+    setTimeout(() => { if (performance.now() - retreatArm >= 2900) $("retreat").textContent = "Retreat"; }, 3000);
+    return;
+  }
+  retreatArm = 0; $("retreat").textContent = "Retreat";
+  if (paused) togglePause();
+  endBattle(true);
+});
 document.addEventListener("keydown", e => {
   if (!inBattle) return;
   const k = e.key.toLowerCase();
