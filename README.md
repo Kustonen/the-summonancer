@@ -28,7 +28,7 @@ Current prototype:
   - Goblin: 50 % chance of 1-2 bones, 20 % chance of 1-2 gold; panics when four fall within 5 s unless an orc is within 3 tiles
   - Orc: strong and slow; 50 % chance of 1-3 bones, 25 % chance of 2-5 gold
 - Waves: kobolds only in waves 1-2, goblins from wave 3, orcs from wave 5, tight packs from wave 10
-- End-of-battle tally: 0.5 / 1 / 2 exp per kobold / goblin / orc, +0.01 exp per unused field bone, multiplied by the wave reached (0.2x for waves 1-3, 0.5x 4-10, 0.7x 11-20, 1.0x 21-40, 1.2x 41-60, then +0.2x per 20 waves), rounded up
+- End-of-battle tally: 0.5 / 1 / 2 exp per kobold / goblin / orc, +0.01 exp per unused field bone, multiplied by the wave reached (0.5x for waves 1-3, 0.75x 4-6, 0.9x 7-9, 1.0x 10-19, 1.1x 20-39, 1.2x 40-59, then +0.2x per 20 waves), rounded up
 - Progress (gold, exp, stored bones, upgrades) is saved in the browser's local storage
 - Background music with a mute toggle
 
