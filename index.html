@@ -1,15 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Summonancer</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
 <style>
-body { margin: 0; } [hidden] { display: none !important; }
-:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; height: 100%; }
 /* Layout: one-screen game with two views. Town = resources, three building tiles and the open building's panel. Battle = HUD / battlefield / spells / summon cards, with field notes beside it on desktop. Single deliberate night look. */
 :root {
   --night: #15131c;      /* page ground, graveyard night */
@@ -170,10 +163,28 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .num:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
 @media (max-width: 560px) { .card span.d { display: none; } }
 @media (min-width: 860px) { .side { display: flex; } .brand { font-size: 28px; } .maps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } }
+/* town scene: the wizard and whoever is talking */
+.scene { display: flex; gap: 12px; align-items: stretch; }
+#wizCv { width: 150px; height: 150px; flex: none; cursor: default; background: #1b1824; border-radius: 10px; }
+@media (max-width: 480px) { #wizCv { width: 112px; height: 112px; } }
+.talk { flex: 1; min-width: 0; background: var(--slate); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.talk .who { font-family: var(--display); font-size: 20px; line-height: 1; color: var(--gold); }
+.talk p { margin: 0; line-height: 1.45; }
+.talk.idle p { color: var(--dim); font-style: italic; }
+.talk .btn { align-self: flex-start; }
+.bld.glow, .btn.glow { animation: glow 1.1s ease-in-out infinite; border-color: var(--gold); }
+@keyframes glow { 50% { box-shadow: 0 0 16px rgba(232, 196, 90, .65); } }
+.tabs { display: flex; gap: 6px; }
+.units { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; }
+.uplate { display: flex; gap: 10px; align-items: flex-start; background: var(--night); border: 1px solid var(--line); border-radius: 8px; padding: 8px; min-width: 0; }
+.uplate canvas { width: 96px; height: 96px; flex: none; border-radius: 6px; background: #1b1824; cursor: default; }
+.uplate b { font-family: var(--display); font-weight: 500; font-size: 18px; }
+.uplate .facts { font-size: 13px; }
+.bar { grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); }
+.spells { grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); }
+.req { color: var(--dim); font-size: 13px; font-style: italic; }
+@media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } .bld.glow, .btn.glow { animation: none; box-shadow: 0 0 10px rgba(232, 196, 90, .5); } }
 </style>
-</head>
-<body>
 
 <!-- ============ TOWN ============ -->
 <div class="view town" id="townView">
@@ -183,7 +194,17 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <div class="stat"><span id="tGold" style="color:var(--gold)">0</span><small>gold</small></div>
       <div class="stat"><span id="tExp" style="color:var(--exp)">0</span><small>exp</small></div>
 <button class="mini book" id="bookTown" type="button" aria-label="Open the Grimoire" title="The Grand Grimoire of Everything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c3-1.5 6-1.5 9 1v14c-3-2.5-6-2.5-9-1z" fill="#5b3f8f" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M21 5c-3-1.5-6-1.5-9 1v14c3-2.5 6-2.5 9-1z" fill="#4a3374" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M16.5 9.5l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#e8c45a"/></svg>Grimoire</button>
+      <button class="mini" id="musicTown" type="button" aria-pressed="true">Music on</button>
+      <button class="mini" id="sfxTown" type="button" aria-pressed="true">Sound on</button>
       <button class="mini dev" id="devBtn" type="button" aria-expanded="false">DEV</button>
+    </div>
+  </div>
+  <div class="scene">
+    <canvas id="wizCv" aria-label="The Summonancer, standing in town"></canvas>
+    <div class="talk idle" id="talk" aria-live="polite">
+      <div class="who" id="talkWho"></div>
+      <p id="talkText"></p>
+      <button class="btn primary" id="talkNext" type="button" hidden>Continue</button>
     </div>
   </div>
   <section class="panel devpanel" id="devPanel" hidden>
@@ -218,6 +239,14 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <button class="btn" id="devFillGrim" type="button">Fill grimoire</button>
       <button class="btn" id="devClearGrim" type="button">Clear grimoire</button>
     </div>
+    <div class="opt">
+      <div class="what"><b>Summons</b><span>Unlock every summon at once and build every building.</span></div>
+      <button class="btn" id="devUnlockAll" type="button">Unlock everything</button>
+    </div>
+    <div class="opt">
+      <div class="what"><b>New game</b><span>Wipes all progress and starts again from the very first battle.</span></div>
+      <button class="btn" id="devNewGame" type="button">Start over</button>
+    </div>
   </section>
   <div class="towns">
     <button class="bld" id="b_gate" type="button" aria-pressed="true">
@@ -229,7 +258,8 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <b>Spelltower</b>
     </button>
     <button class="bld" id="b_builder" type="button" aria-pressed="false">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M44 8l12 7-4 6-12-7z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M44 18l-12 20" stroke="#8a5a34" stroke-width="4" stroke-linecap="round"/><ellipse cx="26" cy="54" rx="10" ry="4" fill="#ece3cf"/><ellipse cx="26" cy="46" rx="8" ry="6" fill="#ece3cf" stroke="#2a1f2e" stroke-width="2"/><path d="M12 22a14 13 0 0 1 28 0c0 6-3 9-6 11v3H18v-3c-3-2-6-5-6-11z" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2.5"/><circle cx="20" cy="23" r="4.5" fill="#2a1f2e"/><circle cx="31" cy="22" r="2.6" fill="#2a1f2e"/><circle cx="32" cy="38" r="3.5" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2"/><path d="M8 18l6-6M10 10l2 4" stroke="#e8c45a" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg id="builderAlive" viewBox="0 0 64 64" aria-hidden="true"><path d="M44 8l12 7-4 6-12-7z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M44 18l-12 20" stroke="#8a5a34" stroke-width="4" stroke-linecap="round"/><path d="M14 58V44c0-6 5-10 12-10s12 4 12 10v14z" fill="#3f6fb0" stroke="#2a1f2e" stroke-width="2.5"/><path d="M19 58V46M33 58V46" stroke="#2f548a" stroke-width="2"/><circle cx="26" cy="24" r="10" fill="#e8b98e" stroke="#2a1f2e" stroke-width="2.5"/><circle cx="22.5" cy="25" r="1.6" fill="#2a1f2e"/><circle cx="29.5" cy="25" r="1.6" fill="#2a1f2e"/><path d="M22 29c2 2 6 2 8 0" stroke="#2a1f2e" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M14 20a12 10 0 0 1 24 0z" fill="#e8c45a" stroke="#2a1f2e" stroke-width="2.5"/><path d="M12 20h28" stroke="#2a1f2e" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="38" r="3.5" fill="#e8b98e" stroke="#2a1f2e" stroke-width="2"/></svg>
+      <svg id="builderSkel" viewBox="0 0 64 64" aria-hidden="true" hidden><path d="M44 8l12 7-4 6-12-7z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M44 18l-12 20" stroke="#8a5a34" stroke-width="4" stroke-linecap="round"/><ellipse cx="26" cy="54" rx="10" ry="4" fill="#ece3cf"/><ellipse cx="26" cy="46" rx="8" ry="6" fill="#ece3cf" stroke="#2a1f2e" stroke-width="2"/><path d="M12 22a14 13 0 0 1 28 0c0 6-3 9-6 11v3H18v-3c-3-2-6-5-6-11z" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2.5"/><circle cx="20" cy="23" r="4.5" fill="#2a1f2e"/><circle cx="31" cy="22" r="2.6" fill="#2a1f2e"/><circle cx="32" cy="38" r="3.5" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2"/><path d="M8 18l6-6M10 10l2 4" stroke="#e8c45a" stroke-width="2" stroke-linecap="round"/></svg>
       <b>Builder</b>
     </button>
     <button class="bld" id="b_grimoire" type="button" aria-pressed="false">
@@ -243,6 +273,26 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <button class="bld" id="b_well" type="button" aria-pressed="false" hidden>
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 18h36" stroke="#8a5a34" stroke-width="4" stroke-linecap="round"/><path d="M18 18v20M46 18v20" stroke="#8a5a34" stroke-width="3"/><path d="M10 16l22-8 22 8z" fill="#b0563f"/><ellipse cx="32" cy="40" rx="20" ry="6" fill="#1e3552"/><circle cx="32" cy="40" r="6" fill="#6fa8ff" opacity=".55"/><circle cx="32" cy="40" r="2.5" fill="#e8f2ff"/><path d="M12 40v14c0 3 9 6 20 6s20-3 20-6V40c0 3-9 6-20 6s-20-3-20-6z" fill="#6c6676"/><path d="M12 47c6 3 34 3 40 0" stroke="#4a4553" stroke-width="2" fill="none"/><path d="M32 18v14" stroke="#ece3cf" stroke-width="1.5"/></svg>
       <b>Wisping Well</b>
+    </button>
+    <button class="bld" id="b_septagram" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="40" rx="27" ry="14" fill="#1e2340" stroke="#6fa8ff" stroke-width="2"/><path d="M32 28 46 46 18 34h28L18 46z" fill="none" stroke="#9fd0ff" stroke-width="1.8" stroke-linejoin="round"/><circle cx="32" cy="40" r="3" fill="#e8f2ff"/><path d="M32 8l2 6 6 .5-4.6 4 1.4 6L32 21l-4.8 3.5 1.4-6-4.6-4 6-.5z" fill="#e8c45a"/></svg>
+      <b>Summoning Septagram</b>
+    </button>
+    <button class="bld" id="b_golematorium" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 58V30l26-18 26 18v28z" fill="#4a4553"/><path d="M18 58V40c0-8 6-12 14-12s14 4 14 12v18z" fill="#a8a293" stroke="#2a1f2e" stroke-width="2.5"/><path d="M22 42h20" stroke="#878171" stroke-width="4" stroke-linecap="round"/><circle cx="27" cy="47" r="2.6" fill="#ffd75a"/><circle cx="37" cy="46.5" r="2" fill="#ffd75a"/><path d="M24 31c2-3 6-4 9-2" stroke="#6f9a4a" stroke-width="4" stroke-linecap="round" fill="none"/></svg>
+      <b>Golematorium</b>
+    </button>
+    <button class="bld" id="b_library" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V22h48v36z" fill="#3a3547"/><path d="M4 22 32 8l28 14z" fill="#5b3f8f"/><rect x="13" y="28" width="6" height="22" fill="#b0563f"/><rect x="20" y="31" width="5" height="19" fill="#6fa8ff"/><rect x="26" y="27" width="6" height="23" fill="#e8c45a"/><rect x="33" y="30" width="5" height="20" fill="#8fbf6a"/><path d="M40 50l6-22 5 1.5-6 22z" fill="#b79cff"/><path d="M10 50h44" stroke="#2a1f2e" stroke-width="2"/><circle cx="32" cy="17" r="3" fill="#ece3cf"/><path d="M32 15v2l1.5 1" stroke="#2a1f2e" stroke-width="1"/></svg>
+      <b>Overdue Library</b>
+    </button>
+    <button class="bld" id="b_stones" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="54" rx="28" ry="6" fill="#26301f"/><rect x="8" y="26" width="9" height="28" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><rect x="25" y="26" width="9" height="28" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><rect x="5" y="19" width="32" height="8" rx="2" fill="#a8a293" stroke="#2a1f2e" stroke-width="2"/><rect x="44" y="30" width="10" height="24" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><ellipse cx="42" cy="50" rx="7" ry="5" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2"/><circle cx="48" cy="47" r="3" fill="#2a1f2e"/></svg>
+      <b>Stone Circle</b>
+    </button>
+    <button class="bld" id="b_archivus" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 58V24a20 20 0 0 1 40 0v34z" fill="#3a3547" stroke="#2a1f2e" stroke-width="2"/><path d="M20 58V28a12 12 0 0 1 24 0v30z" fill="#15131c"/><rect x="24" y="36" width="16" height="12" rx="2" fill="#e8dcbf" stroke="#2a1f2e" stroke-width="2"/><path d="M27 40h10M27 44h7" stroke="#8a5a34" stroke-width="1.5"/><rect x="28" y="30" width="8" height="7" rx="1.5" fill="none" stroke="#e8c45a" stroke-width="2"/><circle cx="32" cy="52" r="2" fill="#e8c45a"/></svg>
+      <b>Archivus Arcanus</b>
     </button>
   </div>
 
@@ -271,7 +321,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 
   <section class="panel" id="p_builder" hidden>
     <h2>Builder</h2>
-    <p>A skeleton with a hammer and a can-do attitude. Give it gold and it will put up whatever you point at, mostly in the right place.</p>
+    <p id="builderAbout"></p>
     <div id="buildList"></div>
   </section>
 
@@ -279,6 +329,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <h2>Cryptic Laboratory</h2>
     <p class="quote">“It's not a crypt! It's a Laboratory!”</p>
     <p>Research for your skeletons, warriors and archers alike. Paid in gold, and in bones and skulls once things get serious.</p>
+    <div class="units" id="labUnits"></div>
     <div id="labList"></div>
   </section>
 
@@ -286,12 +337,49 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <h2>Wisping Well</h2>
     <p class="quote">“Drop a coin in the well and you probably just lose a coin.”</p>
     <p>Wisps gather here between battles. Offerings make them brighter, steadier and a little less easily distracted by swamps.</p>
+    <div class="units" id="wellUnits"></div>
     <div id="wellList"></div>
+  </section>
+
+  <section class="panel" id="p_septagram" hidden>
+    <h2>The Summoning Septagram</h2>
+    <p class="quote">“Pentagrams are for amateurs, Hexagrams are for nerds!”</p>
+    <p>Seven points, seven times the binding. New kinds of summons are bound here once, for good. After that they only cost mana and bones on the battlefield.</p>
+    <div id="septList"></div>
+  </section>
+
+  <section class="panel" id="p_golematorium" hidden>
+    <h2>The Golematorium</h2>
+    <p class="quote">“Some assembly required. Mostly rocks.”</p>
+    <p>Where golems are chiselled, polished and occasionally reassembled. Research here makes them bigger, harder and much harder to ignore.</p>
+    <div class="units" id="golematoriumUnits"></div>
+    <div id="golematoriumList"></div>
+  </section>
+
+  <section class="panel" id="p_library" hidden>
+    <h2>The Overdue Library</h2>
+    <p class="quote">“Please return all spells by the due date. Fines are payable in souls.”</p>
+    <p>Every spell the wizard knows, plus a few nobody has returned in centuries. Study here makes Command and Nemesis last longer, cost less and hurt more.</p>
+    <div id="libraryList"></div>
+  </section>
+
+  <section class="panel" id="p_stones" hidden>
+    <h2>Protective Stone Circle</h2>
+    <p class="quote">“Stonehenge? We just keep our sheep penned here. They do tend to attract druids though...”</p>
+    <p>The ward draws its strength from these stones. Thicker stones take more hits, and the circle can learn to shove enemies away from the ward.</p>
+    <div id="stonesList"></div>
+  </section>
+
+  <section class="panel" id="p_archivus" hidden>
+    <h2>Archivus Arcanus</h2>
+    <p class="quote">“You are not prepared!”</p>
+    <p>Shelves of forbidden tomes on how to modify a summon until it is something else entirely. The archivist checks your library card, sniffs and shuts the door. Come back when you are more experienced.</p>
   </section>
 
   <section class="panel" id="p_grimoire" hidden>
     <h2>The Grand Grimoire of Everything</h2>
-    <p>Everything the wizard has learned about the things that try to reach the ward. Each page fills in as you defeat more of that kind: first how it looks and walks, then how it fights, what it carries, how it behaves and, eventually, the embarrassing details.</p>
+    <p>Everything the wizard has learned about the things that try to reach the ward, and about the things he summons to stop them. Enemy pages fill in as you defeat more of that kind, ally pages as you summon more of them: first how it looks and walks, then how it fights, what it costs or carries, how it behaves and, eventually, the embarrassing details.</p>
+    <div class="tabs" id="grimTabs"><button class="foe" type="button" data-tab="foes" aria-pressed="true">Enemies</button><button class="foe" type="button" data-tab="allies" aria-pressed="false">Allies</button></div>
     <div class="foes" id="foes"></div>
     <div class="page" id="page"></div>
   </section>
@@ -323,13 +411,14 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 <button class="mini book" id="bookBattle" type="button" aria-label="Open the Grimoire" title="The Grand Grimoire of Everything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c3-1.5 6-1.5 9 1v14c-3-2.5-6-2.5-9-1z" fill="#5b3f8f" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M21 5c-3-1.5-6-1.5-9 1v14c3-2.5 6-2.5 9-1z" fill="#4a3374" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M16.5 9.5l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#e8c45a"/></svg>Grimoire</button>
     <button class="mini" id="artBtn" type="button">Art: new</button>
     <button class="mini" id="music" type="button" aria-pressed="true">Music on</button>
+    <button class="mini" id="sfx" type="button" aria-pressed="true">Sound on</button>
     <button class="mini" id="pause" type="button">Pause</button>
   </div>
   <div class="main">
     <div class="field" id="field">
       <canvas id="cv" aria-label="Battlefield. Tap the lit tiles near your ward to summon."></canvas>
       <div class="over" id="over" hidden>
-        <h3>The ward has fallen</h3>
+        <h3 id="overTitle">The ward has fallen</h3>
         <p id="overText"></p>
         <table class="tally" id="tally"></table>
         <button class="btn primary" id="toTown" type="button">Return to town</button>
@@ -340,16 +429,16 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <p>Pick a summon below and tap a lit tile near the ward. The ward holds as long as nothing reaches it.</p>
       <h3>Summons</h3>
       <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
-      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile.</p>
+      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow and very tough: nearby enemies can't help attacking it, and its ground slam shoves them back. New summons are bound at the Summoning Septagram in town.</p>
       <h3>Spells</h3>
-      <p><b>Command</b> calls every summon toward a tile for a second. <b>Nemesis</b> marks one enemy for five seconds, and every summon goes after it.</p>
+      <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward.</p>
       <h3>Enemies</h3>
       <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. From wave 10, they arrive in tight packs.</p>
       <h3>Terrain</h3>
       <p><b>Sand</b> and <b>puddles</b> slow everyone a little, <b>swamp</b> a lot. <b>Bushes</b> slow enemies only. <b>Boulders</b>, <b>trees</b>, <b>lakes</b> and <b>rivers</b> stop anyone on foot; cross rivers by the <b>bridges</b>.</p>
-      <p>Bones you collect here turn into a little extra experience at the end. Bought bones are used only after the ones you find.</p>
+      <p>Bones and skulls you collect here go to the warehouse in town when the battle ends.</p>
       <p>This is a summoning. Nobody is being raised from the dead. Please stop asking.</p>
-      <p><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> summons, <kbd>Q</kbd> <kbd>W</kbd> spells, <kbd>P</kbd> pauses.</p>
+      <p><kbd>1</kbd>–<kbd>4</kbd> summons, <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> spells, <kbd>P</kbd> pauses.</p>
       <p id="best"></p>
     </aside>
   </div>
@@ -357,6 +446,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
   <div class="spells">
     <button class="spell" id="spell_command" type="button" aria-pressed="false"><b>Command</b><span>10 mana</span></button>
     <button class="spell" id="spell_nemesis" type="button" aria-pressed="false"><b>Nemesis</b><span>20 mana</span></button>
+    <button class="spell" id="spell_shove" type="button" aria-pressed="false" hidden><b>Shove</b><span>ready</span></button>
   </div>
   <div class="bar">
     <button class="card" id="card_wisp" type="button" aria-pressed="true">
@@ -371,6 +461,10 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <b>Archer</b><span class="d">Bones, with a bow.</span>
       <span class="cost"><span class="m">10</span> · <span class="b">2 bones</span></span>
     </button>
+    <button class="card" id="card_golem" type="button" aria-pressed="false" hidden>
+      <b>Golem</b><span class="d">Heavy, stubborn.</span>
+      <span class="cost"><span class="m">20</span> · <span class="b">3 bones</span></span>
+    </button>
   </div>
 </div>
 
@@ -380,7 +474,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
   </div>
 </div>
 
-<audio id="bgm" src="music/ghost_of_sherwood.mp3" loop preload="auto"></audio>
+<audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
@@ -398,9 +492,22 @@ const DATA = {
     slots: { per: 1,    cost: lv => lv < 4 ? 25 * (lv + 1) : 150 + (lv - 4) * 50 }   // 25, 50, 75, 100, 150, then +50 per slot
   },
   // buildings the Builder can put up, and the research they offer
+  // "needs": a summon that has to be unlocked first
   builder: {
-    lab:  { name: "Cryptic Laboratory", cost: 40, about: "Research that makes skeletons hit harder, move faster and last longer." },
-    well: { name: "Wisping Well",       cost: 40, about: "Offerings that make wisps brighter, steadier and less easily charmed." }
+    septagram:    { name: "The Summoning Septagram", cost: 0,   about: "Where new kinds of summons are bound. The first building is on the house." },
+    lab:          { name: "Cryptic Laboratory",      cost: 40,  needs: "skeleton_warrior", about: "Research that makes skeletons hit harder, move faster and last longer." },
+    well:         { name: "Wisping Well",            cost: 40,  about: "Offerings that make wisps brighter, steadier and less easily charmed." },
+    golematorium: { name: "The Golematorium",        cost: 100, needs: "golem", about: "Research that makes golems bigger, tougher and harder to ignore." },
+    library:      { name: "The Overdue Library",     cost: 60,  about: "Research for Command and Nemesis: longer, cheaper and nastier." },
+    stones:       { name: "Protective Stone Circle", cost: 50,  about: "A sturdier ward, a Shove that pushes enemies away and stones that mend themselves." },
+    archivus:     { name: "Archivus Arcanus",        cost: 150, about: "Forbidden tomes on modifying summons. Allegedly." }
+  },
+  // binding a new kind of summon at the Septagram, once
+  unlocks: {
+    wisp:             { gold: 0,  bones: 0,  skulls: 0, about: "Floats over anything, pokes enemies, mends other summons." },
+    skeleton_warrior: { gold: 0,  bones: 5,  skulls: 0, about: "Walks around obstacles and hits hard. Cheap and cheerful." },
+    skeleton_archer:  { gold: 15, bones: 15, skulls: 0, about: "Shoots from two tiles away. Slow and fragile." },
+    golem:            { gold: 60, bones: 0,  skulls: 1, about: "A slow, very tough defender. Enemies close by can't resist attacking it." }
   },
   research: {
     lab: [
@@ -417,6 +524,25 @@ const DATA = {
       { key: "dmg",   name: "Brighter Spark", max: 6,  gold: 8,  fx: lv => "+" + lv * 50 + " % damage" },
       { key: "hp",    name: "Steady Glow",    max: 10, gold: 10, fx: lv => "+" + lv * 10 + " % health" },
       { key: "speed", name: "Quick Drift",    max: 8,  gold: 8,  fx: lv => "+" + lv * 5 + " % move speed" }
+    ],
+    golematorium: [
+      { key: "quarry",   name: "Living Quarry",     max: 8, gold: 15, fx: lv => "+" + lv * 15 + " % health, " + lv * 4 + " % bigger" },
+      { key: "granite",  name: "Granite Skin",      max: 8, gold: 15, fx: lv => "blocks " + fmt(lv * 0.4) + " damage per hit" },
+      { key: "slam",     name: "Ground Slam",       max: 8, gold: 12, fx: lv => "+" + lv * 15 + " % slam damage, shoves " + fmt(0.5 + lv * 0.08) + " tiles" },
+      { key: "presence", name: "Rumbling Presence", max: 6, gold: 12, fx: lv => "draws in enemies within " + fmt(2.2 + lv * 0.3) + " tiles" },
+      { key: "pebble",   name: "Pebble Legs",       max: 8, gold: 10, fx: lv => "+" + lv * 6 + " % move speed" }
+    ],
+    library: [
+      { key: "cmdDur",  name: "Extended Loan",   max: 6, gold: 10, fx: lv => "Command lasts " + fmt(1 + lv * 0.25) + " s" },
+      { key: "cmdCost", name: "Late Fee Waiver", max: 5, gold: 12, fx: lv => "Command costs " + (10 - lv) + " mana" },
+      { key: "nemDur",  name: "Grudge Ledger",   max: 6, gold: 10, fx: lv => "Nemesis lasts " + (5 + lv) + " s" },
+      { key: "nemCost", name: "Bulk Borrowing",  max: 5, gold: 12, fx: lv => "Nemesis costs " + (20 - 2 * lv) + " mana" },
+      { key: "exposed", name: "Exposed",         max: 8, gold: 14, fx: lv => lv ? "the marked enemy takes +" + lv * 10 + " % damage" : "no extra damage" }
+    ],
+    stones: [
+      { key: "ward",  name: "Thicker Stones",  max: 5, gold: 15, fx: lv => "the ward holds " + (DATA.wizard.ward + lv) + " hits" },
+      { key: "shove", name: "Shove",           max: 6, gold: 20, fx: lv => lv ? "pushes nearby enemies back, every " + shoveCooldown(lv) + " s" : "not learned yet" },
+      { key: "mend",  name: "Mending Stones",  max: 4, gold: 25, fx: lv => lv ? "the ward mends 1 hit every " + (90 - 15 * lv) + " s" : "no mending" }
     ],
     // price of the next level: gold grows, bones from level 2, skulls from level 6
     cost: (r, lv) => ({ gold: Math.round(r.gold * (lv + 1) * (1 + lv * 0.25)), bones: lv >= 2 ? lv * 2 : 0, skulls: lv >= 6 ? lv - 5 : 0 })
@@ -436,7 +562,9 @@ const DATA = {
             move: "incorporeal", ignoresTerrain: true, heal: { amount: 1, every: 1.6, range: 1.2 },
             swampCharm: { chancePerSecond: 0.02, radius: 3, duration: 10 } },
     skeleton_warrior: { name: "Skeleton Warrior", cost: { mana: 5, bone: 1 }, hp: 20, damage: 3, attackEvery: 0.8, speed: 1.6, range: 1.15, move: "ground" },
-    skeleton_archer: { name: "Skeleton Archer", cost: { mana: 10, bone: 2 }, hp: 13, damage: 3, attackEvery: 1.0, speed: 1.1, range: 2.1, move: "ground", ranged: true }
+    skeleton_archer: { name: "Skeleton Archer", cost: { mana: 10, bone: 2 }, hp: 13, damage: 3, attackEvery: 1.0, speed: 1.1, range: 2.1, move: "ground", ranged: true },
+    golem: { name: "Golem", cost: { mana: 20, bone: 3 }, hp: 110, damage: 4, attackEvery: 1.5, speed: 0.7, range: 1.2, move: "ground",
+             taunt: 2.2, slam: { radius: 1.3, knock: 0.5 } }
   },
   enemies: {
     kobold: { name: "Kobold", hp: 7, damage: 1, attackEvery: 0.9, speed: 1.15, range: 1.15, aggro: 2.4, move: "ground",
@@ -458,6 +586,34 @@ const DATA = {
     ],
     animNames: { walk: "Walk", idle: "Stand", attack: "Attack", panic: "Panic", charm: "Charmed", confused: "Confused" },
     order: ["kobold", "bog_goblin", "orc"],
+    allyOrder: ["wisp", "skeleton_warrior", "skeleton_archer", "golem"],
+    allyTierLabels: { intro: "Appearance and walk", stats: "Combat stats, standing and attacking", loot: "Costs", behaviour: "Behaviour", notes: "Field notes, charmed and confused" },
+    allyPages: {
+      wisp: {
+        lore: "A small, glowing something that agreed to help. Nobody, including the wisp, knows what it is made of. It does not touch the ground on principle.",
+        attacks: "A small electric zap",
+        behaviour: "Alone, a wisp pokes at enemies. With other summons around it drifts to the most battered one and mends its bones. Swamps are a weakness: sometimes it just floats off to admire one.",
+        notes: "Wisps hum when they think nobody is listening. The hum is in a minor key."
+      },
+      skeleton_warrior: {
+        lore: "A perfectly ordinary pile of bones, summoned (not raised, summoned) into a perfectly ordinary skeleton. Each one is missing a few different teeth.",
+        attacks: "Punch, kick or headbutt",
+        behaviour: "Walks around obstacles, goes for the nearest enemy and hits it until one of them falls apart. Never panics; there's nothing left to scare.",
+        notes: "The jaw rattles when it walks. It is not talking. Probably."
+      },
+      skeleton_archer: {
+        lore: "A skeleton that found a bow. It has no eyes, yet it somehow aims, and nobody has asked how in case it stops working.",
+        attacks: "An arrow from two tiles away",
+        behaviour: "Keeps its distance and shoots. Slow and fragile, so it is happiest behind something sturdier.",
+        notes: "It insists the quiver was always part of the skeleton."
+      },
+      golem: {
+        lore: "A boulder with ambitions, held together by the Septagram glowing in its chest. Moss grows on it wherever moss likes.",
+        attacks: "Double-fist ground slam that shoves enemies back",
+        behaviour: "Slow and enormously tough. Enemies near a golem can't resist attacking it, which is exactly the point. Immune to panic, though it can look alarmed.",
+        notes: "Golems don't sleep; they just stop moving for a while. Pigeons have noticed."
+      }
+    },
     pages: {
       kobold: {
         lore: "Small, loud and mostly made of bad decisions. Kobolds travel in crowds because none of them wants to be the one who goes first.",
@@ -519,21 +675,176 @@ const DATA = {
 const QUIPS = {
   skeleton_warrior: ["Skeleton summoned. Not raised. Summoned.", "A fine pile of bones, assembled with care.", "Rattle rattle. That means 'ready'."],
   skeleton_archer: ["An archer. It has no eyes, yet somehow it aims.", "Bow, arrows, ribcage. Ready.", "It insists the quiver was always part of the skeleton."],
-  wisp: ["A wisp drifts in, faintly judging everyone.", "Wisp summoned. It refuses to touch the ground on principle.", "Glowing, hovering, mildly helpful."]
+  wisp: ["A wisp drifts in, faintly judging everyone.", "Wisp summoned. It refuses to touch the ground on principle.", "Glowing, hovering, mildly helpful."],
+  golem: ["A golem rumbles into place. It seems unimpressed.", "Rocks, assembled. Please do not climb the golem.", "The golem has arrived. Slowly. Very slowly."]
 };
 
 // ---------- Saved progress (this browser only) ----------
 const SAVE_KEY = "summonancer_save_v1";
-let META = { gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, slotLv: 0, best: {}, kills: {}, warehouse: { bones: 0, skulls: 0 }, built: {}, research: { lab: {}, well: {} } };
-try { const raw = localStorage.getItem(SAVE_KEY); if (raw) META = Object.assign(META, JSON.parse(raw)); } catch (e) {}
+const freshMeta = () => ({ gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, slotLv: 0, best: {}, kills: {}, summoned: {}, warehouse: { bones: 0, skulls: 0 }, built: {},
+  research: { lab: {}, well: {}, golematorium: {}, library: {}, stones: {} }, unlocked: { wisp: true }, stage: "intro", builder: "alive", v2: true });
+let META = freshMeta(), oldSave = false;
+try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const saved = JSON.parse(raw); oldSave = !saved.v2; META = Object.assign(META, saved); } } catch (e) {}
 // older saves kept bought bones separately; they now live in the warehouse
-META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {}; META.research = META.research || { lab: {}, well: {} };
-META.research.lab = META.research.lab || {}; META.research.well = META.research.well || {};
+META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {}; META.research = META.research || {};
+for (const k of ["lab", "well", "golematorium", "library", "stones"]) META.research[k] = META.research[k] || {};
+META.summoned = META.summoned || {}; META.kills = META.kills || {};
 if (META.bones) { META.warehouse.bones += META.bones; META.bones = 0; }
+// saves from before the Septagram: a returning wizard keeps the summons he already had and skips the introduction
+if (oldSave) {
+  const veteran = META.exp > 0 || META.gold > 0 || Object.values(META.kills).some(n => n > 0) || META.manaLv || META.regenLv || META.slotLv;
+  META.unlocked = veteran ? { wisp: true, skeleton_warrior: true, skeleton_archer: true } : { wisp: true };
+  if (veteran) { META.stage = "done"; META.builder = "dead"; META.built.septagram = true; } else { META.stage = "intro"; META.builder = "alive"; }
+  META.v2 = true;
+}
+META.unlocked = META.unlocked || { wisp: true };
 function saveMeta() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(META)); } catch (e) {} }
 const wizManaMax = () => DATA.wizard.manaMax + META.manaLv * DATA.tower.mana.per;
 const wizRegen = () => DATA.wizard.manaRegen + META.regenLv * DATA.tower.regen.per;
 const wizSlots = () => DATA.wizard.summonSlots + META.slotLv * DATA.tower.slots.per;
+const rlv = (where, key) => (META.research[where] && META.research[where][key]) || 0;
+const shoveCooldown = lv => Math.max(30, 60 - 6 * (lv - 1));
+// spell costs and durations for this battle, with the Overdue Library applied
+function spellsNow() {
+  return {
+    command: { name: "Command", mana: 10 - rlv("library", "cmdCost"), duration: 1 + 0.25 * rlv("library", "cmdDur") },
+    nemesis: { name: "Nemesis", mana: 20 - 2 * rlv("library", "nemCost"), duration: 5 + rlv("library", "nemDur"), exposed: 0.1 * rlv("library", "exposed") }
+  };
+}
+// how the wizard looks: beard and levitation will follow the prestige abilities once those exist
+const wizLook = () => ({ wmode: "idle", beard: 0, gear: "starter", lev: 0, oneT: null });
+
+// ---------- Sound effects: synthesised on the fly with Web Audio, so no sound files are needed ----------
+const SFX = (() => {
+  let ac = null, master = null, noiseBuf = null, on = true, active = [];
+  try { on = localStorage.getItem("summonancer_sfx") !== "off"; } catch (e) {}
+  const last = {}, IMPORTANT = ["gong", "thunder", "puff", "appear", "coins", "shove"], LONG = { gong: 2.8, thunder: 1.9, choir: 1.5, slam: 0.5, krak: 0.5 };
+  function init() {
+    if (ac) { if (ac.state === "suspended") ac.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try { ac = new AC(); } catch (e) { ac = null; return; }
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 6;
+    master = ac.createGain(); master.gain.value = 0.55; master.connect(comp); comp.connect(ac.destination);
+    noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  // the same sound at most every `gap` seconds, and only so many voices at once, so big fights don't turn into noise
+  function ready(key, gap) {
+    if (!on || !ac || ac.state !== "running") return false;
+    const now = ac.currentTime;
+    if (last[key] && now - last[key] < gap) return false;
+    active = active.filter(t => t > now);
+    if (active.length >= 14 && !IMPORTANT.includes(key)) return false;
+    last[key] = now; active.push(now + (LONG[key] || 0.3)); return true;
+  }
+  const vary = (v, r) => v * (1 + (Math.random() * 2 - 1) * (r === undefined ? 0.08 : r));
+  function env(g, t0, a, peak, dec) {
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + dec);
+  }
+  function tone(type, f0, f1, t0, a, dec, peak, filt) {
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0);
+    if (f1) o.frequency.exponentialRampToValueAtTime(f1, t0 + a + dec);
+    let node = o;
+    if (filt) { const f = ac.createBiquadFilter(); f.type = filt[0]; f.frequency.value = filt[1]; f.Q.value = filt[2] || 1; o.connect(f); node = f; }
+    node.connect(g); g.connect(master); env(g, t0, a, peak, dec); o.start(t0); o.stop(t0 + a + dec + 0.05);
+    return o;
+  }
+  function noise(t0, a, dec, peak, type, freq, q, f1) {
+    const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); src.buffer = noiseBuf;
+    f.type = type; f.frequency.setValueAtTime(freq, t0); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t0 + a + dec); f.Q.value = q || 1;
+    src.connect(f); f.connect(g); g.connect(master); env(g, t0, a, peak, dec); src.start(t0, Math.random() * 0.5); src.stop(t0 + a + dec + 0.05);
+  }
+  function vibrato(o, t0, dur, rate, depth) {
+    const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = rate; lg.gain.value = depth;
+    l.connect(lg); lg.connect(o.frequency); l.start(t0); l.stop(t0 + dur);
+  }
+  const R = {
+    // attacks, lightest to heaviest
+    slap(t) { noise(t, 0.002, 0.05, 0.45, "bandpass", vary(1800), 1.2); tone("sine", vary(320), 180, t, 0.002, 0.05, 0.18); },
+    clink(t) { tone("triangle", vary(2400), null, t, 0.001, 0.12, 0.16); tone("sine", vary(3700), null, t, 0.001, 0.09, 0.09); noise(t, 0.001, 0.02, 0.2, "highpass", 5000); },
+    bonePunch(t) {
+      tone("sine", vary(150), 55, t, 0.003, 0.13, 0.55); noise(t, 0.002, 0.06, 0.32, "lowpass", 900);
+      tone("triangle", vary(900), 600, t, 0.001, 0.04, 0.12);
+    },
+    orcPunch(t) { tone("sine", vary(110), 40, t, 0.003, 0.2, 0.75); noise(t, 0.002, 0.09, 0.45, "lowpass", 600); },
+    slam(t) { tone("sine", vary(75), 28, t, 0.005, 0.45, 0.9); noise(t, 0.004, 0.35, 0.6, "lowpass", 350, 1, 120); tone("triangle", vary(55), 30, t, 0.01, 0.5, 0.3); },
+    zap(t) {
+      tone("sawtooth", vary(1100), 180, t, 0.002, 0.14, 0.16, ["bandpass", 1800, 2]); tone("square", vary(90), 60, t, 0.002, 0.12, 0.07);
+      noise(t, 0.001, 0.08, 0.22, "highpass", 3000);
+    },
+    bow(t) { tone("triangle", vary(260), 200, t, 0.002, 0.16, 0.24); noise(t, 0.001, 0.05, 0.14, "bandpass", 2500, 2); },
+    thunk(t) { tone("sine", vary(190), 85, t, 0.002, 0.07, 0.42); noise(t, 0.001, 0.04, 0.28, "bandpass", 500, 1.5); },
+    wardHit(t) { tone("sine", 90, 50, t, 0.003, 0.22, 0.4); noise(t, 0.002, 0.15, 0.3, "lowpass", 400); },
+    // summoning: a little rising chime, pitched and coloured per summon
+    summon(t, kind) {
+      const base = { wisp: 880, skeleton_warrior: 440, skeleton_archer: 523, golem: 220 }[kind] || 440;
+      [1, 1.25, 1.5, 2].forEach((m, i) => tone("sine", base * m, null, t + i * 0.05, 0.005, 0.35, 0.1));
+      noise(t, 0.02, 0.3, 0.07, "highpass", 6000);
+      if (kind === "skeleton_warrior" || kind === "skeleton_archer") for (let i = 0; i < 4; i++) tone("triangle", vary(1200, 0.2), null, t + 0.08 + i * 0.04, 0.001, 0.03, 0.08);
+      if (kind === "golem") tone("sine", 60, 38, t, 0.05, 0.5, 0.4);
+    },
+    // deaths
+    choir(t) {        // a wisp's last ethereal sigh: two voices through "aah" formants, drifting down
+      const f = vary(330, 0.04), out = ac.createGain(); out.connect(master); env(out, t, 0.25, 0.32, 1.3);
+      for (const [fr, q, gn] of [[730, 8, 0.7], [1090, 8, 0.45], [2440, 10, 0.25]]) {
+        const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = fr; bp.Q.value = q;
+        const g = ac.createGain(); g.gain.value = gn; bp.connect(g); g.connect(out);
+        for (const m of [1, 1.5]) {
+          const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(f * m, t); o.frequency.exponentialRampToValueAtTime(f * m * 0.93, t + 1.5);
+          vibrato(o, t, 1.6, 5.5, 4); o.connect(bp); o.start(t); o.stop(t + 1.6);
+        }
+      }
+    },
+    bones(t) { for (let i = 0; i < 7; i++) tone("triangle", 700 + Math.random() * 900, null, t + Math.random() * 0.35, 0.001, 0.05, 0.17); noise(t, 0.002, 0.12, 0.25, "bandpass", 1500, 0.8); },
+    krak(t) {
+      noise(t, 0.001, 0.08, 0.7, "bandpass", 1800, 0.7); noise(t + 0.02, 0.003, 0.4, 0.5, "lowpass", 500, 1, 150);
+      tone("sine", 70, 35, t, 0.005, 0.5, 0.7); noise(t + 0.09, 0.001, 0.05, 0.4, "highpass", 2500);
+    },
+    squeak(t) {
+      const o = tone("sine", vary(1500), null, t, 0.01, 0.2, 0.16);
+      o.frequency.linearRampToValueAtTime(vary(2300), t + 0.06); o.frequency.linearRampToValueAtTime(1200, t + 0.21); vibrato(o, t, 0.25, 30, 40);
+    },
+    screech(t) {
+      const o = tone("sawtooth", vary(650), null, t, 0.02, 0.3, 0.14, ["bandpass", 1600, 2.5]);
+      o.frequency.linearRampToValueAtTime(vary(1150), t + 0.08); o.frequency.linearRampToValueAtTime(520, t + 0.32); vibrato(o, t, 0.35, 28, 60);
+    },
+    grunt(t) {
+      const o = tone("sawtooth", vary(95), 70, t, 0.03, 0.3, 0.32, ["lowpass", 600, 2]); vibrato(o, t, 0.35, 18, 8);
+      tone("sawtooth", vary(85), 60, t + 0.14, 0.02, 0.22, 0.22, ["lowpass", 500, 2]);
+    },
+    // the ward falls: gong, thunder, then the wizard blinks out with a puff
+    gong(t) {
+      [1, 1.47, 2.03, 2.76, 3.9].forEach((m, i) => { tone("sine", 160 * m, null, t, 0.005, 2.8 - i * 0.3, 0.28 / (i + 1)); tone("sine", 160 * m * 1.004, null, t, 0.005, 2.6 - i * 0.3, 0.12 / (i + 1)); });
+      noise(t, 0.002, 0.1, 0.3, "lowpass", 1200);
+    },
+    thunder(t) { noise(t, 0.01, 0.12, 0.5, "highpass", 2000); noise(t + 0.05, 0.08, 1.8, 0.7, "lowpass", 500, 0.7, 120); tone("sine", 50, 30, t + 0.05, 0.1, 1.2, 0.4); },
+    puff(t) { noise(t, 0.01, 0.35, 0.45, "bandpass", 3500, 1.5, 500); for (let i = 0; i < 5; i++) tone("sine", 2000 + Math.random() * 3000, null, t + 0.05 + i * 0.04, 0.002, 0.15, 0.05); },
+    appear(t) { noise(t, 0.12, 0.2, 0.3, "bandpass", 600, 1.5, 3500); for (let i = 0; i < 4; i++) tone("sine", 1800 + i * 600, null, t + 0.12 + i * 0.04, 0.002, 0.14, 0.05); },
+    shove(t) { noise(t, 0.03, 0.4, 0.5, "bandpass", 400, 1, 1800); tone("sine", 120, 60, t, 0.01, 0.35, 0.35); },
+    coins(t) {
+      for (let i = 0; i < 3; i++) {
+        const tt = t + i * 0.06 + Math.random() * 0.02, f = vary(2600, 0.12);
+        tone("sine", f, null, tt, 0.001, 0.25, 0.11); tone("sine", f * 1.5, null, tt, 0.001, 0.18, 0.05); tone("triangle", f * 2.7, null, tt, 0.001, 0.08, 0.03);
+      }
+    }
+  };
+  const ATTACK = { kobold: "slap", wisp: "zap", skeleton_archer: "bow", orc: "orcPunch", golem: "slam" };
+  const DEATH = { wisp: "choir", skeleton_warrior: "bones", skeleton_archer: "bones", golem: "krak", kobold: "squeak", bog_goblin: "screech", orc: "grunt" };
+  function play(name, arg) {
+    if (!on || !ac) return;
+    let r = name, gap = 0.05;
+    if (name === "attack") { r = arg === "bog_goblin" ? (Math.random() < 0.5 ? "clink" : "slap") : arg === "skeleton_warrior" ? "bonePunch" : ATTACK[arg] || "slap"; }
+    if (name === "death") { r = DEATH[arg]; gap = 0.08; }
+    if (name === "summon") gap = 0.1;
+    if (!R[r] || !ready(r, gap)) return;
+    try { R[r](ac.currentTime + 0.01, arg); } catch (e) {}
+  }
+  return {
+    init, play,
+    get on() { return on; },
+    toggle() { on = !on; try { localStorage.setItem("summonancer_sfx", on ? "on" : "off"); } catch (e) {} if (on) init(); return on; }
+  };
+})();
 
 // ---------- State ----------
 const C = DATA.grid.cols, R = DATA.grid.rows;
@@ -658,7 +969,10 @@ function startBattle(key) {
   const carried = 0;
   S = {
     mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(), slots: wizSlots(),
-    bones: 0, carried, skulls: 0, gold: 0, ward: DATA.wizard.ward,
+    bones: 0, carried, skulls: 0, gold: 0, ward: DATA.wizard.ward + rlv("stones", "ward"), wardMax: DATA.wizard.ward + rlv("stones", "ward"),
+    sp: spellsNow(), shoveLv: rlv("stones", "shove"), shoveCd: 0, mendLv: rlv("stones", "mend"), mendT: 0, shoveFx: 0,
+    tutorial: META.stage === "intro", hinted: {}, cheered: true, overShown: false,
+    wiz: { st: wizLook(), seq: { kind: "appear", e: 0 }, until: 0 },
     wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
     slain: { kobold: 0, bog_goblin: 0, orc: 0 },
     units: [], enemies: [], shots: [], floaters: [], goblinDeaths: [], over: false,
@@ -669,7 +983,15 @@ function startBattle(key) {
   $("over").hidden = true;
   paused = false; $("pause").textContent = "Pause";
   $("mapname").innerHTML = "<b>" + L.d.name + "</b>";
-  say(L.d.note + " Start with a wisp.");
+  // only the summons bound at the Septagram get a card
+  const open = UNIT_KEYS.filter(k => META.unlocked[k]);
+  for (const k of UNIT_KEYS) $("card_" + k).hidden = !META.unlocked[k];
+  document.querySelector(".bar").style.setProperty("--n", open.length);
+  select("wisp");
+  for (const k of ["command", "nemesis"]) $("spell_" + k).querySelector("span").textContent = S.sp[k].mana + " mana";
+  $("spell_shove").hidden = !S.shoveLv;
+  document.querySelector(".spells").style.setProperty("--n", S.shoveLv ? 3 : 2);
+  say(S.tutorial ? "You wake up mid-battle on a strange hillside. Tap a lit tile near the bottom to summon a wisp!" : L.d.note + " Start with a wisp.");
   showView("battle");
   showBest();
 }
@@ -723,6 +1045,13 @@ function unitDef(kind) {
     d.damage = b.damage * (1 + 0.5 * lv("well", "dmg"));
     d.hp = Math.round(b.hp * (1 + 0.1 * lv("well", "hp")));
     d.speed = b.speed * (1 + 0.05 * lv("well", "speed"));
+  } else if (kind === "golem") {
+    const g = k => lv("golematorium", k);
+    d.hp = Math.round(b.hp * (1 + 0.15 * g("quarry"))); d.size = 1 + 0.04 * g("quarry");
+    d.armor = 0.4 * g("granite");
+    d.damage = b.damage * (1 + 0.15 * g("slam")); d.slam = { radius: b.slam.radius, knock: b.slam.knock + 0.08 * g("slam") };
+    d.taunt = b.taunt + 0.3 * g("presence");
+    d.speed = b.speed * (1 + 0.06 * g("pebble"));
   } else {
     d.damage = b.damage * (1 + 0.1 * lv("lab", "dmg"));
     d.attackEvery = b.attackEvery * Math.pow(0.95, lv("lab", "rate"));
@@ -740,6 +1069,7 @@ function makeActor(side, kind, x, y) {
 
 function summonAt(cx, cy) {
   const d = DATA.units[selected];
+  if (!META.unlocked[selected]) return say("That summon hasn't been bound at the Septagram yet.");
   if (!L.summon(cx, cy)) return say("You can only summon on the lit tiles near your ward.");
   if (!passable(cx, cy, d.move)) return say("Something's in the way there. Skeletons respect obstacles. Wisps don't.");
   if (S.units.length >= S.slots) return say("All " + S.slots + " summon slots are in use. The Spelltower can add more.");
@@ -749,18 +1079,22 @@ function summonAt(cx, cy) {
   const fromField = Math.min(S.bones, d.cost.bone);           // found bones first, bought bones after
   S.bones -= fromField; S.carried -= d.cost.bone - fromField;
   S.units.push(makeActor("ally", selected, cx, cy));
+  META.summoned[selected] = (META.summoned[selected] || 0) + 1;
   if (d.cost.bone) float(cx, cy, "-" + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : ""), "#ece3cf");
+  SFX.play("summon", selected); wizDo("cast", 1.0, true);
+  if (S.tutorial && !S.hinted.summon) { S.hinted.summon = true; say("A wisp! It floats over anything. Summon a few more before the kobolds reach the ward."); return; }
   const q = QUIPS[selected]; say(q[rnd(q.length)]);
 }
 
 // ---------- Spells ----------
 function castAt(fx, fy) {
-  const sp = DATA.spells[spellMode];
+  const sp = S.sp[spellMode];
   if (S.mana < sp.mana) { say("Not enough mana for " + sp.name + "."); return; }
   if (spellMode === "command") {
     const x = Math.max(0, Math.min(C - 1, Math.floor(fx))), y = Math.max(0, Math.min(R - 1, Math.floor(fy)));
     S.mana -= sp.mana; S.command = { x, y, t: sp.duration };
     for (const u of S.units) { u.path = []; u.repath = 0; }
+    wizDo("cast", 1.6); SFX.play("zap");
     say("Command! Everyone to that spot.");
   } else {
     const pt = { x: fx - 0.5, y: fy - 0.5 };
@@ -768,6 +1102,7 @@ function castAt(fx, fy) {
     if (!target) { say("Tap right on an enemy to mark it."); return; }
     S.mana -= sp.mana; S.nemesis = { target, t: sp.duration };
     for (const u of S.units) { u.path = []; u.repath = 0; }
+    wizDo("cast", 1.6); SFX.play("zap");
     say("Nemesis! That " + target.d.name.toLowerCase() + " has made a powerful enemy.");
   }
   setSpell(null);
@@ -775,6 +1110,26 @@ function castAt(fx, fy) {
 function setSpell(k) {
   spellMode = k;
   for (const s in DATA.spells) $("spell_" + s).setAttribute("aria-pressed", s === k ? "true" : "false");
+}
+// Shove (Stone Circle): push every enemy near the ward back a couple of tiles
+function shove() {
+  if (!S || S.over || paused || !S.shoveLv) return;
+  if (S.shoveCd > 0) { say("The stones are still recovering: " + Math.ceil(S.shoveCd) + " s."); return; }
+  S.shoveCd = shoveCooldown(S.shoveLv); S.shoveFx = 0.6;
+  const xs = L.structs.map(p => p.x), ys = L.structs.map(p => p.y);
+  const cx = xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : null, cy = ys.length ? (Math.min(...ys) + Math.max(...ys)) / 2 : null;
+  let n = 0;
+  for (const e of S.enemies) {
+    if (e.hp <= 0 || e.enter || L.wardDist(Math.round(e.x), Math.round(e.y)) > L.d.summonRange + 2) continue;
+    knock(e, cx === null ? e.x : cx, cy === null ? R : cy, 2); n++;
+  }
+  SFX.play("shove"); wizDo("cast", 1.6, true);
+  say(n ? "Shove! The stones push back." : "Shove! Nobody was close enough to notice.");
+}
+$("spell_shove").addEventListener("click", shove);
+function knock(e, fromX, fromY, d) {
+  const dx = e.x - fromX, dy = e.y - fromY, l = Math.hypot(dx, dy) || 1;
+  e.kb = { vx: dx / l * d / 0.3, vy: dy / l * d / 0.3, t: 0.3 }; e.path = []; e.fleeTo = null;
 }
 for (const s in DATA.spells) $("spell_" + s).addEventListener("click", () => {
   if (spellMode === s) { setSpell(null); say("Spell cancelled."); return; }
@@ -810,7 +1165,7 @@ function waveRoster(w) {
 }
 
 function spawnWave() {
-  S.wave++;
+  S.wave++; S.cheered = false;
   const roster = waveRoster(S.wave), packs = S.wave >= DATA.waves.packsFrom;
   const out = { top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0] };
   const packSpot = {};
@@ -908,11 +1263,21 @@ function goToTile(a, tx, ty, dt) {
 
 function strike(a, target) {
   a.cd = a.d.attackEvery; a.lastStrike = S.time; a.flip = target.x < a.x - 0.05;
+  SFX.play("attack", a.kind);
   if (a.d.ranged) { S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage }); return; }
+  if (a.d.slam) {           // the golem's ground slam: everything close in front takes the blow and gets shoved back
+    const fx = (a.x + target.x) / 2, fy = (a.y + target.y) / 2;
+    for (const e of S.enemies) {
+      if (e.hp <= 0 || e.enter || (e !== target && Math.hypot(e.x - fx, e.y - fy) > a.d.slam.radius)) continue;
+      hurt(e, a.d.damage, "#ece3cf"); knock(e, a.x, a.y, a.d.slam.knock);
+    }
+    return;
+  }
   hurt(target, a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");
 }
 function hurt(t, dmg, color) {
-  if (t.d.armor) dmg = Math.max(dmg * 0.25, dmg - t.d.armor);            // Calcium Plating
+  if (S.nemesis && S.nemesis.target === t && S.sp.nemesis.exposed) dmg *= 1 + S.sp.nemesis.exposed;   // Exposed
+  if (t.d.armor) dmg = Math.max(dmg * 0.25, dmg - t.d.armor);            // Calcium Plating, Granite Skin
   t.hp -= dmg; t.hit = 0.15; float(t.x, t.y, "-" + fmt(Math.round(dmg * 10) / 10), color);
 }
 
@@ -968,7 +1333,8 @@ function updateAlly(a, dt) {
 
 function updateFoe(e, dt) {
   if (e.panic > 0) { flee(e, dt); return; }
-  const target = nearest(e, S.units, e.d.aggro);
+  const golem = nearest(e, S.units, 99, u => u.d.taunt && dist(u, e) <= u.d.taunt);
+  const target = golem || nearest(e, S.units, e.d.aggro);
   if (target) {
     if (dist(e, target) <= e.d.range) { e.path = []; if (e.cd === 0) strike(e, target); return; }
     if (approach(e, target, dt)) return;   // an unreachable target (a wisp over water) is ignored
@@ -1014,12 +1380,19 @@ function update(dt) {
   S.nextWave -= dt;
   if (S.nextWave <= 0) { spawnWave(); S.nextWave = DATA.waves.gap; }
   if (S.command && (S.command.t -= dt) <= 0) S.command = null;
+  S.shoveCd = Math.max(0, S.shoveCd - dt); S.shoveFx = Math.max(0, S.shoveFx - dt);
+  if (S.mendLv && S.ward < S.wardMax && (S.mendT += dt) >= 90 - 15 * S.mendLv) { S.mendT = 0; S.ward++; say("The stones mend a crack in the ward."); }
   if (S.nemesis && ((S.nemesis.t -= dt) <= 0 || S.nemesis.target.hp <= 0)) S.nemesis = null;
 
   for (const a of S.units.concat(S.enemies)) {
     a.cd = Math.max(0, a.cd - dt); a.hit = Math.max(0, a.hit - dt); a.panic = Math.max(0, a.panic - dt); a.charm = Math.max(0, a.charm - dt);
     a.moved = false;
-    if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false, 0.2)) a.enter = null; }
+    if (a.kb) {            // being shoved: slide back, stopping at anything solid
+      const nx = a.x + a.kb.vx * dt, ny = a.y + a.kb.vy * dt;
+      if (passable(Math.round(nx), Math.round(ny), a.d.move)) { a.x = nx; a.y = ny; }
+      if ((a.kb.t -= dt) <= 0) a.kb = null;
+    }
+    else if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false, 0.2)) a.enter = null; }
     else if (a.side === "ally") updateAlly(a, dt); else updateFoe(a, dt);
     if (a.d.selfHeal && a.hp < a.d.hp && (a.selfT = (a.selfT || 0) + dt) >= a.d.selfHeal) { a.selfT = 0; a.hp = Math.min(a.d.hp, a.hp + 1); float(a.x, a.y, "+1", "#7fd67a"); }
     if (!a.moved) a.spd = Math.max(0, a.spd - speedAt(a) / DATA.movement.brakeTime * dt);   // holding still: brake, keep heading
@@ -1030,7 +1403,7 @@ function update(dt) {
   for (const s of S.shots) {
     const t = s.target, dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy), sp = 9 * dt;
     s.ang = Math.atan2(dy, dx);
-    if (d <= sp || t.hp <= 0) { if (t.hp > 0) hurt(t, s.dmg, "#ece3cf"); s.done = true; }
+    if (d <= sp || t.hp <= 0) { if (t.hp > 0) { hurt(t, s.dmg, "#ece3cf"); SFX.play("thunk"); } s.done = true; }
     else { s.x += dx / d * sp; s.y += dy / d * sp; }
   }
   S.shots = S.shots.filter(s => !s.done);
@@ -1043,6 +1416,7 @@ function update(dt) {
       e.hp = 0; e.reached = true; S.ward -= 1;
       float(e.x, e.y, "ward -1", "#e0904a");
       say("Something reached the ward!");
+      SFX.play("wardHit"); wizDo("flinch", 1.0);
     }
   }
   // deaths, drops and panic
@@ -1051,13 +1425,17 @@ function update(dt) {
     if (e.hp > 0 || e.dead) continue;
     e.dead = true;
     if (e.reached) continue;
+    SFX.play("death", e.kind);
     S.kills++; S.slain[e.kind] = (S.slain[e.kind] || 0) + 1;
     let lift = 0.3;
     for (const dr of e.d.drops) {
       if (!chance(dr.chance)) continue;
       const n = dr.min + rnd(dr.max - dr.min + 1);
       if (dr.res === "bone" && chance(e.d.skullChance || 0)) { S.skulls++; float(e.x, e.y - lift, "+1 skull", "#d9c6ff"); }   // rarely a whole skull instead
-      else if (dr.res === "bone") { S.bones += n; float(e.x, e.y - lift, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf"); }
+      else if (dr.res === "bone") {
+        S.bones += n; float(e.x, e.y - lift, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf");
+        if (S.tutorial && !S.hinted.bones) { S.hinted.bones = true; say("Bones! Wisps can't use them, but hold on to them. They go to the warehouse in town."); }
+      }
       else { S.gold += n; float(e.x, e.y - lift, "+" + n + " gold", "#e8c45a"); }
       lift += 0.35;
     }
@@ -1070,7 +1448,10 @@ function update(dt) {
   if (S.goblinDeaths.length >= GP.deaths) { S.goblinDeaths = []; panicGoblins(); }
 
   S.enemies = S.enemies.filter(e => !e.dead);
+  for (const u of S.units) if (u.hp <= 0) SFX.play("death", u.kind);
   S.units = S.units.filter(u => u.hp > 0);
+  // a wave cleared: the wizard cheers
+  if (!S.cheered && S.wave > 0 && !S.enemies.length) { S.cheered = true; wizDo("cheer", 1.8); }
   for (const f of S.floaters) f.t += dt;
   S.floaters = S.floaters.filter(f => f.t < 1);
 
@@ -1087,6 +1468,7 @@ const fmt = n => (Math.round(n * 100) / 100).toLocaleString("en-US");
 
 function endBattle() {
   S.over = true; setSpell(null);
+  S.wiz.seq = { kind: "defeat", e: 0 }; S.wiz.until = 0;
   const E = DATA.exp, rows = [];
   let killExp = 0;
   for (const k of ["kobold", "bog_goblin", "orc"]) {
@@ -1108,9 +1490,11 @@ function endBattle() {
   META.kills = META.kills || {};
   for (const k in S.slain) META.kills[k] = (META.kills[k] || 0) + S.slain[k];
   META.best[levelKey] = Math.max(META.best[levelKey] || 0, S.wave);
+  const first = META.stage === "intro";
+  if (first) META.stage = "monologue";
   saveMeta();
-  $("overText").textContent = "You held " + L.d.name + " until wave " + S.wave + ". The survivors are telling everyone you're a necromancer.";
-  $("over").hidden = false;
+  $("overText").textContent = first ? "Wherever this is, you're going to need more than wisps. The wizard blinked back to the nearest town."
+    : "You held " + L.d.name + " until wave " + S.wave + ". The survivors are telling everyone you're a necromancer.";
 }
 
 // keep same-side actors from stacking on one spot
@@ -1128,13 +1512,14 @@ function separate(list) {
 }
 
 // ---------- Rendering ----------
+const strip = () => L && !L.structs.length ? 1.9 : 0;       // Hillside: the wizard stands on a strip of hill below the ward
 function resize() {
   if (!inBattle) return;
-  const box = $("field").getBoundingClientRect();
-  tile = Math.max(16, Math.floor(Math.min(box.width / C, box.height / R)));
+  const box = $("field").getBoundingClientRect(), H = R + strip();
+  tile = Math.max(16, Math.floor(Math.min(box.width / C, box.height / H)));
   dpr = window.devicePixelRatio || 1;
-  cv.style.width = tile * C + "px"; cv.style.height = tile * R + "px";
-  cv.width = Math.round(tile * C * dpr); cv.height = Math.round(tile * R * dpr);
+  cv.style.width = tile * C + "px"; cv.style.height = tile * H + "px";
+  cv.width = Math.round(tile * C * dpr); cv.height = Math.round(tile * H * dpr);
 }
 
 const GROUND = {
@@ -1188,11 +1573,33 @@ function drawTile(x, y, t) {
   }
 }
 
-function drawWizard(px, py, T) {
-  ctx.fillStyle = "#5b3f8f"; ctx.beginPath(); ctx.moveTo(px, py - T * .42); ctx.lineTo(px - T * .3, py + T * .38); ctx.lineTo(px + T * .3, py + T * .38); ctx.fill();
-  ctx.fillStyle = "#ece3cf"; ctx.beginPath(); ctx.arc(px, py - T * .02, T * .12, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#3e2b66"; ctx.beginPath(); ctx.moveTo(px - T * .24, py - T * .12); ctx.lineTo(px + T * .24, py - T * .12); ctx.lineTo(px + T * .04, py - T * .5); ctx.fill();
-  ctx.fillStyle = "#6fa8ff"; ctx.beginPath(); ctx.arc(px + T * .3, py - T * .25, T * .07, 0, Math.PI * 2); ctx.fill();
+// the wizard's reactions: cast, flinch and cheer play once, then he goes back to idling
+function wizDo(m, dur, noBolt) {
+  if (!S || S.over) return;
+  const W = S.wiz; if (W.seq && W.seq.kind !== "appear") return;
+  W.st.wmode = m; W.st.oneT = 0; W.st.noBolt = !!noBolt; W.until = dur;
+}
+// where he stands: bottom centre on the Hillside strip, inside the ward elsewhere
+function wizSpot() {
+  const T = tile;
+  if (!L.structs.length) return { x: C * T / 2, gy: (R + strip()) * T - T * 0.12, s: strip() * T * 0.9 / 190 };
+  const xs = L.structs.map(p => p.x), ys = L.structs.map(p => p.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs) + 1, y0 = Math.min(...ys), y1 = Math.max(...ys) + 1;
+  return { x: (x0 + x1) / 2 * T, gy: y1 * T - T * 0.1, s: Math.max(1.25, y1 - y0) * T / 190 };
+}
+function drawBattleWizard(dt) {
+  const W = S.wiz, sp = wizSpot();
+  let fx = null;
+  if (W.seq) {
+    W.seq.e += dt; fx = ART.seqFx(W.seq, W.st);
+    for (const ev of fx.events) SFX.play(ev);
+    if (W.seq.kind === "defeat" && W.seq.done && !S.overShown) { S.overShown = true; $("over").hidden = false; }
+    if (W.seq.done) { if (W.seq.kind === "defeat") fx.squash = 1; else W.seq = null; }
+    if (W.seq && W.seq.kind === "defeat" && W.seq.e > 4.1) fx.squash = 1;
+  } else if (W.until > 0) {
+    W.st.oneT += dt; if ((W.until -= dt) <= 0) { W.st.wmode = "idle"; W.st.oneT = null; W.st.noBolt = false; }
+  }
+  ART.drawWizard(ctx, sp.x, sp.gy, sp.s, wizClock, W.st, fx, dt, dpr);
 }
 
 function drawSkull(px, py, r, hit) {
@@ -1265,10 +1672,11 @@ function drawActor(a) {
 }
 
 // the new character art on the battlefield; the classic shapes stay available through the Art toggle
-const ART_SCALE = { kobold: 0.86, orc: 1.3 };
+const ART_SCALE = { kobold: 0.86, orc: 1.3, golem: 1.3 };
 function drawActorArt(a) {
   const T = tile, s = T / 112, px = a.x * T + T / 2, gy = a.y * T + T * 0.8;
   if (!a.look) a.look = ART.looks(a.kind);
+  if (a.kind === "golem") a.look.quarry = ((a.d.size || 1) - 1) / 0.1;
   // which animation to play
   const fighting = a.lastStrike !== null && S.time - a.lastStrike < a.d.attackEvery * 1.15;
   let m = "idle";
@@ -1276,10 +1684,11 @@ function drawActorArt(a) {
   if (fighting && !a.moved) m = "attack";
   if (a.panic > 0) m = "panic";
   if (a.charm > 0) m = "charm";
+  if (a.kb && m !== "attack") m = a.side === "foe" ? "panic" : m;
   // attack timing is mapped so the blow lands exactly when the game deals the damage
   let t = S.time + a.phase;
   if (m === "attack") {
-    const skel = a.kind === "skeleton_warrior" || a.kind === "skeleton_archer";
+    const skel = a.kind === "skeleton_warrior" || a.kind === "skeleton_archer";   // golems use the shared 1.4 s swing like the enemies
     const per = skel ? 1.3 : 1.4, imp = a.kind === "skeleton_archer" ? 0.37 : skel ? 0.47 : 0.52;
     t = per * ((S.time - a.lastStrike) / a.d.attackEvery + imp);
   }
@@ -1315,17 +1724,22 @@ function draw() {
     const xs = L.structs.map(s => s.x), ys = L.structs.map(s => s.y);
     const x0 = Math.min(...xs), x1 = Math.max(...xs) + 1, y0 = Math.min(...ys), y1 = Math.max(...ys) + 1;
     ctx.setLineDash([4, 3]); ctx.strokeRect(x0 * T - 2, y0 * T - 2, (x1 - x0) * T + 4, (y1 - y0) * T + 4); ctx.setLineDash([]);
-    if (L.structs.length === 1) { ctx.fillStyle = "#26301f"; ctx.fillRect(x0 * T, y0 * T, T, T); drawWizard(x0 * T + T / 2, y0 * T + T / 2, T); }
+    if (L.structs.length === 1) { ctx.fillStyle = "#26301f"; ctx.fillRect(x0 * T, y0 * T, T, T); }
     else {
       ctx.fillStyle = "#4a4553";
       for (let x = x0; x < x1; x += 0.5) if (Math.round(x * 2) % 2 === 0) ctx.fillRect(x * T + 2, y0 * T - T * .18, T * .3, T * .2);
-      drawWizard((x0 + x1) / 2 * T, (y0 + y1) / 2 * T, T * 1.2);
     }
-  } else { ctx.fillStyle = "#e0904a"; ctx.fillRect(0, R * T - 3, C * T, 3); }
+  } else {
+    // the hill the wizard stands on
+    const top = R * T, H = strip() * T;
+    ctx.fillStyle = "#1d2419"; ctx.fillRect(0, top, C * T, H);
+    ctx.fillStyle = "#26301f"; ctx.beginPath(); ctx.moveTo(0, top + H * 0.75); ctx.quadraticCurveTo(C * T / 2, top + H * 0.35, C * T, top + H * 0.75); ctx.lineTo(C * T, top + H); ctx.lineTo(0, top + H); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#e0904a"; ctx.fillRect(0, R * T - 3, C * T, 3);
+  }
 
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, C * T, R * T); ctx.clip();
   if (S.command) {
-    const cx = S.command.x * T + T / 2, cy = S.command.y * T + T / 2, k = 1 - S.command.t / DATA.spells.command.duration;
+    const cx = S.command.x * T + T / 2, cy = S.command.y * T + T / 2, k = 1 - S.command.t / S.sp.command.duration;
     ctx.strokeStyle = "#6fa8ff"; ctx.lineWidth = 2; ctx.globalAlpha = 1 - k * .6;
     ctx.beginPath(); ctx.arc(cx, cy, T * (.2 + .35 * k), 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(cx, cy, T * .1, 0, Math.PI * 2); ctx.fillStyle = "#6fa8ff"; ctx.fill();
@@ -1343,10 +1757,16 @@ function draw() {
     ctx.globalAlpha = 1 - f.t; ctx.fillStyle = f.color;
     ctx.fillText(f.text, f.x * T + T / 2, f.y * T + T * .2 - f.t * T * .6);
   }
+  if (S.shoveFx > 0) {
+    const k = 1 - S.shoveFx / 0.6, sp = wizSpot();
+    ctx.strokeStyle = "rgba(224,144,74," + (1 - k) + ")"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(sp.x, L.structs.length ? sp.gy - T : R * T, T * (1 + k * (L.d.summonRange + 2)), 0, Math.PI * 2); ctx.stroke();
+  }
   ctx.globalAlpha = 1; ctx.restore();
+  drawBattleWizard(frameDt);
 
   if (paused && !S.over) {
-    ctx.fillStyle = "rgba(21,19,28,.6)"; ctx.fillRect(0, 0, C * T, R * T);
+    ctx.fillStyle = "rgba(21,19,28,.6)"; ctx.fillRect(0, 0, C * T, (R + strip()) * T);
     ctx.fillStyle = "#ece3cf"; ctx.textAlign = "center"; ctx.font = "700 " + Math.round(T * .9) + "px 'Grenze Gotisch', Georgia, serif";
     ctx.fillText("Paused", C * T / 2, R * T / 2);
   }
@@ -1366,7 +1786,8 @@ function hud() {
     const c = DATA.units[k].cost;
     $("card_" + k).style.opacity = !full && S.mana >= c.mana && S.bones + S.carried >= c.bone ? 1 : .55;
   }
-  for (const s in DATA.spells) $("spell_" + s).style.opacity = S.mana >= DATA.spells[s].mana ? 1 : .55;
+  for (const s in DATA.spells) $("spell_" + s).style.opacity = S.mana >= S.sp[s].mana ? 1 : .55;
+  if (S.shoveLv) { const sh = $("spell_shove"); sh.querySelector("span").textContent = S.shoveCd > 0 ? Math.ceil(S.shoveCd) + " s" : "ready"; sh.style.opacity = S.shoveCd > 0 ? .55 : 1; }
 }
 
 function say(t) { $("toast").textContent = t; }
@@ -1376,10 +1797,58 @@ function showBest() {
 }
 
 // ---------- Town ----------
-const BUILDINGS = ["gate", "tower", "builder", "grimoire", "lab", "well"];
+const BUILDINGS = ["gate", "tower", "builder", "grimoire", "lab", "well", "septagram", "golematorium", "library", "stones", "archivus"];
 function openBuilding(k) {
   for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
   if (k === "grimoire") renderGrimoire();
+  if (k === "builder") builderTalk();
+}
+// ---------- Talking: the wizard, the Builder and whoever else has something to say ----------
+const LINES = {
+  monologue: [{ who: "The Summonancer", text: "What a strange world I ended up in... I'm gonna need some sturdier allies to survive here than these mere wisps. I wonder if I could utilize these bones they found on those creatures..." }],
+  builderHello: [{ who: "Builder", text: "Hello there new boss! I'm your local engineer - you want it, I build it! I've done everything from Potholes to Pyramids! And since you're my first customer since opening this shop in this town I'm gonna go all out and build you the first building for FREE! ... The rest will cost you though." }],
+  builderBones: [
+    { who: "Builder", text: "Don't mind me, boss! There was a minor work-related accident while constructing your fancy Septagram over there. Actually I'm rather surprised I survived that fall and all those supports collapsing on me, but here I am! Now that I'm working for you, could we maybe discuss a new dental plan? The current one is horrible!" },
+    { who: "The Summonancer", text: "(muttering) I'm sure that's... unrelated." }
+  ],
+  skeletons: [{ who: "The Summonancer", text: "Skeletons! Now we're talking. Well, they aren't. But still." }]
+};
+const IDLE = ["The town is quiet. Suspiciously quiet.", "Somewhere a villager is muttering the word 'necromancer'.", "The wizard adjusts his hat. The patch holds. For now.",
+              "A cat watches the wizard from a rooftop. It does not approve.", "The well gurgles. Probably just the wisps."];
+let TALK = null;
+const TOWN = { st: wizLook(), seq: null, idle: IDLE[0] };
+function talk(lines, done) { TALK = { lines, i: 0, done }; showTalk(); }
+function idleLine() {
+  if (META.stage === "builder") return "The Builder's sign is lit. Maybe pay him a visit.";
+  if (META.stage === "septagram") return "The Septagram hums quietly. Bones in the warehouse: " + META.warehouse.bones + ".";
+  return TOWN.idle;
+}
+function showTalk() {
+  const box = $("talk");
+  if (TALK) {
+    const l = TALK.lines[TALK.i];
+    box.classList.remove("idle"); $("talkWho").textContent = l.who; $("talkText").textContent = l.text;
+    $("talkNext").hidden = false; $("talkNext").textContent = TALK.i < TALK.lines.length - 1 ? "Continue" : "Close";
+  } else {
+    box.classList.add("idle"); $("talkWho").textContent = ""; $("talkText").textContent = idleLine(); $("talkNext").hidden = true;
+  }
+}
+$("talkNext").addEventListener("click", () => {
+  if (!TALK) return;
+  if (++TALK.i < TALK.lines.length) { showTalk(); return; }
+  const d = TALK.done; TALK = null;
+  if (d) d();
+  renderTown(); showTalk();
+});
+function enterTown() {
+  TOWN.idle = IDLE[rnd(IDLE.length)];
+  if (META.stage === "monologue" && !TALK) talk(LINES.monologue, () => { META.stage = "builder"; saveMeta(); });
+  showTalk();
+}
+function builderTalk() {
+  if (TALK) return;
+  if (META.stage === "builder" && !META.metBuilder) talk(LINES.builderHello, () => { META.metBuilder = true; saveMeta(); });
+  else if (META.builder === "dead_pending") talk(LINES.builderBones, () => { META.builder = "dead"; saveMeta(); });
 }
 for (const b of BUILDINGS) $("b_" + b).addEventListener("click", () => openBuilding(b));
 
@@ -1388,16 +1857,29 @@ for (const k in DATA.levels) {
   const b = document.createElement("button");
   b.className = "mapbtn"; b.type = "button"; b.id = "map_" + k;
   b.innerHTML = "<b>" + DATA.levels[k].name + "</b><span>" + DATA.levels[k].note + "</span><span class='bestline'></span>";
-  b.addEventListener("click", () => startBattle(k));
+  b.addEventListener("click", () => goBattle(k));
   maps.appendChild(b);
 }
 
+// leaving town: the wizard casts, blinks out and reappears on the battlefield
+function goBattle(k) {
+  if (TOWN.seq && TOWN.seq.kind === "vanish") return;
+  TOWN.seq = { kind: "vanish", e: 0, next: k };
+}
 function renderTown() {
   $("tGold").textContent = META.gold; $("tExp").textContent = META.exp;
   const W = META.warehouse;
   $("goods").innerHTML = [["Gold", META.gold], ["Bones", W.bones], ["Skulls", W.skulls]].map(([n, v]) => "<div class='good'><b>" + v + "</b><span>" + n + "</span></div>").join("");
   for (const k in DATA.builder) $("b_" + k).hidden = !META.built[k];
-  renderBuilder(); renderResearch("lab"); renderResearch("well");
+  const alive = META.builder === "alive";
+  $("builderAlive").toggleAttribute("hidden", !alive); $("builderSkel").toggleAttribute("hidden", alive);   // svg elements have no .hidden
+  $("builderAbout").textContent = alive ? "Your local engineer: hard hat, overalls, a hammer and boundless optimism. Give him gold and he'll put up whatever you point at."
+    : "A skeleton with a hammer and a can-do attitude. Give it gold and it will put up whatever you point at, mostly in the right place.";
+  $("b_builder").classList.toggle("glow", META.stage === "builder");
+  $("b_septagram").classList.toggle("glow", META.stage === "septagram");
+  renderBuilder(); renderSeptagram();
+  for (const w of ["lab", "well", "golematorium", "library", "stones"]) renderResearch(w);
+  renderUnits(); if (!TALK) showTalk();
   const T = DATA.tower;
   const mCost = T.mana.cost(META.manaLv), rCost = T.regen.cost(META.regenLv), sCost = T.slots.cost(META.slotLv);
   $("upManaInfo").textContent = "Level " + META.manaLv + " · max mana " + wizManaMax() + " → " + (wizManaMax() + T.mana.per);
@@ -1420,16 +1902,71 @@ $("upRegen").addEventListener("click", () => upgrade("regen", "regenLv"));
 $("upSlot").addEventListener("click", () => upgrade("slots", "slotLv"));
 // ---------- Builder, Cryptic Laboratory, Wisping Well ----------
 function renderBuilder() {
-  $("buildList").innerHTML = Object.entries(DATA.builder).map(([k, b]) =>
-    "<div class='opt'><div class='what'><b>" + b.name + "</b><span>" + b.about + "</span></div>" +
-    (META.built[k] ? "<span class='done'>Built</span>" : "<button class='btn' type='button' data-build='" + k + "'" + (META.gold < b.cost ? " disabled" : "") + ">Build · " + b.cost + " gold</button>") + "</div>").join("");
+  $("buildList").innerHTML = Object.entries(DATA.builder).map(([k, b]) => {
+    const needs = b.needs && !META.unlocked[b.needs], glow = k === "septagram" && META.stage === "builder" ? " glow" : "";
+    const btn = META.built[k] ? "<span class='done'>Built</span>"
+      : needs ? "<span class='req'>Needs " + DATA.units[b.needs].name.toLowerCase() + "s from the Septagram</span>"
+      : "<button class='btn" + glow + "' type='button' data-build='" + k + "'" + (META.gold < b.cost ? " disabled" : "") + ">" + (b.cost ? "Build · " + b.cost + " gold" : "Build · free") + "</button>";
+    return "<div class='opt'><div class='what'><b>" + b.name + "</b><span>" + b.about + "</span></div>" + btn + "</div>";
+  }).join("");
   for (const btn of $("buildList").querySelectorAll("[data-build]")) btn.addEventListener("click", () => {
     const k = btn.dataset.build, b = DATA.builder[k];
     if (META.gold < b.cost || META.built[k]) return;
-    META.gold -= b.cost; META.built[k] = true; saveMeta(); renderTown();
+    META.gold -= b.cost; META.built[k] = true;
+    if (b.cost) SFX.play("coins"); else SFX.play("appear");
+    if (k === "septagram" && META.stage === "builder") META.stage = "septagram";
+    saveMeta(); renderTown(); showTalk();
   });
 }
-const costText = c => [c.gold + " gold", c.bones ? c.bones + " bones" : "", c.skulls ? c.skulls + (c.skulls > 1 ? " skulls" : " skull") : ""].filter(Boolean).join(" · ");
+// the Septagram: bind each kind of summon once
+function renderSeptagram() {
+  $("septList").innerHTML = Object.entries(DATA.unlocks).map(([k, c]) => {
+    const glow = k === "skeleton_warrior" && META.stage === "septagram" ? " glow" : "";
+    const btn = META.unlocked[k] ? "<span class='done'>Bound</span>"
+      : "<button class='btn" + glow + "' type='button' data-unlock='" + k + "'" + (canPay(c) ? "" : " disabled") + ">Bind · " + costText(c) + "</button>";
+    const u = DATA.units[k];
+    return "<div class='opt'><div class='what'><b>" + u.name + "</b><span>" + c.about + " On the battlefield: " + u.cost.mana + " mana" + (u.cost.bone ? " and " + u.cost.bone + " bone" + (u.cost.bone > 1 ? "s" : "") : "") + ".</span></div>" + btn + "</div>";
+  }).join("");
+  for (const btn of $("septList").querySelectorAll("[data-unlock]")) btn.addEventListener("click", () => {
+    const k = btn.dataset.unlock, c = DATA.unlocks[k];
+    if (META.unlocked[k] || !canPay(c)) return;
+    META.gold -= c.gold; META.warehouse.bones -= c.bones; META.warehouse.skulls -= c.skulls; META.unlocked[k] = true;
+    SFX.play(c.gold ? "coins" : "summon", k); if (c.gold) SFX.play("summon", k);
+    if (k === "skeleton_warrior") {
+      if (META.builder === "alive") META.builder = "dead_pending";
+      if (META.stage === "septagram") { META.stage = "done"; talk(LINES.skeletons); }
+    }
+    saveMeta(); renderTown();
+  });
+}
+// a summon's animation and current numbers, shown in the building that improves it
+const PLATE_LOOKS = {};
+function unitPlate(k) {
+  const d = unitDef(k), rows = [["Health", Math.round(d.hp)], ["Damage", fmt(d.damage) + " every " + fmt(d.attackEvery) + " s"], ["Speed", fmt(d.speed) + " tiles/s"], ["Reach", fmt(d.range) + " tiles"]];
+  if (d.armor) rows.push(["Armour", "blocks " + fmt(d.armor) + " per hit"]);
+  if (d.heal) rows.push(["Mending", d.heal.amount + " HP every " + fmt(d.heal.every) + " s"]);
+  if (d.selfHeal) rows.push(["Self-mending", "1 HP every " + fmt(d.selfHeal) + " s"]);
+  if (d.taunt) rows.push(["Draws enemies", "within " + fmt(d.taunt) + " tiles"]);
+  if (d.slam) rows.push(["Slam shove", fmt(d.slam.knock) + " tiles"]);
+  rows.push(["Summon", d.cost.mana + " mana" + (d.cost.bone ? " · " + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : "") : "")]);
+  return "<div class='uplate'><canvas data-plate='" + k + "' aria-label='" + d.name + " animation'></canvas><div><b>" + d.name + "</b><table class='facts'>" +
+    rows.map(r => "<tr><th>" + r[0] + "</th><td>" + r[1] + "</td></tr>").join("") + "</table></div></div>";
+}
+function renderUnits() {
+  const show = (id, kinds, none) => { const ks = kinds.filter(k => META.unlocked[k]); $(id).innerHTML = ks.length ? ks.map(unitPlate).join("") : "<p class='req'>" + none + "</p>"; };
+  show("labUnits", ["skeleton_warrior", "skeleton_archer"], "Bind skeletons at the Septagram to study them here.");
+  show("wellUnits", ["wisp"], "");
+  show("golematoriumUnits", ["golem"], "Bind a golem at the Septagram to study it here.");
+}
+function drawPlates(t, dt) {
+  for (const cv of document.querySelectorAll("canvas[data-plate]")) {
+    if (!cv.offsetParent) continue;
+    const k = cv.dataset.plate, st = PLATE_LOOKS[k] || (PLATE_LOOKS[k] = ART.looks(k));
+    if (k === "golem") st.quarry = ((unitDef("golem").size || 1) - 1) / 0.1;
+    ART.render(k, cv, st, t, dt, Math.floor(t / 3) % 2 ? "attack" : "walk");
+  }
+}
+const costText = c => [c.gold ? c.gold + " gold" : "", c.bones ? c.bones + " bones" : "", c.skulls ? c.skulls + (c.skulls > 1 ? " skulls" : " skull") : ""].filter(Boolean).join(" · ") || "free";
 const canPay = c => META.gold >= c.gold && META.warehouse.bones >= c.bones && META.warehouse.skulls >= c.skulls;
 function renderResearch(where) {
   const list = DATA.research[where], lvs = META.research[where];
@@ -1442,10 +1979,11 @@ function renderResearch(where) {
     const r = list.find(x => x.key === btn.dataset.r), lv = lvs[r.key] || 0, c = DATA.research.cost(r, lv);
     if (lv >= r.max || !canPay(c)) return;
     META.gold -= c.gold; META.warehouse.bones -= c.bones; META.warehouse.skulls -= c.skulls; lvs[r.key] = lv + 1;
+    if (c.gold) SFX.play("coins");
     saveMeta(); renderTown();
   });
 }
-$("toTown").addEventListener("click", () => showView("town"));
+$("toTown").addEventListener("click", () => { TOWN.st = wizLook(); TOWN.seq = { kind: "appear", e: 0 }; showView("town"); });
 
 // ---------- DEV console (remove before release) ----------
 function fillDev() { $("devExp").value = META.exp; $("devGold").value = META.gold; $("devBones").value = META.warehouse.bones; $("devSkulls").value = META.warehouse.skulls; }
@@ -1461,7 +1999,8 @@ $("devApply").addEventListener("click", () => {
   $("devMsg").textContent = "Saved: " + META.exp + " exp, " + META.gold + " gold, " + META.warehouse.bones + " bones, " + META.warehouse.skulls + " skulls.";
 });
 $("devResetTower").addEventListener("click", () => {
-  META.manaLv = 0; META.regenLv = 0; META.slotLv = 0; META.research = { lab: {}, well: {} }; META.built = {}; saveMeta(); renderTown();
+  META.manaLv = 0; META.regenLv = 0; META.slotLv = 0; META.research = { lab: {}, well: {}, golematorium: {}, library: {}, stones: {} };
+  META.built = { septagram: META.built.septagram }; saveMeta(); renderTown();
   $("devMsg").textContent = "Spelltower abilities, research and buildings reset.";
 });
 
@@ -2057,6 +2596,534 @@ function wisp(ctx, cx, gy, s, t, st) {
   if (M.panicking) exclaim(ctx, x, y - R * 1.15, s, t);
 }
 
+// ---------- Golem (summon) ----------
+const STONE = "#a8a293", STONE_D = "#878171", STONE_L = "#c4beaf", MOSS = "#6f9a4a";
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : (1 - Math.cos(x * Math.PI)) / 2;
+const lerp = (a, b, u) => a + (b - a) * u;
+function roundPoly(ctx, pts, r) {
+  const n = pts.length;
+  ctx.beginPath(); ctx.moveTo((pts[n - 1][0] + pts[0][0]) / 2, (pts[n - 1][1] + pts[0][1]) / 2);
+  for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; ctx.arcTo(p[0], p[1], q[0], q[1], r); }
+  ctx.closePath();
+}
+const offs = (pts, x, y) => pts.map(([a, b]) => [a + x, b + y]);
+// puffy outline: ink circles first, then the fill on top, so overlapping puffs merge into one cloud
+function puffs(ctx, cs, fill, shade) {
+  ctx.fillStyle = INK; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 1.9 * LW, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = shade || fill; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill(); }
+  if (shade) { ctx.fillStyle = fill; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x - c.r * 0.18, c.y - c.r * 0.22, c.r * 0.72, 0, Math.PI * 2); ctx.fill(); } }
+}
+function glowEye(ctx, x, y, r, boost) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.6);
+  g.addColorStop(0, "rgba(255,215,90," + (0.6 * (boost || 1)) + ")"); g.addColorStop(1, "rgba(255,215,90,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 2.6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y, r, r * 1.1, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.35, r * 0.3, 0, Math.PI * 2); ctx.fill();
+}
+const TORSO = [[-30, -28], [29, -31], [38, -6], [33, 24], [-33, 25], [-39, -4]];
+const GHEAD = [[-25, -16], [24, -18], [28, 5], [22, 18], [-22, 18], [-28, 4]];
+const FIST = [[-12, -10], [11, -11], [14, 2], [10, 11], [-11, 10], [-14, 0]];
+function rollGolemCracks() {
+  const starts = [[-37, -3, 0.2], [27, -30, 2.1], [34, 18, 3.6], [-26, 24, -1.1], [8, -31, 1.7]];
+  starts.sort(() => Math.random() - 0.5);
+  return starts.slice(0, 1 + Math.floor(Math.random() * 2)).map(([x, y, d]) => {
+    const pts = [[x, y]];
+    for (let j = 0; j < 3; j++) { const a = d + (j % 2 ? 0.7 : -0.7) * (0.5 + Math.random() * 0.5); x += Math.cos(a) * (5 + Math.random() * 4); y += Math.sin(a) * (5 + Math.random() * 4); pts.push([x, y]); }
+    return pts;
+  });
+}
+function golem(ctx, cx, gy, s0, t, st) {
+  const q = st.quarry || 0, s = s0 * 1.3 * (1 + q * 0.1);
+  const saved = mode, panicky = mode === "panic"; if (panicky) mode = "walk";   // immune to panic in battle, but it can still look alarmed
+  const M = motion(t, 4.2, null, []); mode = saved;
+  const atk = M.attacking, ph = (t / 1.4) % 1;
+  ctx.save(); ctx.translate(cx + (panicky ? Math.sin(t * 47) * 1.2 * s : 0), gy); ctx.scale(s, s);
+  const LW0 = LW; LW = LW0 / s;
+  // ground slam: fists rise over the head, smash down in front, rest a moment, come back
+  let lean = M.walking ? Math.sin(M.p) * 0.06 : M.confused ? Math.sin(t * 1.4) * 0.07 : Math.sin(t * 1.1) * 0.02, jolt = 0, raise = 0;
+  if (atk) {
+    if (ph < 0.4) { raise = ease(ph / 0.4); lean = -0.08 * raise; }
+    else if (ph < 0.52) { raise = 1; lean = lerp(-0.08, 0.12, (ph - 0.4) / 0.12); }
+    else if (ph < 0.75) { lean = 0.12; jolt = ph < 0.6 ? Math.sin((ph - 0.52) / 0.08 * Math.PI) * 3 : 0; }
+    else lean = lerp(0.12, 0, ease((ph - 0.75) / 0.25));
+  }
+  const bob = M.bob * 0.7;
+  const fistAt = side => {
+    const rest = [side * 40 - side * M.swing * 9, -44 + bob + (M.walking ? 0 : Math.sin(t * 2 + side) * 1.5)];
+    if (!atk) return rest;
+    const up = [10 + side * 13, -122], down = [38 + side * 15, -13];
+    if (ph < 0.4) { const u = ease(ph / 0.4); return [lerp(rest[0], up[0], u), lerp(rest[1], up[1], u)]; }
+    if (ph < 0.52) { const u = Math.pow((ph - 0.4) / 0.12, 2); return [lerp(up[0], down[0], u), lerp(up[1], down[1], u)]; }
+    if (ph < 0.75) return down;
+    const u = ease((ph - 0.75) / 0.25); return [lerp(down[0], rest[0], u), lerp(down[1], rest[1], u)];
+  };
+  const drawFist = side => {
+    const [fx, fy] = fistAt(side), ax = side * 30, ay = -58 + bob;
+    for (let i = 1; i <= 2; i++) {                                  // floating pebbles stand in for arms
+      const u = i / 3; ell(ctx, lerp(ax, fx, u) + Math.sin(t * 3 + i + side) * 1.5, lerp(ay, fy, u) + Math.cos(t * 2.6 + i) * 1.5, 4 - i * 0.6, 3.6 - i * 0.5, 0, STONE, 2.5);
+    }
+    roundPoly(ctx, offs(FIST, fx, fy), 5); shape(ctx, STONE, 3.5);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";
+    for (const dy of [-4, 2]) { ctx.beginPath(); ctx.moveTo(fx + 4, fy + dy); ctx.lineTo(fx + 10, fy + dy - 1); ctx.stroke(); }
+  };
+  // stubby boulder feet
+  for (const side of [-1, 1]) {
+    const fwd = M.walking ? side * M.swing : 0;
+    ell(ctx, side * 17 + fwd * 10 + 2, -6 - Math.max(0, fwd) * 5, 13, 7.5, 0, STONE_D, 3.5);
+  }
+  if (!atk) drawFist(-1);
+  ctx.save(); ctx.rotate(lean);
+  const ty = -46 + bob + jolt, hx = 3 + lean * 8, hy = ty - 40 + (M.walking ? Math.abs(Math.sin(M.p)) * 1.5 : 0);
+  // head, sunk into the shoulders
+  roundPoly(ctx, offs(GHEAD, hx, hy), 8); shape(ctx, STONE, 3.5);
+  ctx.save(); roundPoly(ctx, offs(GHEAD, hx, hy), 8); ctx.clip();
+  ctx.fillStyle = STONE_D; ctx.beginPath(); ctx.ellipse(hx + 17, hy + 16, 26, 12, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  roundPoly(ctx, offs(GHEAD, hx, hy), 8); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  // moss on top, maybe with a flower or a mushroom
+  const MS = st.mossSpots || {};
+  if (MS.head) puffs(ctx, [[-10, -18.5, 5], [-3, -21, 6], [4, -19.5, 5]].map(([x, y, r]) => ({ x: hx + x, y: hy + y, r })), "#86b25a", MOSS);
+  if (!MS.head) {}
+  else if (st.mossTop === "flower") {
+    const fx = hx + 2, fy = hy - 27 + Math.sin(t * 2) * 0.6;
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.3; ell(ctx, fx + Math.cos(a) * 3.2, fy + Math.sin(a) * 3.2, 2.6, 2.6, 0, "#fff4f8", 1.6); }
+    ell(ctx, fx, fy, 2, 2, 0, "#ffd24a", 1.4);
+  } else if (st.mossTop === "mushroom") {
+    const fx = hx - 5, fy = hy - 25;
+    ctx.beginPath(); ctx.rect(fx - 1.6, fy, 3.2, 5); shape(ctx, "#f3ead8", 1.8);
+    ctx.beginPath(); ctx.ellipse(fx, fy, 6, 4.5, 0, Math.PI, 0); ctx.closePath(); shape(ctx, "#d8473f", 2);
+    ctx.fillStyle = "#fff"; for (const [dx, dy] of [[-2.5, -1.5], [1.8, -2.6], [3.4, -0.8]]) { ctx.beginPath(); ctx.arc(fx + dx, fy + dy, 0.9, 0, Math.PI * 2); ctx.fill(); }
+  }
+  // heavy stone brow over two small glowing eyes (one bigger, like every summon)
+  const eyes = [[hx - 6, hy + 5.5, 4.4], [hx + 12, hy + 4.6, 3.3]].map(([x, y, r]) => panicky ? [x, y, r * 1.5] : [x, y, r]);
+  const tiltB = M.confused ? -0.35 : 0;
+  if (panicky) {                                                     // brows pop up into two half-arcs, eyes go wide
+    for (const [x, y, r] of eyes) {
+      ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 6.5 * LW; ctx.beginPath(); ctx.arc(x, y + 0.5, r * 1.9, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+      ctx.strokeStyle = STONE_D; ctx.lineWidth = 3 * LW; ctx.stroke();
+    }
+  } else {
+  ctx.save(); ctx.translate(hx + 1, hy - 4); ctx.rotate(tiltB);
+  ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 7 * LW; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(21, -1); ctx.stroke();
+  ctx.strokeStyle = STONE_D; ctx.lineWidth = 3.5 * LW; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(21, -1); ctx.stroke();
+  ctx.restore();
+  }
+  if (M.charmed) for (const [x, y, r] of eyes) heart(ctx, x, y, (r + 1.2) * charmBeat(t), "#ff6f9c");
+  else for (const [x, y, r] of eyes) glowEye(ctx, x, y, r, atk ? 1 + raise * 0.6 : 1);
+  ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(hx - 1, hy + 13.5); ctx.lineTo(hx + 9, hy + 13); ctx.stroke();
+  // torso: one big boulder with the Septagram that bound it glowing in the chest
+  roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.fillStyle = STONE; ctx.fill();
+  ctx.save(); roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.clip();
+  ctx.fillStyle = STONE_D; ctx.beginPath(); ctx.ellipse(20, ty + 22, 36, 20, -0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = STONE_L; ctx.beginPath(); ctx.ellipse(-15, ty - 20, 15, 6, -0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = STONE_D; for (const [x, y] of [[-22, 6], [-12, 15], [16, -18], [24, 4], [-27, -12]]) { ctx.beginPath(); ctx.arc(x, ty + y, 1.4, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * LW; ctx.lineJoin = "round";
+  for (const c of st.gcracks || []) { ctx.beginPath(); c.forEach(([x, y], i) => i ? ctx.lineTo(x, ty + y) : ctx.moveTo(x, ty + y)); ctx.stroke(); }
+  // moss on the flanks, rolled per golem
+  if (MS.left) puffs(ctx, [[-38, -6, 4.5], [-36, 1, 5.5], [-35, 9, 4.5], [-31, 14, 3.5]].map(([x, y, r]) => ({ x, y: ty + y, r })), "#86b25a", MOSS);
+  if (MS.right) puffs(ctx, [[35, 8, 4], [33, 14, 5.5], [29, 20, 4.5], [23, 24, 3.5]].map(([x, y, r]) => ({ x, y: ty + y, r })), "#86b25a", MOSS);
+  const pulse = Math.min(1, 0.55 + 0.25 * Math.sin(t * 2.2) + raise * 0.45), rc = [-1, ty - 1];
+  ctx.save(); ctx.globalAlpha = pulse; ctx.shadowColor = "#6fa8ff"; ctx.shadowBlur = 10 * s * (st.dpr || 1);
+  ctx.strokeStyle = "#8fc0ff"; ctx.lineWidth = 1.8 * LW; ctx.beginPath(); ctx.arc(rc[0], rc[1], 12.5, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7, x = rc[0] + Math.cos(a) * 10.5, y = rc[1] + Math.sin(a) * 10.5; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke(); ctx.restore();
+  // Living Quarry: quartz grows out of the shoulders
+  const shards = [[-24, -30, -0.35, 9], [-15, -32, 0.1, 12], [22, -33, 0.3, 10], [30, -28, 0.7, 8]];
+  for (let i = 0; i < Math.max(0, q - 1) * 2; i++) {
+    const [x, y, a, h] = shards[i];
+    ctx.save(); ctx.translate(x, ty + y); ctx.rotate(a);
+    ctx.beginPath(); ctx.moveTo(-3.5, 2); ctx.lineTo(-3.5, -h * 0.6); ctx.lineTo(0, -h); ctx.lineTo(3.5, -h * 0.6); ctx.lineTo(3.5, 2); ctx.closePath(); shape(ctx, "#b79cf0", 2.4);
+    ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillRect(-2, -h * 0.55, 1.2, h * 0.45);
+    ctx.restore();
+  }
+  ctx.restore();
+  if (!atk) drawFist(1); else { drawFist(-1); drawFist(1); }
+  // shockwave, dust and a few flying chips where the fists land
+  if (atk && ph >= 0.52 && ph < 0.95) {
+    const pr = (ph - 0.52) / 0.43, a = 1 - pr, gx = 38, R = 12 + pr * 80;
+    ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = "#efe2c0"; ctx.lineWidth = (1 + 3 * a) * LW;
+    ctx.beginPath(); ctx.ellipse(gx, -2, R, R * 0.22, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = a * 0.7; ctx.fillStyle = "#bfb39b";
+    for (let i = 0; i < 5; i++) { const an = Math.PI * (0.1 + i * 0.2); ctx.beginPath(); ctx.arc(gx + Math.cos(an) * pr * 58 * (i % 2 ? 1 : -1) * 0.9, -6 - Math.sin(an) * pr * 16 - pr * 6, 5 + pr * 6, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    for (let i = 0; i < 3; i++) {
+      const vx = (i - 1) * 30 + 8, x = gx + vx * pr, y = -8 - (70 * pr - 95 * pr * pr) * (1 + i * 0.2);
+      if (y < 0) { ctx.save(); ctx.translate(x, y); ctx.rotate(pr * 8 + i); ctx.beginPath(); ctx.rect(-2.2, -2.2, 4.4, 4.4); shape(ctx, STONE, 1.6); ctx.restore(); }
+    }
+    if (ph < 0.62) burst(ctx, gx, -16, 1, 1 - (ph - 0.52) / 0.1);
+  }
+  ctx.restore(); LW = LW0;
+  qMarks(ctx, st, cx + (hx + 4) * s, gy + (hy - 22) * s, s0, M.confused);
+}
+
+// ---------- The Summonancer ----------
+// Gear is drawn in layers (hat, robe, staff, amulet) so equipment can change how he looks later
+const GEAR = {
+  starter: { name: "Starter gear", hat: ["#4b3780", "#3a2a66"], band: "#2a1d40", buckle: "#d9b45a", patch: true, feather: null,
+             robe: ["#5a3e8e", "#45306e"], trim: "#d9b45a", orb: [111, 168, 255], head: "claw", amulet: null },
+  ember:   { name: "Ember set", hat: ["#8a3329", "#6a261f"], band: "#2b1512", buckle: "#f0a040", patch: false, feather: "#ff9a3c",
+             robe: ["#7c3a2c", "#5e2a20"], trim: "#f0a040", orb: [255, 140, 60], head: "claw", amulet: "#e0403a" },
+  frost:   { name: "Frost set", hat: ["#2f5f8a", "#234a6c"], band: "#e8f2ff", buckle: "#9fd8ff", patch: false, feather: null,
+             robe: ["#35648f", "#284e72"], trim: "#cfe3f5", orb: [150, 230, 255], head: "crystal", amulet: "#7fd0ff" }
+};
+const FACE = "#0f0b15", BEARD = "#efeae0", BEARD_D = "#c9c1b1", GLOVE = "#7a5536", WOOD = "#8a5a34", BOOT = "#3b2a22";
+const BEARDS = ["Apprentice fuzz", "Bushy", "Proper", "Venerable", "Legendary"];
+const rgba = (c, a) => "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
+function wizEyes(ctx, look, boost, dy) {
+  const E = [[-3, -95 + dy, 5.2], [10, -96.5 + dy, 3.9]];
+  ctx.lineCap = "round"; ctx.strokeStyle = GLOW; ctx.lineWidth = 2.3 * LW;
+  E.forEach(([x, y, r], i) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3);
+    g.addColorStop(0, "rgba(255,215,90," + Math.min(0.85, 0.45 * boost) + ")"); g.addColorStop(1, "rgba(255,215,90,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3, 0, Math.PI * 2); ctx.fill();
+    if (look === "blink") { ctx.beginPath(); ctx.moveTo(x - r, y + 1); ctx.lineTo(x + r, y + 1); ctx.stroke(); }
+    else if (look === "narrow") { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y + 0.5, r * 1.1, r * 0.45, 0, 0, Math.PI * 2); ctx.fill(); }
+    else if (look === "squeeze") { const d = i ? -1 : 1; ctx.beginPath(); ctx.moveTo(x - d * r, y - r * 0.8); ctx.lineTo(x + d * r * 0.7, y); ctx.lineTo(x - d * r, y + r * 0.8); ctx.stroke(); }
+    else if (look === "happy") { ctx.beginPath(); ctx.arc(x, y + r * 0.5, r * 0.95, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
+    else if (look === "sad") { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y + 1, r * 0.75, r * 0.6, 0, -0.25 * (i ? -1 : 1), Math.PI - 0.25 * (i ? -1 : 1)); ctx.fill(); }
+    else { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y, r, r * 1.15, 0, 0, Math.PI * 2); ctx.fill();
+           ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.4, r * 0.3, 0, Math.PI * 2); ctx.fill(); }
+  });
+}
+// the beard grows a stage with every prestige: from apprentice fuzz to a legendary beard with a gold ring near the tip
+function wizBeard(ctx, stage, t, flutter) {
+  const chin = -83, x0 = 3, L = [5, 15, 27, 41, 57][stage], W = [7, 13, 17, 19, 20][stage], cs = [];
+  const mr = stage === 0 ? 3.6 : 5.6;
+  cs.push({ x: x0 - 8, y: chin + 1, r: mr }, { x: x0 + 9, y: chin, r: mr });
+  const n = Math.max(2, Math.round(L / 6));
+  for (let i = 0; i <= n; i++) {
+    const u = i / n, y = chin + 3 + L * u, w = W * (1 - 0.8 * Math.pow(u, 1.5)), r = (6.5 - 2.2 * u) * (stage === 0 ? 0.65 : 1);
+    const count = Math.max(1, Math.ceil(2 * w / (r * 1.3)));
+    const sw = Math.sin(t * 1.6 + u * 2.5) * u * (1.5 + stage * 0.6) + flutter * u * 6;
+    for (let j = 0; j < count; j++) cs.push({ x: x0 + sw + (count === 1 ? 0 : -w + 2 * w * j / (count - 1)), y, r });
+  }
+  puffs(ctx, cs, BEARD, BEARD_D);
+  if (stage === 4) {
+    const y = chin + 3 + L * 0.82, sw = Math.sin(t * 1.6 + 2) * 0.82 * 4 + flutter * 5;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0 + sw - 5, y - 2.5, 10, 5, 2) : ctx.rect(x0 + sw - 5, y - 2.5, 10, 5); shape(ctx, "#e2b84a", 2);
+  }
+}
+// tall pointy hat: straight at the bottom, then it folds over and droops at the tip
+function wizHat(ctx, G, lift, tipA, sq, t) {
+  const bx = 1, by = -110 - lift;
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, 0, Math.PI * 2); shape(ctx, G.hat[0], 3.5);
+  const N = 20, Lc = 50 * sq + 30, step = Lc / (N - 1), P = [];
+  let x = bx + 1, y = by - 2;
+  for (let i = 0; i < N; i++) {
+    const u = i / (N - 1), ang = -0.05 + (tipA + 0.05) * Math.pow(ease(Math.max(0, (u - 0.42) / 0.58)), 0.9);
+    P.push({ x, y, ang, w: 21 * Math.pow(1 - u, 1.05) + 1.4 });
+    x += Math.sin(ang) * step; y -= Math.cos(ang) * step;
+  }
+  const L = P.map(p => [p.x - Math.cos(p.ang) * p.w, p.y - Math.sin(p.ang) * p.w]), R = P.map(p => [p.x + Math.cos(p.ang) * p.w, p.y + Math.sin(p.ang) * p.w]);
+  const outline = () => { ctx.beginPath(); L.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); const e = P[N - 1]; ctx.arc(e.x, e.y, e.w, e.ang + Math.PI, e.ang, true); for (let i = N - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); };
+  outline(); ctx.fillStyle = G.hat[0]; ctx.fill();
+  ctx.beginPath(); P.forEach((p, i) => i ? ctx.lineTo(p.x + Math.cos(p.ang) * p.w * 0.2, p.y + Math.sin(p.ang) * p.w * 0.2) : ctx.moveTo(p.x + Math.cos(p.ang) * p.w * 0.2, p.y + Math.sin(p.ang) * p.w * 0.2));
+  for (let i = N - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); ctx.fillStyle = G.hat[1]; ctx.fill();
+  outline(); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  // band and buckle
+  ctx.beginPath(); for (let i = 0; i <= 3; i++) i ? ctx.lineTo(L[i][0], L[i][1]) : ctx.moveTo(L[i][0], L[i][1]); for (let i = 3; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); shape(ctx, G.band, 2.5);
+  const bp = P[2]; ctx.save(); ctx.translate(bp.x + Math.cos(bp.ang) * bp.w * 0.35, bp.y - 1); ctx.rotate(bp.ang);
+  ctx.beginPath(); ctx.rect(-3.5, -3.5, 7, 7); shape(ctx, G.buckle, 2); ctx.fillStyle = G.band; ctx.fillRect(-1.5, -1.5, 3, 3); ctx.restore();
+  if (G.feather) {
+    const fp = P[3]; ctx.save(); ctx.translate(fp.x - fp.w * 0.7, fp.y - 2); ctx.rotate(-0.9 + Math.sin(t * 2) * 0.06);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-7, -14, 2, -30); ctx.quadraticCurveTo(8, -14, 0, 0); shape(ctx, G.feather, 2);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.2 * LW; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(1, -14, 2, -28); ctx.stroke(); ctx.restore();
+  }
+  // a patch, because hats are expensive
+  if (G.patch) {
+    const pp = P[9]; ctx.save(); ctx.translate(pp.x - Math.cos(pp.ang) * pp.w * 0.25, pp.y - Math.sin(pp.ang) * pp.w * 0.25); ctx.rotate(pp.ang + 0.25);
+    ctx.beginPath(); ctx.rect(-4.5, -4, 9, 8); shape(ctx, "#7b62b4", 2);
+    ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 1.1 * LW; ctx.setLineDash([1.6, 1.6]); ctx.beginPath(); ctx.rect(-3, -2.6, 6, 5.2); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+  }
+  if (G.head === "crystal") { const e = P[N - 1]; ell(ctx, e.x + Math.sin(e.ang) * 2, e.y - Math.cos(e.ang) * 2, 3.6, 3.6, 0, "#f4fbff", 2); }
+  // the front half of the brim goes over the bottom of the cone
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, 0, Math.PI); ctx.fillStyle = G.hat[0]; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, -0.08, Math.PI + 0.08); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(bx, by + 3, 38, 5, 0.05, 0.3, Math.PI - 0.3); ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 2 * LW; ctx.stroke();
+}
+function wizHand(ctx, x, y, side, G, rot) {
+  ell(ctx, x - side * 6, y + 3, 8, 6.5, rot || side * 0.4, G.robe[0], 3);
+  ctx.beginPath(); ctx.arc(x, y, 6.5, 0, Math.PI * 2); shape(ctx, GLOVE, 3);
+}
+function wizard(ctx, cx, gy, s, t, st) {
+  const G = GEAR[st.gear || "starter"], m = st.wmode || "idle";
+  let dx = 0, by = Math.sin(t * 2) * 1.2, lean = 0, lift = 0, tipA = 1.95 + Math.sin(t * 1.3) * 0.12, sq = 1;
+  let look = (t % 3.7) < 0.13 ? "blink" : "open", eyeDy = 0, boost = 1, flutter = 0;
+  let hF = [31, -50], hB = [-33, -48], staffA = -0.05, orbGlow = 0.55 + 0.15 * Math.sin(t * 3), c = 0, r = 0, ph = 0, hop = 0, j = 0;
+  if (m === "cast") {
+    ph = st.castHold != null ? 0 : st.oneT != null ? Math.min(0.999, st.oneT / 1.6) : (t / 1.6) % 1;
+    c = st.castHold != null ? st.castHold : ph < 0.55 ? ease(ph / 0.55) : ph < 0.7 ? 1 : 1 - ease((ph - 0.7) / 0.3);
+    r = ph >= 0.55 && ph < 0.7 ? Math.sin((ph - 0.55) / 0.15 * Math.PI) : 0;
+    hF = [31 + 4 * c + 8 * r, -50 - 26 * c]; hB = [-33 + 6 * c, -48 - 30 * c];
+    staffA = -0.05 + 0.3 * c + 0.3 * r; lean = -0.04 * c + 0.14 * r; orbGlow = 0.5 + 0.9 * c;
+    tipA -= 0.5 * r - 0.15 * c; flutter = r * 0.6 - c * 0.2; boost = 1 + c * 0.8;
+    if (c > 0.3 && look !== "blink") look = "narrow";
+  } else if (m === "flinch") {
+    ph = st.oneT != null ? Math.min(0.999, st.oneT / 1.5) : (t / 1.5) % 1;
+    j = ph < 0.07 ? ph / 0.07 : 1 - ease((ph - 0.07) / 0.5);
+    dx = -8 * j; lean = -0.18 * j; lift = 10 * j; tipA = 1.95 - 1.3 * j + Math.sin(ph * 40) * 0.35 * j;
+    hF = [31 - 4 * j, -50 - 14 * j]; hB = [-33 - 6 * j, -48 - 22 * j]; staffA = -0.05 - 0.3 * j; flutter = -j * 0.5;
+    if (j > 0.25) look = "squeeze";
+  } else if (m === "cheer") {
+    ph = (t / 0.9) % 1; hop = Math.sin(ph * Math.PI);
+    by = -hop * 16; lift = hop * 9; tipA = 1.35 + (1 - hop) * 0.5 + Math.sin(t * 9) * 0.1;
+    hF = [28, -84 - hop * 6]; hB = [-31, -90 - hop * 8]; staffA = Math.sin(t * 9) * 0.18; orbGlow = 1.1; flutter = (hop - 0.5) * 0.5;
+    look = "happy"; boost = 1.3;
+  } else if (m === "despair") {
+    by = 4 + Math.pow(Math.max(0, Math.sin(t * 1.2)), 8) * 2; lean = 0.1; sq = 0.82; lift = -4; tipA = 2.8 + Math.sin(t * 0.9) * 0.05;
+    hF = [27, -40]; hB = [-28, -38]; staffA = 0.38; orbGlow = 0.2; look = "sad"; eyeDy = 1.5; boost = 0.6;
+  }
+  ctx.save(); ctx.translate(cx + dx * s, gy + by * s); ctx.scale(s, s); ctx.rotate(lean);
+  const LW0 = LW; LW = LW0 / s;
+  // boots peek out under the robe
+  if (st.lev) for (const side of [-1, 1]) ell(ctx, side * 9 + 4, -2, 8.5, 4.6, 1.15 + Math.sin(t * 1.8 + side) * 0.08, BOOT, 3);
+  else for (const side of [-1, 1]) ell(ctx, side * 11 + 3, -4, 9, 5, 0, BOOT, 3);
+  // robe: a bell from the shoulders to a hem that sways a little
+  const hemW = Math.sin(t * 2.4) * 1.2 + flutter * 5;
+  const robe = () => {
+    ctx.beginPath(); ctx.moveTo(-22, -80);
+    ctx.quadraticCurveTo(-33, -80, -33, -68);                       // padded shoulder
+    ctx.quadraticCurveTo(-33, -38, -35 + hemW, -7);
+    for (let i = 0; i < 4; i++) { const x0 = -35 + i * 17.5, x1 = x0 + 17.5; ctx.quadraticCurveTo(lerp(x0, x1, 0.5) + hemW, -2 + (i % 2 ? -2 : 1), x1 + hemW * (i === 3 ? 1 : 0.5), -7); }
+    ctx.quadraticCurveTo(33, -38, 33, -68); ctx.quadraticCurveTo(33, -80, 22, -80); ctx.quadraticCurveTo(0, -85, -22, -80); ctx.closePath();
+  };
+  robe(); ctx.fillStyle = G.robe[0]; ctx.fill();
+  ctx.save(); robe(); ctx.clip();
+  ctx.fillStyle = G.robe[1]; ctx.beginPath(); ctx.ellipse(30, -36, 18, 56, 0.05, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = G.robe[1]; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";            // a couple of folds so it hangs
+  for (const x of [-16, 12]) { ctx.beginPath(); ctx.moveTo(x, -34); ctx.quadraticCurveTo(x - 1.5, -20, x + hemW * 0.4, -9); ctx.stroke(); }
+  ctx.strokeStyle = G.trim; ctx.lineWidth = 3.5 * LW; ctx.beginPath(); ctx.moveTo(-40, -11); ctx.quadraticCurveTo(0, -5 + hemW, 40, -11); ctx.stroke();
+  ctx.strokeStyle = "#c79a5a"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.moveTo(-34, -42); ctx.quadraticCurveTo(0, -37, 34, -42); ctx.stroke();
+  ctx.restore();
+  robe(); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  ctx.strokeStyle = G.trim; ctx.lineWidth = 2 * LW;                  // seams of the shoulder pads
+  for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * 20, -80); ctx.quadraticCurveTo(sd * 24, -70, sd * 33, -66); ctx.stroke(); }
+  for (const [x, y, rr] of [[-14, -24, 2.6], [8, -58, 2], [15, -20, 2.2]]) sparkle(ctx, x, y, rr, 0.35);
+  if (G.amulet) { ctx.strokeStyle = "#d9b45a"; ctx.lineWidth = 1.6 * LW; ctx.beginPath(); ctx.moveTo(-9, -78); ctx.quadraticCurveTo(0, -60, 11, -78); ctx.stroke(); ell(ctx, 1, -64, 3.6, 4.4, 0, G.amulet, 2); }
+  // the face: nothing but shadow under the brim, and two yellow eyes, one bigger than the other
+  ell(ctx, 3, -94, 21, 14.5, 0, FACE, 3);
+  wizEyes(ctx, look, boost, eyeDy);
+  wizBeard(ctx, st.beard == null ? 2 : st.beard, t, flutter);
+  wizHand(ctx, hB[0], hB[1], -1, G);
+  wizHat(ctx, G, lift, tipA, sq, t);
+  // staff, then the hand gripping it
+  const up = [Math.sin(staffA), -Math.cos(staffA)], top = [hF[0] + up[0] * 62, hF[1] + up[1] * 62], bot = [hF[0] - up[0] * 46, hF[1] - up[1] * 46];
+  ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 7.5 * LW; ctx.beginPath(); ctx.moveTo(bot[0], bot[1]); ctx.lineTo(top[0], top[1]); ctx.stroke();
+  ctx.strokeStyle = WOOD; ctx.lineWidth = 7.5 * LW - 3.5 * LW; ctx.stroke();
+  const ob = [top[0] + up[0] * 7, top[1] + up[1] * 7];
+  const g = ctx.createRadialGradient(ob[0], ob[1], 0, ob[0], ob[1], 7 * (2 + orbGlow * 1.6));
+  g.addColorStop(0, rgba(G.orb, Math.min(0.6, 0.35 * orbGlow + 0.1))); g.addColorStop(1, rgba(G.orb, 0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ob[0], ob[1], 7 * (2 + orbGlow * 1.6), 0, Math.PI * 2); ctx.fill();
+  if (G.head === "crystal") {
+    ctx.save(); ctx.translate(ob[0], ob[1]); ctx.rotate(staffA);
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(6, -2); ctx.lineTo(0, 8); ctx.lineTo(-6, -2); ctx.closePath(); shape(ctx, rgba(G.orb, 1), 2.5);
+    ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(-3, -2); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill(); ctx.restore();
+  } else {
+    ctx.beginPath(); ctx.arc(ob[0], ob[1], 7, 0, Math.PI * 2);
+    const og = ctx.createRadialGradient(ob[0] - 2, ob[1] - 2, 0, ob[0], ob[1], 7);
+    og.addColorStop(0, "#ffffff"); og.addColorStop(0.45, rgba(G.orb, 1)); og.addColorStop(1, rgba(G.orb.map(v => Math.round(v * 0.6)), 1));
+    shape(ctx, og, 2.5);
+    ctx.save(); ctx.translate(ob[0], ob[1]); ctx.rotate(staffA);
+    ctx.strokeStyle = INK; ctx.lineWidth = 5.5 * LW; ctx.beginPath(); ctx.arc(0, 0, 8.5, 0.35, Math.PI - 0.35); ctx.stroke();
+    ctx.strokeStyle = WOOD; ctx.lineWidth = 2.5 * LW; ctx.stroke(); ctx.restore();
+  }
+  wizHand(ctx, hF[0], hF[1], 1, G);
+  // effects
+  if (m === "cast") {
+    if (c > 0.15 && ph < 0.55) for (let i = 0; i < 5; i++) { const a = i * 1.2566 + t * 3, rr = (1 - ((t * 1.6 + i / 5) % 1)) * 26; sparkle(ctx, ob[0] + Math.cos(a) * rr, ob[1] + Math.sin(a) * rr, 2.6, c); }
+    if (c > 0.3) sparkle(ctx, hB[0] - 2, hB[1] - 9, 3.2 * c, c * 0.9);
+    if (!st.noBolt && ph >= 0.55 && ph < 0.95) {
+      const pr = (ph - 0.55) / 0.4;
+      for (let k = 5; k >= 0; k--) {
+        const pk = Math.max(0, pr - k * 0.04), x = ob[0] + 8 + pk * 150, y = ob[1] - pk * 25;
+        ctx.save(); ctx.globalAlpha = (1 - pr) * (1 - k / 6); ctx.fillStyle = k ? rgba(G.orb, 1) : "#ffffff";
+        ctx.beginPath(); ctx.arc(x, y, (k ? 5 - k * 0.6 : 4), 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+    }
+  }
+  if (m === "flinch") { if (ph < 0.3) burst(ctx, 48, -66, 1, 1 - ph / 0.3, "#ff8a8a"); if (j > 0.2) sweat(ctx, -14, -108 - lift, 1, t); }
+  if (m === "cheer") for (let i = 0; i < 6; i++) { const a = t * 3 + i * 1.047; sparkle(ctx, ob[0] + Math.cos(a) * 20, ob[1] + Math.sin(a) * 15, 3, 0.5 + 0.5 * Math.sin(t * 6 + i)); }
+  if (m === "despair" && !st.cloud) rainCloud(ctx, 2, -172, t, { grow: 1, rain: 1, bolt: 0, fade: 1 });
+  ctx.restore(); LW = LW0;
+}
+
+// levitation: blue motes trickle down from under the robe; later they rise from a slowly turning Septagram
+function mote(ctx, x, y, r, a) {
+  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = "#9cc8ff";
+  ctx.beginPath(); ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+  ctx.globalAlpha = a * 0.35; ctx.beginPath(); ctx.arc(x, y, r * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+function motes(ctx, cx, gy, s, t, hover, lev) {
+  const g = ctx.createRadialGradient(cx, gy - hover * s * 0.4, 0, cx, gy - hover * s * 0.4, 40 * s);
+  g.addColorStop(0, "rgba(111,168,255,.28)"); g.addColorStop(1, "rgba(111,168,255,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, gy - hover * s * 0.4, 40 * s, 22 * s, 0, 0, Math.PI * 2); ctx.fill();
+  const N = lev === 2 ? 16 : 9;
+  for (let i = 0; i < N; i++) {
+    const f = (t * (lev === 2 ? 0.45 : 0.7) + i / N) % 1, spread = lev === 2 ? 44 : 22;
+    const x = cx + Math.sin(i * 12.9898) * spread * s + Math.sin(t * 2 + i) * 2.5 * s;
+    const y = lev === 2 ? gy - f * (hover + 50) * s : gy - hover * s - 4 * s + f * (hover + 4) * s;
+    mote(ctx, x, y, (1.6 + (i % 3) * 0.8) * s * (1 + 0.3 * Math.sin(t * 6 + i)), Math.sin(f * Math.PI));
+  }
+}
+function septagram(ctx, cx, gy, s, t) {
+  ctx.save(); ctx.translate(cx, gy); ctx.scale(1, 0.3);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 60 * s);
+  g.addColorStop(0, "rgba(111,168,255,.35)"); g.addColorStop(1, "rgba(111,168,255,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 60 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.rotate(t * 0.5);
+  ctx.shadowColor = "#6fa8ff"; ctx.shadowBlur = 12 * s; ctx.strokeStyle = "rgba(160,205,255," + (0.75 + 0.2 * Math.sin(t * 2.5)) + ")"; ctx.lineWidth = 2.2 * s;
+  ctx.beginPath(); ctx.arc(0, 0, 48 * s, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, 42 * s, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7; k ? ctx.lineTo(Math.cos(a) * 42 * s, Math.sin(a) * 42 * s) : ctx.moveTo(Math.cos(a) * 42 * s, Math.sin(a) * 42 * s); }
+  ctx.stroke();
+  ctx.fillStyle = "#cfe4ff";
+  for (let k = 0; k < 7; k++) { const a = -Math.PI / 2 + k * Math.PI * 2 / 7; ctx.beginPath(); ctx.arc(Math.cos(a) * 45 * s, Math.sin(a) * 45 * s, 1.8 * s, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+}
+
+// the little raincloud of defeat: grows, rumbles a small lightning bolt into the air, then rains on his hat
+function rainCloud(ctx, x, y, t, cl) {
+  const g = cl.grow * cl.fade; if (g <= 0.01) return;
+  ctx.save(); ctx.globalAlpha = cl.fade;
+  if (cl.rain) for (let i = 0; i < 6; i++) {
+    const f = (t * 1.6 + i / 6) % 1;
+    ctx.save(); ctx.globalAlpha = (1 - f) * cl.fade * cl.rain; ctx.strokeStyle = "#8fb8ff"; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x - 13 + i * 5.4, y + 8 + f * 32); ctx.lineTo(x - 14 + i * 5.4, y + 13 + f * 32); ctx.stroke(); ctx.restore();
+  }
+  if (cl.bolt > 0) {
+    const pts = cl.path || [[x + 4, y - 8], [x, y - 17], [x + 8, y - 20], [x + 3, y - 31], [x + 12, y - 27], [x + 9, y - 42]];
+    ctx.save(); ctx.globalAlpha = cl.bolt; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.shadowColor = "#fff6a0"; ctx.shadowBlur = 14;
+    ctx.strokeStyle = INK; ctx.lineWidth = 5 * LW; ctx.beginPath(); pts.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); ctx.stroke();
+    ctx.strokeStyle = "#ffe95a"; ctx.lineWidth = 2.4 * LW; ctx.stroke(); ctx.restore();
+    const end = pts[pts.length - 1]; if (cl.bolt > 0.5) burst(ctx, end[0], end[1], 1, 0.9, "#ffe95a");
+  }
+  const dark = cl.bolt > 0 ? ["#9a95ad", "#7d7892"] : ["#77718a", "#5f5a72"];
+  puffs(ctx, [[-12, 2, 7], [-3, -4, 9], [9, 0, 8], [2, 4, 7]].map(([a, b, r]) => ({ x: x + a * g, y: y + b * g, r: r * g })), dark[0], dark[1]);
+  ctx.restore();
+}
+// teleport: stars and mystic symbols flung out in a burst
+function spawnTwinkles(st, x, y, s) {
+  st.parts = st.parts || [];
+  for (let i = 0; i < 16; i++) {
+    const a = Math.random() * Math.PI * 2, v = (60 + Math.random() * 90) * s;
+    st.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30 * s, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 8,
+                    kind: ["star", "hept", "moon", "rune"][i % 4], hue: Math.random() * 360, r: (4 + Math.random() * 3) * s, life: 0 });
+  }
+}
+function drawTwinkles(ctx, st, dt) {
+  for (const p of st.parts || []) {
+    p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.97; p.vy *= 0.97; p.rot += p.vr * dt;
+    const r = p.r, col = "hsl(" + p.hue + ",90%,72%)";
+    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - p.life / 1.1); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    ctx.shadowColor = col; ctx.shadowBlur = 8; ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1.6 * LW; ctx.lineJoin = "round";
+    ctx.beginPath();
+    if (p.kind === "star") { for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r; k ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); }
+    else if (p.kind === "hept") { for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7; k ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.stroke(); }
+    else if (p.kind === "moon") { ctx.moveTo(0, -r); ctx.quadraticCurveTo(r * 1.5, 0, 0, r); ctx.quadraticCurveTo(r * 0.6, 0, 0, -r); ctx.fill(); }
+    else { ctx.moveTo(0, -r); ctx.lineTo(r * 0.9, r * 0.7); ctx.lineTo(-r * 0.9, r * 0.7); ctx.closePath(); ctx.moveTo(0, -r * 0.2); ctx.lineTo(0, r * 0.4); ctx.stroke(); }
+    ctx.restore();
+  }
+  st.parts = (st.parts || []).filter(p => p.life < 1.1);
+}
+// a cosy corner of town: cobbles and a couple of houses
+function townBack(ctx, W, gy, s) {
+  ctx.fillStyle = "#2a2433";
+  ctx.beginPath(); ctx.moveTo(W * 0.62, gy - 4 * s); ctx.lineTo(W * 0.62, gy - 70 * s); ctx.lineTo(W * 0.72, gy - 100 * s); ctx.lineTo(W * 0.82, gy - 70 * s); ctx.lineTo(W * 0.82, gy - 4 * s); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W * 0.02, gy - 4 * s); ctx.lineTo(W * 0.02, gy - 58 * s); ctx.lineTo(W * 0.1, gy - 84 * s); ctx.lineTo(W * 0.18, gy - 58 * s); ctx.lineTo(W * 0.18, gy - 4 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#ffcf6a"; for (const [x, y] of [[0.68, 60], [0.75, 60], [0.07, 40], [0.12, 40]]) ctx.fillRect(W * x, gy - y * s, 7 * s, 9 * s);
+  ctx.fillStyle = "#3a3540"; ctx.fillRect(0, gy - 4 * s, W, W - gy + 4 * s);
+  ctx.fillStyle = "#4a4452";
+  for (let row = 0; row < 3; row++) for (let i = -1; i < W / (18 * s) + 1; i++) { ctx.beginPath(); ctx.ellipse((i + (row % 2) * 0.5) * 18 * s, gy + (2 + row * 8) * s, 7 * s, 3 * s, 0, 0, Math.PI * 2); ctx.fill(); }
+}
+
+const clamp01 = x => Math.max(0, Math.min(1, x));
+// one-shot wizard sequences: "defeat" (ward falls: cloud, bolt, rain, vanish), "vanish" (cast and blink out), "appear"
+function seqFx(q, st) {
+  const e = q.e, out = { shimmer: 0, squash: 0, flash: 0, burst: false, events: [] };
+  const once = (k, at) => { if (e >= at && !q[k]) { q[k] = true; return true; } return false; };
+  const vanish = t0 => {
+    out.shimmer = clamp01((e - t0) / 0.6); out.squash = clamp01((e - t0 - 0.55) / 0.25);
+    out.flash = Math.max(0, 1 - Math.abs(e - t0 - 0.8) / 0.15);
+    if (once("v", t0 + 0.78)) { out.burst = true; out.events.push("puff"); }
+    if (e > t0 + 0.8) out.squash = 1;
+  };
+  const appear = t0 => {
+    out.squash = e < t0 ? 1 : 1 - clamp01((e - t0) / 0.3); out.shimmer = e < t0 ? 1 : 1 - clamp01((e - t0 - 0.1) / 0.6);
+    out.flash = Math.max(0, 1 - Math.abs(e - t0 - 0.05) / 0.15);
+    if (once("a", t0)) { out.burst = true; out.events.push("appear"); }
+  };
+  if (q.kind === "defeat") {
+    if (!q.boltPath) {
+      const side = Math.random() < 0.5 ? -1 : 1, ex = side * (60 + Math.random() * 30), ey = -2 - Math.random() * 30;
+      const sx = 2 + side * 14, sy = -168, pts = [[sx, sy]];
+      for (let k = 1; k < 6; k++) { const u = k / 6; pts.push([lerp(sx, ex, u) + (k % 2 ? 1 : -1) * (5 + Math.random() * 5), lerp(sy, ey, u) + (Math.random() - 0.5) * 6]); }
+      pts.push([ex, ey]); q.boltPath = pts;
+    }
+    if (once("g", 0)) out.events.push("gong");
+    if (once("th", 1.3)) out.events.push("thunder");
+    st.wmode = "despair"; st.oneT = null;
+    st.cloud = { grow: ease(clamp01((e - 0.2) / 0.9)), bolt: e > 1.3 && e < 1.8 ? (e < 1.42 || e > 1.5 ? 1 : 0.25) * (1 - clamp01((e - 1.6) / 0.2)) : 0,
+                 rain: clamp01((e - 1.8) / 0.2), fade: 1 - clamp01((e - 3.9) / 0.6), path: q.boltPath };
+    if (e > 3.2) vanish(3.2);
+    q.done = e > 5.0;
+  } else if (q.kind === "vanish") {
+    st.wmode = "cast"; st.castHold = ease(clamp01(e / 0.9)); st.oneT = null;
+    if (e > 1.0) vanish(1.0);
+    q.done = e > 2.0;
+  } else {
+    st.wmode = "idle"; st.castHold = null; appear(0.25);
+    q.done = e > 1.1;
+  }
+  if (q.done) { st.cloud = null; st.castHold = null; }
+  return out;
+}
+const NOFX = { shimmer: 0, squash: 0, flash: 0, burst: false, events: [] };
+// the wizard, with his levitation, teleport shimmer, raincloud, twinkles and flash
+function drawWizard(ctx, x, gy, s, t, st, fx, dt, dpr) {
+  fx = fx || NOFX; mode = "idle"; LW = Math.max(0.5, s * 1.1);
+  const hover = st.lev ? 16 + Math.sin(t * 1.8) * 3 : 0;
+  if (st.lev === 2) septagram(ctx, x, gy, s, t);
+  const shrink = (1 - hover / 60) * (1 - fx.squash);
+  ctx.fillStyle = "rgba(0,0,0," + (0.25 * shrink) + ")"; ctx.beginPath(); ctx.ellipse(x, gy, 38 * s * Math.max(0.01, shrink), 7 * s * Math.max(0.01, shrink), 0, 0, Math.PI * 2); ctx.fill();
+  if (st.lev && fx.squash < 1) motes(ctx, x, gy, s, t, hover, st.lev);
+  if (fx.squash < 1) {
+    if (!fx.shimmer) { ctx.save(); ctx.translate(0, -hover * s); wizard(ctx, x, gy, s, t, st); ctx.restore(); }
+    else {
+      const bw = 260 * s, bh = 300 * s, ox = x - bw / 2, oy = gy + 20 * s - bh;
+      if (!st.off) st.off = document.createElement("canvas");
+      const off = st.off, W = Math.ceil(bw * dpr), H = Math.ceil(bh * dpr);
+      if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
+      const o = off.getContext("2d"); o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, W, H);
+      o.setTransform(dpr, 0, 0, dpr, 0, 0); o.translate(-ox, -oy - hover * s);
+      wizard(o, x, gy, s, t, st);
+      o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = "source-atop";
+      o.fillStyle = "hsla(" + ((t * 420) % 360) + ",95%,62%," + (0.6 * fx.shimmer) + ")"; o.fillRect(0, 0, W, H); o.globalCompositeOperation = "source-over";
+      const ccy = gy - (hover + 70) * s;
+      ctx.save(); ctx.translate(x, ccy); ctx.scale(Math.max(0.001, 1 - fx.squash), 1 + fx.squash * 0.8); ctx.translate(-x, -ccy);
+      const sh = Math.max(2, Math.round(4 * s * dpr));
+      for (let y = 0; y < H; y += sh) {
+        const dx = Math.sin(y / dpr * 0.15 + t * 22) * 5 * s * fx.shimmer;
+        ctx.drawImage(off, 0, y, W, Math.min(sh + 1, H - y), ox + dx, oy + y / dpr, bw, Math.min(sh + 1, H - y) / dpr);
+      }
+      ctx.restore();
+    }
+    LW = Math.max(0.5, s * 1.1);
+  }
+  if (st.cloud) { ctx.save(); ctx.translate(x, gy - hover * s); ctx.scale(s, s); const L0 = LW; LW = L0 / s; rainCloud(ctx, 2, -172, t, st.cloud); LW = L0; ctx.restore(); }
+  const cy = gy - (hover + 70) * s;
+  if (fx.burst) spawnTwinkles(st, x, cy, s);
+  drawTwinkles(ctx, st, dt);
+  if (fx.flash > 0) {
+    const g = ctx.createRadialGradient(x, cy, 0, x, cy, 90 * s);
+    g.addColorStop(0, "rgba(255,255,255," + fx.flash + ")"); g.addColorStop(0.4, "rgba(200,170,255," + (0.6 * fx.flash) + ")"); g.addColorStop(1, "rgba(160,120,255,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, cy, 90 * s, 0, Math.PI * 2); ctx.fill();
+  }
+  if (st.cloud && st.cloud.bolt > 0) { ctx.fillStyle = "rgba(255,250,220," + (0.12 * st.cloud.bolt) + ")"; ctx.beginPath(); ctx.arc(x, cy, 140 * s, 0, Math.PI * 2); ctx.fill(); }
+}
 // ---------- Looks rolled per character ----------
 function rollTeeth() {
   const all = [];
@@ -2085,7 +3152,9 @@ function rollCracks() {
 }
 
 
-  const DRAW = { kobold, bog_goblin: goblin, orc };
+  const DRAW = { kobold, bog_goblin: goblin, orc, golem, wisp,
+    skeleton_warrior: (ctx, x, gy, s, t, st) => { st.ctx = ctx; skeleton(st, x, gy, s, t); },
+    skeleton_archer: (ctx, x, gy, s, t, st) => { st.ctx = ctx; st.archer = true; skeleton(st, x, gy, s, t); } };
   // draw one character on a square canvas: ground, shadow and the creature, in the given animation mode
   function render(kind, cv, st, t, dt, m) {
     const ctx = cv.getContext("2d"), W = cv.clientWidth || 240, dpr = window.devicePixelRatio || 1;
@@ -2110,6 +3179,10 @@ function rollCracks() {
     }
     if (kind === "bog_goblin") st.jewels = JEWELS.filter(() => Math.random() < 0.4);
     if (kind === "kobold") { st.tongue = Math.random() < 0.5 ? -1 : 1; st.hornMissing = Math.random() < 0.4 ? (Math.random() < 0.5 ? -1 : 1) : null; }
+    if (kind === "golem") {
+      st.mossSpots = { head: Math.random() < 0.5, left: Math.random() < 0.5, right: Math.random() < 0.5 };
+      st.mossTop = ["plain", "flower", "mushroom"][Math.floor(Math.random() * 3)]; st.gcracks = rollGolemCracks(); st.quarry = 0;
+    }
     if (kind === "orc") { st.marks = {}; for (const spot of ["left", "right", "forehead"]) { const r = Math.random(); st.marks[spot] = r < 0.35 ? "scar" : r < 0.65 ? "plaster" : null; } }
     return st;
   }
@@ -2118,22 +3191,37 @@ function rollCracks() {
     mode = m; LW = Math.max(0.45, s * 1.15);
     ctx.save();
     if (flip) { ctx.translate(x, 0); ctx.scale(-1, 1); ctx.translate(-x, 0); }
-    if (kind === "skeleton_warrior" || kind === "skeleton_archer") { st.ctx = ctx; skeleton(st, x, gy, s, t); }
-    else if (kind === "wisp") wisp(ctx, x, gy, s, t, st);
-    else DRAW[kind](ctx, x, gy, s, t, st);
+    DRAW[kind](ctx, x, gy, s, t, st);
     ctx.restore();
   }
-  return { render, looks, drawAt };
+  // the wizard on a small square canvas in town
+  function renderTownWizard(cv, st, t, dt, fx) {
+    const ctx = cv.getContext("2d"), W = cv.clientWidth || 150, dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(W * dpr); }
+    const s = W / 250, gy = W * 0.92;
+    LW = Math.max(0.5, s);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, W);
+    ctx.fillStyle = "#f1e8d4";
+    for (const [x, y, r] of [[0.12, 0.12, 1.2], [0.8, 0.08, 1], [0.9, 0.3, 1.4], [0.3, 0.22, 0.9], [0.62, 0.18, 1.1]]) { ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 1.5 + x * 9); ctx.beginPath(); ctx.arc(x * W, y * W, r * s * 1.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    townBack(ctx, W, gy, s);
+    drawWizard(ctx, W * 0.45, gy, s, t, st, fx, dt, dpr);
+  }
+  return { render, looks, drawAt, drawWizard, seqFx, renderTownWizard, GEAR };
 })();
 
 // ---------- The Grand Grimoire of Everything ----------
-const GRIM = { foe: "kobold", anim: "walk", looks: {}, t: 0 };
+const GRIM = { tab: "foes", foe: "kobold", ally: "wisp", anim: "walk", looks: {}, t: 0 };
+const summoned = k => (META.summoned && META.summoned[k]) || 0;
+for (const b of document.querySelectorAll("#grimTabs .foe")) b.addEventListener("click", () => { GRIM.tab = b.dataset.tab; GRIM.anim = "walk"; renderGrimoire(); });
 const kills = k => (META.kills && META.kills[k]) || 0;
 const unlocked = (k, key) => DATA.grimoire.tiers.find(x => x.key === key).at <= kills(k);
 const pct = p => fmt(p * 100) + " %";
 const range = (a, b) => a === b ? String(a) : a + "–" + b;
 
 function renderGrimoire() {
+  for (const b of document.querySelectorAll("#grimTabs .foe")) b.setAttribute("aria-pressed", b.dataset.tab === GRIM.tab ? "true" : "false");
+  if (GRIM.tab === "allies") { renderAllies(); return; }
   const G = DATA.grimoire;
   $("foes").innerHTML = G.order.map(k => "<button class='foe' type='button' data-k='" + k + "' aria-pressed='" + (k === GRIM.foe) + "'>" +
     (kills(k) ? DATA.enemies[k].name : "???") + "<small>" + kills(k) + "</small></button>").join("");
@@ -2175,6 +3263,44 @@ function renderGrimoire() {
     GRIM.anim = b.dataset.a; for (const o of $("page").querySelectorAll(".anim[data-a]")) o.setAttribute("aria-pressed", o === b ? "true" : "false");
   });
 }
+// ally pages fill in by how many times each summon has been called
+function renderAllies() {
+  const G = DATA.grimoire;
+  $("foes").innerHTML = G.allyOrder.map(k => "<button class='foe' type='button' data-k='" + k + "' aria-pressed='" + (k === GRIM.ally) + "'>" +
+    (summoned(k) ? DATA.units[k].name : "???") + "<small>" + summoned(k) + "</small></button>").join("");
+  for (const b of $("foes").querySelectorAll(".foe")) b.addEventListener("click", () => { GRIM.ally = b.dataset.k; GRIM.anim = "walk"; renderGrimoire(); });
+  const k = GRIM.ally, n = summoned(k), d = unitDef(k), pg = G.allyPages[k];
+  if (!n) {
+    $("page").innerHTML = "<div class='entry' style='grid-column: 1 / -1'><h3>???</h3><p class='blank'>" + (META.unlocked[k] ? "Not yet summoned. Call one onto the battlefield and this page will start to fill in." : "Not yet bound. The Summoning Septagram in town can bind this summon.") + "</p></div>";
+    return;
+  }
+  GRIM.looks[k] = GRIM.looks[k] || ART.looks(k);
+  const open = G.tiers.filter(x => x.at <= n), next = G.tiers.find(x => x.at > n), anims = open.flatMap(x => x.anims);
+  if (!anims.includes(GRIM.anim)) GRIM.anim = "walk";
+  const animBtns = G.tiers.flatMap(x => x.anims).map(a => anims.includes(a)
+    ? "<button class='anim' type='button' data-a='" + a + "' aria-pressed='" + (a === GRIM.anim) + "'>" + G.animNames[a] + "</button>"
+    : "<button class='anim' type='button' disabled title='Locked'>" + G.animNames[a] + "</button>").join("");
+  const sec = (key, title, body) => G.tiers.find(x => x.key === key).at <= n
+    ? "<div class='sec'><h4>" + title + "</h4>" + body + "</div>"
+    : "<div class='sec locked'><h4>" + title + "</h4><p>Summon " + (G.tiers.find(x => x.key === key).at - n) + " more to reveal.</p></div>";
+  const u = DATA.unlocks[k], extra = (d.heal ? "<tr><th>Mending</th><td>" + d.heal.amount + " HP every " + fmt(d.heal.every) + " s</td></tr>" : "") +
+    (d.taunt ? "<tr><th>Draws enemies</th><td>within " + fmt(d.taunt) + " tiles</td></tr>" : "") + (d.armor ? "<tr><th>Armour</th><td>blocks " + fmt(d.armor) + " per hit</td></tr>" : "");
+  $("page").innerHTML =
+    "<div class='plate'><canvas id='grimCv' aria-label='" + d.name + " animation'></canvas><div class='anims'>" + animBtns + "</div></div>" +
+    "<div class='entry'><h3>" + d.name + "</h3><p class='lore'>" + pg.lore + "</p>" +
+    "<table class='facts'><tr><th>Summoned</th><td>" + n + "</td></tr></table>" +
+    sec("stats", "Combat", "<table class='facts'><tr><th>Health</th><td>" + Math.round(d.hp) + "</td></tr><tr><th>Damage</th><td>" + fmt(d.damage) + " per hit, every " + fmt(d.attackEvery) + " s</td></tr>" +
+      "<tr><th>Speed</th><td>" + fmt(d.speed) + " tiles per second</td></tr><tr><th>Attacks</th><td>" + pg.attacks + "</td></tr>" + extra + "</table>") +
+    sec("loot", "Costs", "<table class='facts'><tr><th>Summoning</th><td>" + d.cost.mana + " mana" + (d.cost.bone ? " and " + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : "") : "") + "</td></tr>" +
+      "<tr><th>Binding</th><td>" + costText(u) + ", once, at the Septagram</td></tr></table>") +
+    sec("behaviour", "Behaviour", "<p>" + pg.behaviour + "</p>") +
+    sec("notes", "Field notes", "<p>" + pg.notes + "</p>") +
+    (next ? "<div class='sec'><h4>Next page</h4><p>" + G.allyTierLabels[next.key] + " at " + next.at + " summoned</p><div class='prog'><div style='width:" + Math.round(n / next.at * 100) + "%'></div></div></div>"
+          : "<div class='sec'><h4>Complete</h4><p>Every page of this entry is filled in.</p></div>") + "</div>";
+  for (const b of $("page").querySelectorAll(".anim[data-a]")) b.addEventListener("click", () => {
+    GRIM.anim = b.dataset.a; for (const o of $("page").querySelectorAll(".anim[data-a]")) o.setAttribute("aria-pressed", o === b ? "true" : "false");
+  });
+}
 // the book button opens the same Grimoire panel in an overlay, from town or mid-battle (which pauses)
 let grimOpen = false, grimPausedBattle = false;
 function openGrimoireOverlay() {
@@ -2210,15 +3336,27 @@ function drawGrimoire(dt) {
   const cv = $("grimCv");
   if (!cv || $("p_grimoire").hidden || (inBattle && !grimOpen)) return;
   GRIM.t += dt;
-  ART.render(GRIM.foe, cv, GRIM.looks[GRIM.foe], GRIM.t, dt, GRIM.anim);
+  const k = GRIM.tab === "allies" ? GRIM.ally : GRIM.foe;
+  if (GRIM.looks[k]) ART.render(k, cv, GRIM.looks[k], GRIM.t, dt, GRIM.anim);
 }
-$("devFillGrim").addEventListener("click", () => { META.kills = {}; for (const k of DATA.grimoire.order) META.kills[k] = 60; saveMeta(); renderTown(); renderGrimoire(); $("devMsg").textContent = "Grimoire filled."; });
-$("devClearGrim").addEventListener("click", () => { META.kills = {}; saveMeta(); renderTown(); renderGrimoire(); $("devMsg").textContent = "Grimoire cleared."; });
+$("devFillGrim").addEventListener("click", () => {
+  META.kills = {}; for (const k of DATA.grimoire.order) META.kills[k] = 60;
+  META.summoned = {}; for (const k of DATA.grimoire.allyOrder) META.summoned[k] = 60;
+  saveMeta(); renderTown(); renderGrimoire(); $("devMsg").textContent = "Grimoire filled.";
+});
+$("devClearGrim").addEventListener("click", () => { META.kills = {}; META.summoned = {}; saveMeta(); renderTown(); renderGrimoire(); $("devMsg").textContent = "Grimoire cleared."; });
+$("devUnlockAll").addEventListener("click", () => {
+  for (const k in DATA.units) META.unlocked[k] = true;
+  for (const k in DATA.builder) META.built[k] = true;
+  META.stage = "done"; META.metBuilder = true; if (META.builder === "alive") META.builder = "dead_pending";
+  saveMeta(); renderTown(); $("devMsg").textContent = "Every summon bound and every building built.";
+});
+$("devNewGame").addEventListener("click", () => { META = freshMeta(); saveMeta(); location.reload(); });
 
 function showView(v) {
   inBattle = v === "battle";
   $("townView").hidden = inBattle; $("battleView").hidden = !inBattle;
-  if (inBattle) resize(); else { renderTown(); openBuilding("gate"); }
+  if (inBattle) { resize(); requestAnimationFrame(resize); } else { renderTown(); openBuilding("gate"); enterTown(); }
 }
 
 // ---------- Battle input ----------
@@ -2249,36 +3387,58 @@ document.addEventListener("keydown", e => {
   if (k === "q") $("spell_command").click();
   if (k === "w") $("spell_nemesis").click();
   if (k === "escape") setSpell(null);
-  const i = "123".indexOf(e.key); if (i >= 0 && UNIT_KEYS[i]) select(UNIT_KEYS[i]);
+  if (k === "e") shove();
+  const i = "1234".indexOf(e.key), open = UNIT_KEYS.filter(u => META.unlocked[u]); if (i >= 0 && open[i]) select(open[i]);
 });
 document.addEventListener("visibilitychange", () => { if (document.hidden && inBattle && !paused) togglePause(); });
 window.addEventListener("resize", resize);
+// the field box can settle a moment after the view switches (fonts, scrollbars): keep the canvas fitted to it
+if (window.ResizeObserver) new ResizeObserver(() => resize()).observe($("field"));
 
 // ---------- Music: browsers only allow sound after the first tap ----------
 const bgm = $("bgm"); bgm.volume = 0.45;
-let musicOn = true;
+const TRACKS = ["music/ghost_of_sherwood.mp3", "music/shadowy_loops.mp3"];
+let musicOn = true, track = 0;
 try { musicOn = localStorage.getItem("summonancer_music") !== "off"; } catch (e) {}
-function markMusic() { $("music").textContent = musicOn ? "Music on" : "Music off"; $("music").setAttribute("aria-pressed", musicOn ? "true" : "false"); }
+bgm.addEventListener("ended", () => { track = (track + 1) % TRACKS.length; bgm.src = TRACKS[track]; playMusic(); });
+function markMusic() { for (const id of ["music", "musicTown"]) { $(id).textContent = musicOn ? "Music on" : "Music off"; $(id).setAttribute("aria-pressed", musicOn ? "true" : "false"); } }
 function playMusic() { if (musicOn && !paused && bgm.paused) { const p = bgm.play(); if (p && p.catch) p.catch(() => {}); } }
-$("music").addEventListener("click", () => {
+function toggleMusic() {
   musicOn = !musicOn; markMusic();
   try { localStorage.setItem("summonancer_music", musicOn ? "on" : "off"); } catch (e) {}
   if (musicOn) playMusic(); else bgm.pause();
-});
-document.addEventListener("pointerdown", playMusic);
-document.addEventListener("keydown", playMusic);
-markMusic();
+}
+$("music").addEventListener("click", toggleMusic); $("musicTown").addEventListener("click", toggleMusic);
+function markSfx() { for (const id of ["sfx", "sfxTown"]) { $(id).textContent = SFX.on ? "Sound on" : "Sound off"; $(id).setAttribute("aria-pressed", SFX.on ? "true" : "false"); } }
+for (const id of ["sfx", "sfxTown"]) $(id).addEventListener("click", () => { SFX.toggle(); markSfx(); });
+const firstTouch = () => { SFX.init(); playMusic(); };
+document.addEventListener("pointerdown", firstTouch);
+document.addEventListener("keydown", firstTouch);
+markMusic(); markSfx();
 
 // ---------- Loop ----------
+let frameDt = 0, wizClock = 0, plateT = 0;
+function drawTown(dt) {
+  if ($("townView").hidden) return;
+  let fx = null;
+  if (TOWN.seq) {
+    TOWN.seq.e += dt; fx = ART.seqFx(TOWN.seq, TOWN.st);
+    for (const ev of fx.events) SFX.play(ev);
+    if (TOWN.seq.done) { const next = TOWN.seq.next; TOWN.seq = null; if (next) { TOWN.st = wizLook(); startBattle(next); return; } }
+  }
+  ART.renderTownWizard($("wizCv"), TOWN.st, wizClock, dt, fx);
+  plateT += dt; drawPlates(plateT, dt);
+}
 function loop(t) {
-  const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t;
+  const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t; frameDt = dt; wizClock += dt;
   if (inBattle && S) { if (!paused) update(dt); draw(); hud(); }
+  else drawTown(dt);
   drawGrimoire(dt);
   requestAnimationFrame(loop);
 }
 
-showView("town");
+// a brand-new wizard wakes up in the middle of a battle; everyone else starts in town
+if (META.stage === "intro") startBattle("hillside");
+else { TOWN.seq = { kind: "appear", e: 0 }; showView("town"); }
 requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
 </script>
-</body>
-</html>
