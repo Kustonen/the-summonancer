@@ -191,6 +191,16 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .bar { grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); }
 .spells { grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); }
 .req { color: var(--dim); font-size: 13px; font-style: italic; }
+.qbtn { position: relative; }
+.badge { position: absolute; top: -7px; right: -7px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--gold); color: var(--night);
+  font-weight: 800; font-size: 13px; line-height: 18px; text-align: center; box-shadow: 0 0 8px rgba(232, 196, 90, .7); }
+.quest { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.quest .qhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.quest .qhead b { font-family: var(--display); font-weight: 500; font-size: 20px; flex: 1; min-width: 160px; }
+.quest .qstate { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.quest .qstate.ready { color: var(--gold); }
+.quest .qstate.claimed { color: var(--heal); }
+.quest p { margin: 0; color: var(--dim); }
 @media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } .bld.glow, .btn.glow { animation: none; box-shadow: 0 0 10px rgba(232, 196, 90, .5); } }
 </style>
 
@@ -201,6 +211,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div class="res">
       <div class="stat"><span id="tGold" style="color:var(--gold)">0</span><small>gold</small></div>
       <div class="stat"><span id="tExp" style="color:var(--exp)">0</span><small>exp</small></div>
+<button class="mini qbtn" id="questTown" type="button">Quests<span class="badge" hidden>!</span></button>
 <button class="mini book" id="bookTown" type="button" aria-label="Open the Grimoire" title="The Grand Grimoire of Everything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c3-1.5 6-1.5 9 1v14c-3-2.5-6-2.5-9-1z" fill="#5b3f8f" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M21 5c-3-1.5-6-1.5-9 1v14c3-2.5 6-2.5 9-1z" fill="#4a3374" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M16.5 9.5l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#e8c45a"/></svg>Grimoire</button>
       <button class="mini" id="musicTown" type="button" aria-pressed="true">Music on</button>
       <button class="mini" id="sfxTown" type="button" aria-pressed="true">Sound on</button>
@@ -273,6 +284,10 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <button class="bld" id="b_grimoire" type="button" aria-pressed="false">
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 14c8-4 16-4 22 2v40c-6-6-14-6-22-2z" fill="#5b3f8f"/><path d="M54 14c-8-4-16-4-22 2v40c6-6 14-6 22-2z" fill="#4a3374"/><path d="M14 18c6-2 11-2 15 2M14 24c6-2 11-2 15 2M35 20c4-4 9-4 15-2M35 26c4-4 9-4 15-2" stroke="#ece3cf" stroke-width="1.5" opacity=".55" fill="none"/><path d="M42 34l2 5 5 .5-4 3.3 1.3 5-4.3-2.8-4.3 2.8 1.3-5-4-3.3 5-.5z" fill="#e8c45a"/></svg>
       <b>Grimoire</b>
+    </button>
+    <button class="bld" id="b_tavern" type="button" aria-pressed="false">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V28h48v30z" fill="#6b4f33"/><path d="M4 30 32 10l28 20z" fill="#8a3329"/><path d="M8 40h48M8 50h48" stroke="#4a3523" stroke-width="1.5"/><rect x="26" y="40" width="12" height="18" fill="#15131c"/><rect x="12" y="34" width="9" height="8" fill="#ffcf6a"/><rect x="43" y="34" width="9" height="8" fill="#ffcf6a"/><path d="M50 14v8" stroke="#2a1f2e" stroke-width="2"/><rect x="42" y="22" width="16" height="12" rx="2" fill="#e8dcbf" stroke="#2a1f2e" stroke-width="2"/><path d="M47 25h5v6h-5z" fill="#e8c45a" stroke="#2a1f2e" stroke-width="1.2"/><path d="M52 26.5c2 0 2 3 0 3" stroke="#2a1f2e" stroke-width="1.2" fill="none"/><path d="M47 25c1-1.5 4-1.5 5 0" stroke="#fff" stroke-width="1.5"/></svg>
+      <b>Tavern</b>
     </button>
     <button class="bld" id="b_lab" type="button" aria-pressed="false" hidden>
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V26L32 10l24 16v32z" fill="#3a3547"/><path d="M8 26L32 10l24 16" fill="none" stroke="#2a1f2e" stroke-width="2"/><rect x="26" y="40" width="12" height="18" fill="#15131c"/><path d="M28 18h8M30 18v8l-6 10h16l-6-10v-8" fill="none" stroke="#ece3cf" stroke-width="2" stroke-linejoin="round"/><path d="M26 34h12l2 2H24z" fill="#8fbf6a"/><circle cx="31" cy="30" r="1.5" fill="#8fbf6a"/><circle cx="34" cy="27" r="1" fill="#8fbf6a"/></svg>
@@ -379,6 +394,13 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div id="stonesList"></div>
   </section>
 
+  <section class="panel" id="p_tavern" hidden>
+    <h2>The Tavern</h2>
+    <p class="quote">“Come for the ale, stay because the door sticks.”</p>
+    <p>Villagers, rumours and suspiciously cheap ale. If anyone in town needs something done, this is where they'll ask. Finished jobs are paid here too.</p>
+    <div id="tavernList"></div>
+  </section>
+
   <section class="panel" id="p_archivus" hidden>
     <h2>Archivus Arcanus</h2>
     <p class="quote">“You are not prepared!”</p>
@@ -417,6 +439,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
   <div class="manabar" aria-hidden="true"><div id="manafill"></div></div>
   <div class="row">
     <div class="mapname" id="mapname"></div>
+<button class="mini qbtn" id="questBattle" type="button">Quests<span class="badge" hidden>!</span></button>
 <button class="mini book" id="bookBattle" type="button" aria-label="Open the Grimoire" title="The Grand Grimoire of Everything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c3-1.5 6-1.5 9 1v14c-3-2.5-6-2.5-9-1z" fill="#5b3f8f" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M21 5c-3-1.5-6-1.5-9 1v14c3-2.5 6-2.5 9-1z" fill="#4a3374" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M16.5 9.5l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#e8c45a"/></svg>Grimoire</button>
     <button class="mini" id="artBtn" type="button">Art: new</button>
     <button class="mini" id="music" type="button" aria-pressed="true">Music on</button>
@@ -479,6 +502,16 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 </div>
 
  <div id="talkDim" hidden></div>
+ <div class="overlay" id="questOverlay" hidden>
+  <div class="overlay-inner">
+    <button class="mini close" id="questClose" type="button">Close</button>
+    <section class="panel">
+      <h2>Quests</h2>
+      <p>Jobs the villagers have asked for. Finished ones are paid at the Tavern.</p>
+      <div id="questList"></div>
+    </section>
+  </div>
+</div>
  <div class="overlay" id="grimOverlay" hidden>
   <div class="overlay-inner" id="grimSlot">
     <button class="mini close" id="grimClose" type="button">Close</button>
@@ -670,6 +703,16 @@ const DATA = {
     bridge:    { name: "Bridge",  moveCost: 1 },
     structure: { name: "Ward",    blocks: ["ground", "incorporeal"], moveCost: 1 }
   },
+  // jobs from the Tavern; "kills" counts defeats from the moment the quest is taken
+  quests: {
+    hero: { name: "So you wanna be a hero?", about: "Defeat 20 kobolds and show the village you can scare one.", kills: { kobold: 20 }, reward: { gold: 25, exp: 25 },
+      offer: [
+        { who: "Villagers", text: "So, you're the one everyone is talking about. To tell you the truth, you're not much to look at... Bob here says you're nothing but a showoff. He says you couldn't scare a kobold." },
+        { who: "The Summonancer", text: "Couldn't scare a kobold? The real trick would be to NOT scare them! I'll show you! I'll show you all!!" },
+        { who: "Villagers (muttering)", text: "Huh... He does sound kinda mean... Maybe he's one of those creeps who have unnaturally strong tender feelings about necks..." }
+      ],
+      done: [{ who: "Villagers", text: "Twenty kobolds? Huh. Bob owes me a pint. Fine, you can scare a kobold. Here, this is yours." }] }
+  },
   // materials enemies drop; they pile up in the warehouse for things still to come
   materials: {
     stone:   { one: "smooth stone", many: "smooth stones", name: "Smooth stone" },
@@ -713,7 +756,8 @@ let META = freshMeta(), oldSave = false;
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const saved = JSON.parse(raw); oldSave = !saved.v2; META = Object.assign(META, saved); } } catch (e) {}
 // older saves kept bought bones separately; they now live in the warehouse
 META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {};
-for (const k of ["stone", "iron", "wood", "crystal"]) META.warehouse[k] = META.warehouse[k] || 0; META.research = META.research || {};
+for (const k of ["stone", "iron", "wood", "crystal"]) META.warehouse[k] = META.warehouse[k] || 0;
+META.quests = META.quests || {}; META.research = META.research || {};
 for (const k of ["lab", "well", "golematorium", "library", "stones"]) META.research[k] = META.research[k] || {};
 META.summoned = META.summoned || {}; META.kills = META.kills || {};
 if (META.bones) { META.warehouse.bones += META.bones; META.bones = 0; }
@@ -1538,6 +1582,7 @@ function endBattle(retreated) {
   for (const k in DATA.materials) META.warehouse[k] = (META.warehouse[k] || 0) + S.loot[k];
   META.kills = META.kills || {};
   for (const k in S.slain) META.kills[k] = (META.kills[k] || 0) + S.slain[k];
+  S.tallied = true;
   META.best[levelKey] = Math.max(META.best[levelKey] || 0, S.wave);
   const first = META.stage === "intro";
   if (first) META.stage = "monologue";
@@ -1823,6 +1868,7 @@ function draw() {
 }
 
 function hud() {
+  if ((S.qTick = (S.qTick || 0) + 1) % 15 === 0) markQuests();
   $("mana").textContent = Math.floor(S.mana) + "/" + S.manaMax;
   $("manafill").style.width = (S.mana / S.manaMax * 100) + "%";
   $("bones").textContent = S.bones;
@@ -1847,11 +1893,12 @@ function showBest() {
 }
 
 // ---------- Town ----------
-const BUILDINGS = ["gate", "tower", "builder", "grimoire", "lab", "well", "septagram", "golematorium", "library", "stones", "archivus"];
+const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "lab", "well", "septagram", "golematorium", "library", "stones", "archivus"];
 function openBuilding(k) {
   for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
   if (k === "grimoire") renderGrimoire();
   if (k === "builder") builderTalk();
+  if (k === "tavern") tavernTalk();
 }
 // ---------- Talking: the wizard, the Builder and whoever else has something to say ----------
 const LINES = {
@@ -1932,6 +1979,64 @@ for (const k in DATA.levels) {
   maps.appendChild(b);
 }
 
+// ---------- Quests ----------
+// defeats so far, including the battle in progress
+const killsNow = k => kills(k) + (S && !S.tallied ? (S.slain[k] || 0) : 0);
+function questProgress(id) {
+  const q = DATA.quests[id], m = META.quests[id], out = [];
+  for (const k in q.kills) out.push({ k, have: Math.min(q.kills[k], killsNow(k) - (m.start[k] || 0)), need: q.kills[k] });
+  return out;
+}
+const questDone = id => META.quests[id] && META.quests[id].state === "active" && questProgress(id).every(p => p.have >= p.need);
+const anyQuestReady = () => Object.keys(META.quests).some(questDone);
+function takeQuest(id) {
+  const start = {}; for (const k in DATA.quests[id].kills) start[k] = kills(k);
+  META.quests[id] = { state: "active", start }; saveMeta();
+}
+function tavernTalk() {
+  if (TALK) return;
+  if (!META.quests.hero) talk(DATA.quests.hero.offer, () => { takeQuest("hero"); renderTown(); });
+}
+function questRow(id, inTavern) {
+  const q = DATA.quests[id], m = META.quests[id], ready = questDone(id);
+  const prog = questProgress(id).map(p => p.have + " / " + p.need + " " + DATA.enemies[p.k].name.toLowerCase() + "s").join(", ");
+  const rw = [q.reward.gold ? q.reward.gold + " gold" : "", q.reward.exp ? q.reward.exp + " exp" : ""].filter(Boolean).join(" and ");
+  const state = m.state === "claimed" ? "<span class='qstate claimed'>Rewarded</span>" : ready ? "<span class='qstate ready'>Complete</span>" : "<span class='qstate'>Active</span>";
+  const btn = inTavern && ready ? "<button class='btn primary glow' type='button' data-claim='" + id + "'>Claim · " + rw + "</button>" : "";
+  return "<div class='quest'><div class='qhead'><b>" + q.name + "</b>" + state + btn + "</div><p>" + q.about + "</p>" +
+    (m.state === "claimed" ? "" : "<p>Progress: " + prog + ". Reward: " + rw + (ready && !inTavern ? ". Collect it at the Tavern." : ".") + "</p>") + "</div>";
+}
+function renderQuests() {
+  const ids = Object.keys(META.quests);
+  const order = ids.filter(id => META.quests[id].state !== "claimed").concat(ids.filter(id => META.quests[id].state === "claimed"));
+  $("questList").innerHTML = order.length ? order.map(id => questRow(id, false)).join("") : "<p class='blank'>No quests yet. The villagers at the Tavern may have something for you.</p>";
+  $("tavernList").innerHTML = order.length ? order.map(id => questRow(id, true)).join("") : "<p class='req'>The villagers are eyeing you from the corner table. Maybe come in and say hello.</p>";
+  for (const b of $("tavernList").querySelectorAll("[data-claim]")) b.addEventListener("click", () => claimQuest(b.dataset.claim));
+  markQuests();
+}
+function claimQuest(id) {
+  if (!questDone(id)) return;
+  const q = DATA.quests[id];
+  META.gold += q.reward.gold || 0; META.exp += q.reward.exp || 0; META.quests[id].state = "claimed";
+  SFX.play("coins"); saveMeta(); renderTown();
+  if (q.done) talk(q.done);
+}
+function markQuests() { const r = anyQuestReady(); for (const id of ["questTown", "questBattle"]) $(id).querySelector(".badge").hidden = !r; }
+let questOpen = false, questPausedBattle = false;
+function openQuests() {
+  if (TALK) return;
+  questOpen = true; renderQuests(); $("questOverlay").hidden = false;
+  if (inBattle && S && !S.over && !paused) { togglePause(); questPausedBattle = true; }
+}
+function closeQuests() {
+  questOpen = false; $("questOverlay").hidden = true;
+  if (questPausedBattle && paused) togglePause();
+  questPausedBattle = false;
+}
+$("questTown").addEventListener("click", openQuests); $("questBattle").addEventListener("click", openQuests);
+$("questClose").addEventListener("click", closeQuests);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && questOpen) closeQuests(); });
+
 // leaving town: the wizard casts, blinks out and reappears on the battlefield
 function goBattle(k) {
   if (TOWN.seq && TOWN.seq.kind === "vanish") return;
@@ -1950,7 +2055,8 @@ function renderTown() {
   $("b_septagram").classList.toggle("glow", META.stage === "septagram");
   renderBuilder(); renderSeptagram();
   for (const w of ["lab", "well", "golematorium", "library", "stones"]) renderResearch(w);
-  renderUnits(); if (!TALK) showTalk();
+  renderUnits(); renderQuests(); if (!TALK) showTalk();
+  $("b_tavern").classList.toggle("glow", META.stage === "done" && !META.quests.hero || anyQuestReady());
   const T = DATA.tower;
   const mCost = T.mana.cost(META.manaLv), rCost = T.regen.cost(META.regenLv), sCost = T.slots.cost(META.slotLv);
   $("upManaInfo").textContent = "Level " + META.manaLv + " · max mana " + wizManaMax() + " → " + (wizManaMax() + T.mana.per);

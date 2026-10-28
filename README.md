@@ -22,7 +22,8 @@ Current prototype:
   - Cryptic Laboratory ("It's not a crypt! It's a Laboratory!"): skeleton research for damage, attack speed, move speed, armor, health and archer range (up to twice the reach at level 10)
   - Wisping Well ("Drop a coin in the well and you probably just lose a coin."): wisp research for shorter swamp daydreams, faster healing, self-mending, damage, health and speed
   - Research costs gold, plus bones from level 2 and skulls from level 6
-  - Warehouse: everything carried back from battle (gold, bones, skulls)
+  - Tavern: where villagers hand out quests and pay for finished ones. The first, "So you wanna be a hero?", asks for 20 kobolds and pays 25 gold and 25 exp. The Quests button in the top bar lists active and finished quests and shows a gold "!" when one is ready to hand in
+  - Warehouse: everything carried back from battle (gold, bones, skulls and materials)
   - The Grand Grimoire of Everything (also opens from the book button in the top bar, which pauses a battle while it's open): Enemies pages fill in as enemies are defeated, Allies pages as summons are called (1 / 5 / 15 / 30 / 60 defeats unlock appearance and walk, combat stats with stand and attack animations, drops and rewards, behaviour with the panic animation, and field notes with the charmed and confused animations)
 - Three maps: Hillside (ward along one edge), Crossroads (wizard in the middle, enemies from every side), Outpost (outpost on one edge, enemies from three sides)
 - Each battle generates a fresh field: grass, dirt, sand, rock, boulders, swamp, bushes, trees, puddles, lakes (2-9 tiles in a 3x3 area) and sometimes a river crossing the whole field with 1-3 bridges. Every walkable tile is guaranteed to connect to the ward.
