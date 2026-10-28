@@ -285,7 +285,12 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 const DATA = {
   grid: { cols: 9, rows: 14 },
   wizard: { manaMax: 15, manaStart: 10, manaRegen: 1.0, ward: 5, summonSlots: 5 },
-  accelTime: 0.8,                                     // seconds from standing still to full speed
+  movement: {
+    accelTime: 0.8,      // seconds from standing still to full speed
+    brakeTime: 0.3,      // seconds from full speed to a stop when a unit holds still
+    turnRate: 7,         // radians per second (about 90 degrees in a quarter second)
+    cornerSpeed: 0.45    // share of speed kept while turning hard
+  },
   tower: {
     mana:  { per: 5,    cost: lv => 3 + 4 * lv + lv * lv },                 // 3, 8, 15, 24 ... level 16: 323
     regen: { per: 0.15, cost: lv => Math.round(4 + 5 * lv + 1.5 * lv * lv) },// 4, 11, 20, 32 ... level 24: 988
@@ -546,7 +551,7 @@ function findPath(sx, sy, goal, h, d, side) {
 // ---------- Entities ----------
 function makeActor(side, kind, x, y) {
   const d = side === "ally" ? DATA.units[kind] : DATA.enemies[kind];
-  return { side, kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0, enter: null, panic: 0, ramp: 0, moved: false, charm: 0, charmTick: 0 };
+  return { side, kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0, enter: null, panic: 0, heading: null, spd: 0, moved: false, charm: 0, charmTick: 0 };
 }
 
 function summonAt(cx, cy) {
@@ -659,19 +664,37 @@ function speedAt(a) {
   return a.d.speed * (t.slow || 1);
 }
 
-// move straight toward a point, easing up to full speed; false if a tile blocks the way
-function moveDirect(a, tx, ty, dt, checkTiles) {
-  const dx = tx - a.x, dy = ty - a.y, d = Math.hypot(dx, dy);
-  if (d < 1e-6) return true;
-  const ramp = Math.min(1, a.ramp + dt / DATA.accelTime);
-  const sp = speedAt(a) * (0.15 + 0.85 * ramp) * dt;
-  const nx = d <= sp ? tx : a.x + dx / d * sp, ny = d <= sp ? ty : a.y + dy / d * sp;
-  if (checkTiles && !passable(Math.round(nx), Math.round(ny), a.d.move)) return false;
-  a.x = nx; a.y = ny; a.ramp = ramp; a.moved = true;
-  return d <= sp;
+// steer toward a point: turn at a limited rate, speed up gradually and slow down in sharp turns.
+// returns true once within arrival distance, "blocked" if the way ahead is blocked, false otherwise
+function moveDirect(a, tx, ty, dt, checkTiles, arrive) {
+  const M = DATA.movement, dx = tx - a.x, dy = ty - a.y, d = Math.hypot(dx, dy);
+  if (d < (arrive || 0.05)) return true;
+  const want = Math.atan2(dy, dx), top = speedAt(a), h0 = a.heading, s0 = a.spd;
+  if (a.heading === null || a.spd < top * 0.08 || d < 0.3) a.heading = want;   // nearly still or almost there: pivot
+  let diff = Math.atan2(Math.sin(want - a.heading), Math.cos(want - a.heading));
+  const turn = Math.max(-M.turnRate * dt, Math.min(M.turnRate * dt, diff));
+  a.heading += turn; diff -= turn;
+  const goal = top * (M.cornerSpeed + (1 - M.cornerSpeed) * Math.max(0, Math.cos(diff)));
+  a.spd = a.spd < goal ? Math.min(goal, a.spd + top / M.accelTime * dt) : Math.max(goal, a.spd - top / M.brakeTime * dt);
+  let step = Math.min(a.spd * dt, d);
+  const tryMove = h => {
+    const nx = a.x + Math.cos(h) * step, ny = a.y + Math.sin(h) * step, cx = Math.round(nx), cy = Math.round(ny);
+    if (inGrid(cx, cy) ? !passable(cx, cy, a.d.move) : checkTiles) return false;
+    a.x = nx; a.y = ny; return true;
+  };
+  if (!tryMove(a.heading)) {
+    // the curve would clip an obstacle: turn straight at the goal instead
+    a.heading = want;
+    if (!tryMove(want)) {
+      if (checkTiles) { a.heading = h0; a.spd = s0; return "blocked"; }   // let the caller pick another route, momentum intact
+      a.spd *= 0.5; return d < 0.3;
+    }
+  }
+  a.moved = true;
+  return Math.hypot(tx - a.x, ty - a.y) < (arrive || 0.05);
 }
 
-// follow an A* path toward a goal, recomputed twice a second
+// follow an A* path toward a goal, recomputed twice a second; waypoints are passed, not stopped at
 function travel(a, goal, h, dt) {
   a.repath -= dt;
   if (a.repath <= 0 || !a.path.length) {
@@ -679,14 +702,15 @@ function travel(a, goal, h, dt) {
     const c = cellOf(a);
     a.path = findPath(Math.max(0, Math.min(C - 1, c.x)), Math.max(0, Math.min(R - 1, c.y)), goal, h, a.d, a.side) || [];
   }
-  if (a.path.length && moveDirect(a, a.path[0].x, a.path[0].y, dt, false)) a.path.shift();
+  while (a.path.length > 1 && dist(a, a.path[0]) < 0.35) a.path.shift();
+  if (a.path.length && moveDirect(a, a.path[0].x, a.path[0].y, dt, false, a.path.length > 1 ? 0.35 : 0.08)) a.path.shift();
   return a.path.length > 0;
 }
 
 // head for another actor: wisps fly straight when nothing is in the way
 function approach(a, target, dt) {
   const d = dist(a, target);
-  if ((a.d.ignoresTerrain || d < 1.9) && moveDirect(a, target.x, target.y, dt, true) !== false) { a.path = []; return true; }
+  if ((a.d.ignoresTerrain || d < 1.9) && moveDirect(a, target.x, target.y, dt, true) !== "blocked") { a.path = []; return true; }
   const tc = cellOf(target);
   const h = (x, y) => Math.hypot(x - tc.x, y - tc.y);
   return travel(a, (x, y) => Math.abs(x - tc.x) <= 1 && Math.abs(y - tc.y) <= 1 && (x === tc.x || y === tc.y || a.d.ignoresTerrain), h, dt);
@@ -694,7 +718,7 @@ function approach(a, target, dt) {
 
 function goToTile(a, tx, ty, dt) {
   if (dist(a, { x: tx, y: ty }) < 0.6) return;
-  if (a.d.ignoresTerrain && moveDirect(a, tx, ty, dt, true) !== false) return;
+  if (a.d.ignoresTerrain && moveDirect(a, tx, ty, dt, true) !== "blocked") return;
   travel(a, (x, y) => Math.abs(x - tx) + Math.abs(y - ty) <= (passable(tx, ty, a.d.move) ? 0 : 1), (x, y) => Math.hypot(x - tx, y - ty), dt);
 }
 
@@ -769,7 +793,7 @@ function updateFoe(e, dt) {
 function flee(e, dt) {
   const threat = nearest(e, S.units, 8);
   if (!threat) return;
-  if (!e.fleeTo || dist(e, e.fleeTo) < 0.1) {
+  if (!e.fleeTo) {
     const c = cellOf(e); let best = null, bd = dist(c, threat);
     for (const [dx, dy] of DIRS8) {
       const nx = c.x + dx, ny = c.y + dy;
@@ -779,7 +803,7 @@ function flee(e, dt) {
     }
     e.fleeTo = best;
   }
-  if (e.fleeTo) moveDirect(e, e.fleeTo.x, e.fleeTo.y, dt, false);
+  if (e.fleeTo && moveDirect(e, e.fleeTo.x, e.fleeTo.y, dt, false, 0.15)) e.fleeTo = null;
 }
 
 function panicGoblins() {
@@ -808,9 +832,9 @@ function update(dt) {
   for (const a of S.units.concat(S.enemies)) {
     a.cd = Math.max(0, a.cd - dt); a.hit = Math.max(0, a.hit - dt); a.panic = Math.max(0, a.panic - dt); a.charm = Math.max(0, a.charm - dt);
     a.moved = false;
-    if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false)) a.enter = null; }
+    if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false, 0.2)) a.enter = null; }
     else if (a.side === "ally") updateAlly(a, dt); else updateFoe(a, dt);
-    if (!a.moved) a.ramp = Math.max(0, a.ramp - dt * 3);   // standing still loses momentum quickly
+    if (!a.moved) a.spd = Math.max(0, a.spd - speedAt(a) / DATA.movement.brakeTime * dt);   // holding still: brake, keep heading
   }
   separate(S.units); separate(S.enemies);
 
@@ -827,7 +851,7 @@ function update(dt) {
   for (const e of S.enemies) {
     if (e.hp <= 0 || e.enter) continue;
     const c = cellOf(e);
-    if (inGrid(c.x, c.y) && L.reach(c.x, c.y) && dist(e, c) < 0.15) {
+    if (inGrid(c.x, c.y) && L.reach(c.x, c.y)) {
       e.hp = 0; e.reached = true; S.ward -= 1;
       float(e.x, e.y, "ward -1", "#e0904a");
       say("Something reached the ward!");
