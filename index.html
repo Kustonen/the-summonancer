@@ -492,7 +492,7 @@ div.mapbtn { cursor: default; }
       <h3>Spells</h3>
       <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward.</p>
       <h3>Assault</h3>
-      <p>On the Assault field the enemies pour out of a <b>red ward</b> at the top. Summons with nothing to fight nearby march up and attack it. It is armoured (wisps barely scratch it; wards are built to keep spirits out), it pulses to hurt summons right next to it, and every fifth of its health lost it spits out a squad of defenders. Break it to win; spells that hit a tile can't touch it.</p>
+      <p>On the Assault field the enemies pour out of a <b>red ward</b> at the top. Summons with nothing to fight nearby march up and attack it. It is armoured (wisps barely scratch it; wards are built to keep spirits out), it pulses to hurt summons right next to it, and every third of its health lost it spits out a squad of defenders. Break it to win; spells that hit a tile can't touch it.</p>
       <h3>Enemies</h3>
       <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. From wave 10, they arrive in tight packs, and from wave 40 every wave makes them a little tougher and harder-hitting.</p>
       <h3>Terrain</h3>
@@ -655,7 +655,7 @@ const DATA = {
     beyondStep: 0.2
   },
   units: {
-    wisp: { name: "Wisp", freezeImmune: true, wardMult: 0.3, cost: { mana: 10, bone: 0 }, hp: 24, damage: 1, attackEvery: 0.8, speed: 1.8, range: 1.15,
+    wisp: { name: "Wisp", freezeImmune: true, wardMult: 0.5, cost: { mana: 10, bone: 0 }, hp: 24, damage: 1, attackEvery: 0.8, speed: 1.8, range: 1.15,
             move: "incorporeal", ignoresTerrain: true, heal: { amount: 1, every: 1.6, range: 1.2 },
             swampCharm: { chancePerSecond: 0.02, radius: 3, duration: 10 } },
     skeleton_warrior: { name: "Skeleton Warrior", freezeImmune: true, cost: { mana: 5, bone: 1 }, hp: 20, damage: 3, attackEvery: 0.8, speed: 1.6, range: 1.15, move: "ground" },
@@ -796,11 +796,11 @@ const DATA = {
   },
   // Assault difficulty: the enemy ward's health, seconds between waves, and how much tougher the enemies are
   // armor: blocked from every hit (at least a quarter always gets through); pulse: damage to summons right next to it, every few seconds;
-  // alarm: every fifth of its health lost, it spits out a squad of defenders
+  // alarm: every third of its health lost, it spits out a squad of defenders
   assault: {
-    easy:   { name: "Easy",   wardHp: 150, armor: 1, pulse: { dmg: 2, every: 3 },   alarm: ["kobold", "kobold", "bog_goblin"],               gap: 14, strength: 1.0, reward: { exp: 25,  gold: 25 } },
-    normal: { name: "Normal", wardHp: 300, armor: 1.2, pulse: { dmg: 2.5, every: 2.5 }, alarm: ["kobold", "bog_goblin", "bog_goblin"], gap: 11, strength: 1.3, reward: { exp: 60,  gold: 60 } },
-    hard:   { name: "Hard",   wardHp: 600, armor: 2, pulse: { dmg: 4, every: 2 },   alarm: ["bog_goblin", "bog_goblin", "orc", "orc", "kobold"], gap: 8, strength: 1.7, reward: { exp: 140, gold: 140 } }
+    easy:   { name: "Easy",   wardHp: 150, armor: 1, pulse: { dmg: 2, every: 4 },   alarm: ["kobold", "kobold", "bog_goblin"],               gap: 14, strength: 1.0, reward: { exp: 25,  gold: 25 } },
+    normal: { name: "Normal", wardHp: 300, armor: 1.2, pulse: { dmg: 2.5, every: 3.5 }, alarm: ["kobold", "bog_goblin", "bog_goblin"], gap: 11, strength: 1.3, reward: { exp: 60,  gold: 60 } },
+    hard:   { name: "Hard",   wardHp: 600, armor: 2, pulse: { dmg: 4, every: 3 },   alarm: ["bog_goblin", "bog_goblin", "orc", "orc", "kobold"], gap: 8, strength: 1.7, reward: { exp: 140, gold: 140 } }
   }
 };
 const QUIPS = {
@@ -1490,7 +1490,7 @@ function hurt(t, dmg, color) {
   if (t.isWard) {
     dmg = Math.max(dmg * 0.25, dmg - S.assault.armor);
     const before = S.foeWardHp; t.hp -= dmg; S.wardFlash = 0.15; float(t.x, t.y + 0.4, "-" + fmt(Math.round(dmg * 10) / 10), color);
-    const step = S.foeWardMax / 5;                 // every fifth of its health: the alarm goes off
+    const step = S.foeWardMax / 3;                 // every third of its health: the alarm goes off
     if (S.foeWardHp > 0 && Math.floor(before / step) > Math.floor(S.foeWardHp / step)) wardAlarm();
     return;
   }
