@@ -11,7 +11,7 @@ Current prototype:
   - Town Gate: pick a battlefield
   - Spelltower: spend experience on max mana, mana regeneration and summon slots (5 at start, then 50 / 100 / 150 ... exp each)
   - Market: buy bones with gold (10 gold each); bought bones go to the next battle and come back if unused
-  - The Grand Grimoire of Everything: a bestiary that fills in as enemies are defeated (1 / 5 / 15 / 30 / 60 defeats unlock appearance and walk, combat stats with stand and attack animations, drops and rewards, behaviour with the panic animation, and field notes with the charmed and confused animations)
+  - The Grand Grimoire of Everything (also opens from the book button in the top bar, which pauses a battle while it's open): a bestiary that fills in as enemies are defeated (1 / 5 / 15 / 30 / 60 defeats unlock appearance and walk, combat stats with stand and attack animations, drops and rewards, behaviour with the panic animation, and field notes with the charmed and confused animations)
 - Three maps: Hillside (ward along one edge), Crossroads (wizard in the middle, enemies from every side), Outpost (outpost on one edge, enemies from three sides)
 - Each battle generates a fresh field: grass, dirt, sand, rock, boulders, swamp, bushes, trees, puddles, lakes (2-9 tiles in a 3x3 area) and sometimes a river crossing the whole field with 1-3 bridges. Every walkable tile is guaranteed to connect to the ward.
   - Sand and puddles slow a little, swamp a lot, bushes slow enemies only
@@ -46,4 +46,4 @@ The DEV button in the town view sets exp and gold and resets Spelltower abilitie
 
 ## Character art
 
-`style-studies/cast.html` is the animated character study (skeleton, archer, wisp, goblin, kobold, orc) with walk, stand, attack, panic, charmed and confused animations and per-character random looks. The same drawings are used in the Grimoire; the battlefield still uses the simple placeholder shapes for now.
+`style-studies/cast.html` is the animated character study (skeleton, archer, wisp, goblin, kobold, orc) with walk, stand, attack, panic, charmed and confused animations and per-character random looks. The same drawings are used in the Grimoire and on the battlefield. The "Art" button in battle switches between the new art and the original classic shapes; the choice is remembered.

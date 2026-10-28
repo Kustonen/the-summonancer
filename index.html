@@ -149,6 +149,14 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .prog { height: 6px; border-radius: 3px; background: var(--night); border: 1px solid var(--line); overflow: hidden; }
 .prog > div { height: 100%; background: var(--exp); }
 .blank { color: var(--dim); font-style: italic; }
+.book { display: inline-flex; align-items: center; gap: 5px; }
+.book svg { width: 18px; height: 18px; flex: none; }
+.overlay { position: fixed; inset: 0; z-index: 20; background: rgba(21, 19, 28, .9); overflow-y: auto;
+  padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.overlay-inner { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+.overlay .close { align-self: flex-end; }
+@media (max-width: 420px) { .row .book { font-size: 0; gap: 0; padding: 4px 8px; } }
 .dev { border-style: dashed; color: var(--ember); border-color: var(--ember); }
 .devpanel { border: 1px dashed var(--ember); }
 .num { width: 9em; max-width: 100%; box-sizing: border-box; background: var(--night); color: var(--bone); border: 1px solid var(--line); border-radius: 8px; font: inherit; font-variant-numeric: tabular-nums; padding: 8px 10px; }
@@ -168,6 +176,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <div class="stat"><span id="tGold" style="color:var(--gold)">0</span><small>gold</small></div>
       <div class="stat"><span id="tExp" style="color:var(--exp)">0</span><small>exp</small></div>
       <div class="stat"><span id="tBones">0</span><small>stored bones</small></div>
+<button class="mini book" id="bookTown" type="button" aria-label="Open the Grimoire" title="The Grand Grimoire of Everything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c3-1.5 6-1.5 9 1v14c-3-2.5-6-2.5-9-1z" fill="#5b3f8f" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M21 5c-3-1.5-6-1.5-9 1v14c3-2.5 6-2.5 9-1z" fill="#4a3374" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M16.5 9.5l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#e8c45a"/></svg>Grimoire</button>
       <button class="mini dev" id="devBtn" type="button" aria-expanded="false">DEV</button>
     </div>
   </div>
@@ -272,6 +281,8 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
   <div class="manabar" aria-hidden="true"><div id="manafill"></div></div>
   <div class="row">
     <div class="mapname" id="mapname"></div>
+<button class="mini book" id="bookBattle" type="button" aria-label="Open the Grimoire" title="The Grand Grimoire of Everything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c3-1.5 6-1.5 9 1v14c-3-2.5-6-2.5-9-1z" fill="#5b3f8f" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M21 5c-3-1.5-6-1.5-9 1v14c3-2.5 6-2.5 9-1z" fill="#4a3374" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M16.5 9.5l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#e8c45a"/></svg>Grimoire</button>
+    <button class="mini" id="artBtn" type="button">Art: new</button>
     <button class="mini" id="music" type="button" aria-pressed="true">Music on</button>
     <button class="mini" id="pause" type="button">Pause</button>
   </div>
@@ -321,6 +332,12 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <b>Archer</b><span class="d">Bones, with a bow.</span>
       <span class="cost"><span class="m">10</span> · <span class="b">2 bones</span></span>
     </button>
+  </div>
+</div>
+
+ <div class="overlay" id="grimOverlay" hidden>
+  <div class="overlay-inner" id="grimSlot">
+    <button class="mini close" id="grimClose" type="button">Close</button>
   </div>
 </div>
 
@@ -628,7 +645,8 @@ function findPath(sx, sy, goal, h, d, side) {
 // ---------- Entities ----------
 function makeActor(side, kind, x, y) {
   const d = side === "ally" ? DATA.units[kind] : DATA.enemies[kind];
-  return { side, kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0, enter: null, panic: 0, heading: null, spd: 0, moved: false, charm: 0, charmTick: 0 };
+  return { side, kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0, enter: null, panic: 0, heading: null, spd: 0, moved: false, charm: 0, charmTick: 0,
+           look: null, phase: Math.random() * 10, lastStrike: null, flip: side === "foe" ? Math.random() < 0.5 : false };
 }
 
 function summonAt(cx, cy) {
@@ -800,7 +818,7 @@ function goToTile(a, tx, ty, dt) {
 }
 
 function strike(a, target) {
-  a.cd = a.d.attackEvery;
+  a.cd = a.d.attackEvery; a.lastStrike = S.time; a.flip = target.x < a.x - 0.05;
   if (a.d.ranged) { S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage }); return; }
   hurt(target, a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");
 }
@@ -1152,6 +1170,43 @@ function drawActor(a) {
   }
 }
 
+// the new character art on the battlefield; the classic shapes stay available through the Art toggle
+const ART_SCALE = { kobold: 0.86, orc: 1.3 };
+function drawActorArt(a) {
+  const T = tile, s = T / 112, px = a.x * T + T / 2, gy = a.y * T + T * 0.8;
+  if (!a.look) a.look = ART.looks(a.kind);
+  // which animation to play
+  const fighting = a.lastStrike !== null && S.time - a.lastStrike < a.d.attackEvery * 1.15;
+  let m = "idle";
+  if (a.enter || a.moved) m = "walk";
+  if (fighting && !a.moved) m = "attack";
+  if (a.panic > 0) m = "panic";
+  if (a.charm > 0) m = "charm";
+  // attack timing is mapped so the blow lands exactly when the game deals the damage
+  let t = S.time + a.phase;
+  if (m === "attack") {
+    const skel = a.kind === "skeleton_warrior" || a.kind === "skeleton_archer";
+    const per = skel ? 1.3 : 1.4, imp = a.kind === "skeleton_archer" ? 0.37 : skel ? 0.47 : 0.52;
+    t = per * ((S.time - a.lastStrike) / a.d.attackEvery + imp);
+  }
+  if (a.moved && a.heading !== null && Math.abs(Math.cos(a.heading)) > 0.35) a.flip = Math.cos(a.heading) < 0;
+  ART.drawAt(a.kind, ctx, px, gy, s, t, a.look, m, a.flip);
+  // health bar and nemesis mark on top
+  const top = a.kind === "wisp" ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1), mid = a.kind === "wisp" ? gy - 62 * s : (top + gy) / 2;
+  if (S.nemesis && S.nemesis.target === a) {
+    ctx.strokeStyle = "#e2566a"; ctx.lineWidth = 2;
+    const rr = (gy - top) * 0.55 + Math.sin(S.time * 8) * 2;
+    ctx.beginPath(); ctx.arc(px, mid, rr, 0, Math.PI * 2); ctx.stroke();
+  }
+  const f = Math.max(0, a.hp / a.d.hp);
+  if (f < 1) {
+    ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(px - T * .35, top - 6, T * .7, 4);
+    ctx.fillStyle = a.side === "ally" ? (a.kind === "wisp" ? "#6fa8ff" : "#ece3cf") : "#8fbf6a"; ctx.fillRect(px - T * .35, top - 6, T * .7 * f, 4);
+  }
+}
+let artMode = "new";
+try { artMode = localStorage.getItem("summonancer_art") || "new"; } catch (e) {}
+
 function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const T = tile;
@@ -1182,7 +1237,8 @@ function draw() {
     ctx.beginPath(); ctx.arc(cx, cy, T * .1, 0, Math.PI * 2); ctx.fillStyle = "#6fa8ff"; ctx.fill();
     ctx.globalAlpha = 1;
   }
-  S.enemies.forEach(drawActor); S.units.forEach(drawActor);
+  if (artMode === "new") S.enemies.concat(S.units).sort((p, q) => p.y - q.y).forEach(drawActorArt);
+  else { S.enemies.forEach(drawActor); S.units.forEach(drawActor); }
   ctx.strokeStyle = "#ece3cf"; ctx.lineWidth = 2;
   for (const s of S.shots) {
     const px = s.x * T + T / 2, py = s.y * T + T / 2, l = T * .25, a = s.ang || 0;
@@ -1927,12 +1983,27 @@ function rollCracks() {
   // roll the cosmetic quirks a creature is born with
   function looks(kind) {
     const st = { x: 0 };
+    if (kind === "skeleton_warrior" || kind === "skeleton_archer") {
+      const r = rollTeeth(); st.upMiss = r.up; st.lowMiss = r.low;
+      st.glow = Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1];
+      st.cracks = rollCracks(); st.archer = kind === "skeleton_archer";
+    }
     if (kind === "bog_goblin") st.jewels = JEWELS.filter(() => Math.random() < 0.4);
     if (kind === "kobold") { st.tongue = Math.random() < 0.5 ? -1 : 1; st.hornMissing = Math.random() < 0.4 ? (Math.random() < 0.5 ? -1 : 1) : null; }
     if (kind === "orc") { st.marks = {}; for (const spot of ["left", "right", "forehead"]) { const r = Math.random(); st.marks[spot] = r < 0.35 ? "scar" : r < 0.65 ? "plaster" : null; } }
     return st;
   }
-  return { render, looks };
+  // draw a character standing on (x, gy) on the battlefield; flip mirrors it to face left
+  function drawAt(kind, ctx, x, gy, s, t, st, m, flip) {
+    mode = m; LW = Math.max(0.45, s * 1.15);
+    ctx.save();
+    if (flip) { ctx.translate(x, 0); ctx.scale(-1, 1); ctx.translate(-x, 0); }
+    if (kind === "skeleton_warrior" || kind === "skeleton_archer") { st.ctx = ctx; skeleton(st, x, gy, s, t); }
+    else if (kind === "wisp") wisp(ctx, x, gy, s, t, st);
+    else DRAW[kind](ctx, x, gy, s, t, st);
+    ctx.restore();
+  }
+  return { render, looks, drawAt };
 })();
 
 // ---------- The Grand Grimoire of Everything ----------
@@ -1983,9 +2054,40 @@ function renderGrimoire() {
     GRIM.anim = b.dataset.a; for (const o of $("page").querySelectorAll(".anim[data-a]")) o.setAttribute("aria-pressed", o === b ? "true" : "false");
   });
 }
+// the book button opens the same Grimoire panel in an overlay, from town or mid-battle (which pauses)
+let grimOpen = false, grimPausedBattle = false;
+function openGrimoireOverlay() {
+  if (grimOpen) return;
+  grimOpen = true;
+  $("grimSlot").appendChild($("p_grimoire")); $("p_grimoire").hidden = false;
+  $("grimOverlay").hidden = false;
+  if (inBattle && S && !S.over && !paused) { togglePause(); grimPausedBattle = true; }
+  renderGrimoire();
+}
+function closeGrimoireOverlay() {
+  if (!grimOpen) return;
+  grimOpen = false;
+  $("grimOverlay").hidden = true;
+  $("townView").insertBefore($("p_grimoire"), $("townView").querySelector(".foot"));
+  $("p_grimoire").hidden = $("b_grimoire").getAttribute("aria-pressed") !== "true";
+  if (grimPausedBattle && paused) togglePause();
+  grimPausedBattle = false;
+}
+$("bookTown").addEventListener("click", openGrimoireOverlay);
+$("bookBattle").addEventListener("click", openGrimoireOverlay);
+$("grimClose").addEventListener("click", closeGrimoireOverlay);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && grimOpen) closeGrimoireOverlay(); });
+
+function markArt() { $("artBtn").textContent = artMode === "new" ? "Art: new" : "Art: classic"; }
+$("artBtn").addEventListener("click", () => {
+  artMode = artMode === "new" ? "classic" : "new"; markArt();
+  try { localStorage.setItem("summonancer_art", artMode); } catch (e) {}
+});
+markArt();
+
 function drawGrimoire(dt) {
   const cv = $("grimCv");
-  if (!cv || $("p_grimoire").hidden || inBattle) return;
+  if (!cv || $("p_grimoire").hidden || (inBattle && !grimOpen)) return;
   GRIM.t += dt;
   ART.render(GRIM.foe, cv, GRIM.looks[GRIM.foe], GRIM.t, dt, GRIM.anim);
 }
@@ -2050,7 +2152,7 @@ markMusic();
 function loop(t) {
   const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t;
   if (inBattle && S) { if (!paused) update(dt); draw(); hud(); }
-  else drawGrimoire(dt);
+  drawGrimoire(dt);
   requestAnimationFrame(loop);
 }
 
