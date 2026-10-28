@@ -19,7 +19,7 @@ Current prototype:
   - Protective Stone Circle ("Stonehenge? We just keep our sheep penned here..."): a sturdier ward, the Shove spell (pushes nearby enemies back, every 60 s down to 30 s) and Mending Stones
   - Archivus Arcanus: "You are not prepared!"
   - The upgrade buildings show each summon's animation and current numbers
-  - Cryptic Laboratory ("It's not a crypt! It's a Laboratory!"): skeleton research for damage, attack speed, move speed, armor and health
+  - Cryptic Laboratory ("It's not a crypt! It's a Laboratory!"): skeleton research for damage, attack speed, move speed, armor, health and archer range (up to twice the reach at level 10)
   - Wisping Well ("Drop a coin in the well and you probably just lose a coin."): wisp research for shorter swamp daydreams, faster healing, self-mending, damage, health and speed
   - Research costs gold, plus bones from level 2 and skulls from level 6
   - Warehouse: everything carried back from battle (gold, bones, skulls)
@@ -39,9 +39,9 @@ Current prototype:
   - Golem (20 mana + 3 bones): slow and very tough; nearby enemies attack it instead, and its ground slam hits everything in front of it and shoves it back
 - Enemies and drops:
   - Every bone drop has a small chance (kobold 1 %, goblin 2 %, orc 3 %) to be a whole skull instead
-  - Kobold: weak and fast; always 1 bone, 10 % chance of 1 gold; all kobolds flee for 1 s when one dies
-  - Goblin: 50 % chance of 1-2 bones, 20 % chance of 1-2 gold; panics when four fall within 5 s unless an orc is within 3 tiles
-  - Orc: strong and slow; 50 % chance of 1-3 bones, 25 % chance of 2-5 gold
+  - Kobold: weak and fast; always 1 bone, 25 % chance of 1 gold; all kobolds flee for 1 s when one dies
+  - Goblin: 50 % chance of 1-2 bones, 35 % chance of 1-3 gold; panics when four fall within 5 s unless an orc is within 3 tiles
+  - Orc: strong and slow; 50 % chance of 1-3 bones, 50 % chance of 3-6 gold
 - Waves: kobolds only in waves 1-2, goblins from wave 3, orcs from wave 5, tight packs from wave 10
 - End-of-battle tally: 0.5 / 1 / 2 exp per kobold / goblin / orc, multiplied by the wave reached (0.5x for waves 1-3, 0.75x 4-6, 0.9x 7-9, 1.0x 10-19, 1.1x 20-39, 1.2x 40-59, then +0.2x per 20 waves), rounded up
 - Progress (gold, exp, warehouse, buildings, research, upgrades, grimoire) is saved in the browser's local storage

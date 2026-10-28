@@ -525,7 +525,8 @@ const DATA = {
       { key: "rate",  name: "Loose Joints",       max: 8,  gold: 10, fx: lv => "attacks " + Math.round((1 - Math.pow(0.95, lv)) * 100) + " % faster" },
       { key: "speed", name: "Hollow Bones",       max: 8,  gold: 8,  fx: lv => "+" + lv * 5 + " % move speed" },
       { key: "armor", name: "Calcium Plating",    max: 8,  gold: 12, fx: lv => "blocks " + fmt(lv * 0.3) + " damage per hit" },
-      { key: "hp",    name: "Extra Ribs",         max: 10, gold: 10, fx: lv => "+" + lv * 10 + " % health" }
+      { key: "hp",    name: "Extra Ribs",         max: 10, gold: 10, fx: lv => "+" + lv * 10 + " % health" },
+      { key: "range", name: "Keen Sockets",       max: 10, gold: 15, fx: lv => "archers shoot " + fmt(DATA.units.skeleton_archer.range * (1 + 0.1 * lv)) + " tiles" }
     ],
     well: [
       { key: "charm", name: "Swamp Resolve",  max: 8,  gold: 8,  fx: lv => "swamp daydreams last " + Math.max(2, 10 - lv) + " s" },
@@ -578,12 +579,12 @@ const DATA = {
   },
   enemies: {
     kobold: { name: "Kobold", hp: 7, damage: 1, attackEvery: 0.9, speed: 1.15, range: 1.15, aggro: 2.4, move: "ground",
-              drops: [{ res: "bone", chance: 1, min: 1, max: 1 }, { res: "gold", chance: 0.10, min: 1, max: 1 }], skullChance: 0.01, panicOnKinDeath: 1 },
+              drops: [{ res: "bone", chance: 1, min: 1, max: 1 }, { res: "gold", chance: 0.25, min: 1, max: 1 }], skullChance: 0.01, panicOnKinDeath: 1 },
     bog_goblin: { name: "Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.15, aggro: 2.6, move: "ground",
-                  drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.20, min: 1, max: 2 }], skullChance: 0.02,
+                  drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.35, min: 1, max: 3 }], skullChance: 0.02,
                   panic: { deaths: 4, window: 5, min: 1, max: 5, steadiedBy: "orc", steadyRange: 3 } },
     orc: { name: "Orc", hp: 32, damage: 4, attackEvery: 1.3, speed: 0.65, range: 1.15, aggro: 2.8, move: "ground",
-           drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.25, min: 2, max: 5 }], skullChance: 0.03 }
+           drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.5, min: 3, max: 6 }], skullChance: 0.03 }
   },
   // The Grand Grimoire of Everything: what each page reveals, and after how many defeats
   grimoire: {
@@ -1068,6 +1069,7 @@ function unitDef(kind) {
     d.speed = b.speed * (1 + 0.05 * lv("lab", "speed"));
     d.armor = 0.3 * lv("lab", "armor");
     d.hp = Math.round(b.hp * (1 + 0.1 * lv("lab", "hp")));
+    if (kind === "skeleton_archer") d.range = b.range * (1 + 0.1 * lv("lab", "range"));   // Keen Sockets: twice the reach at level 10
   }
   return d;
 }
