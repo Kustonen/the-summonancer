@@ -60,7 +60,7 @@ button:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
     <div class="info">
       <div class="side us">The Summonancer</div>
       <h2>The wizard himself</h2>
-      <p>Stands on the hillside behind the ward. A wide hat that folds over and droops at the tip, and under the brim nothing but shadow: no face, just two yellow eyes, one a little bigger than the other. The beard grows a stage with every prestige. Hat, robe, staff and amulet are drawn as separate layers, so gear he equips later can show on him.</p>
+      <p>Stands on the hillside behind the ward. A wide hat that folds over and droops at the tip, and under the brim nothing but shadow: no face, just two yellow eyes, one a little bigger than the other. The beard grows a stage with every prestige, and later he stops touching the ground altogether: first he levitates over a trickle of blue sparkles, finally he floats above a slowly turning Septagram. Hat, robe, staff and amulet are drawn as separate layers, so gear he equips later can show on him.</p>
       <div class="controls" role="group" aria-label="Wizard animation">
         <span>Animation</span>
         <button id="w_idle" type="button" aria-pressed="true">Idle</button>
@@ -82,6 +82,12 @@ button:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
         <button id="g_starter" type="button" aria-pressed="true">Starter gear</button>
         <button id="g_ember" type="button" aria-pressed="false">Ember set</button>
         <button id="g_frost" type="button" aria-pressed="false">Frost set</button>
+      </div>
+      <div class="controls" role="group" aria-label="Footing">
+        <span>Footing (progression)</span>
+        <button id="l_0" type="button" aria-pressed="true">On the ground</button>
+        <button id="l_1" type="button" aria-pressed="false">Levitating</button>
+        <button id="l_2" type="button" aria-pressed="false">On a Septagram</button>
       </div>
     </div>
   </section>
@@ -107,7 +113,7 @@ button:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
     <section class="card"><div class="side us">Summon</div><h2>Skeleton</h2><canvas id="cvSkel" aria-label="Animated skeleton warrior"></canvas><p>Punches, kicks or headbutts, picked at random each swing.</p></section>
     <section class="card"><div class="side us">Summon</div><h2>Archer</h2><canvas id="cvArch" aria-label="Animated skeleton archer"></canvas><p>Bow in one hand, arrow in the other. On release the arrow is gone.</p></section>
     <section class="card"><div class="side us">Summon</div><h2>Wisp</h2><canvas id="cvWisp" aria-label="Animated wisp"></canvas><p>A shimmering orb. Pulses as it moves, flashes red when it strikes, shimmers yellow in a panic and turns pink over a swamp.</p></section>
-    <section class="card"><div class="side us">Summon</div><h2>Golem</h2><canvas id="cvGolem" aria-label="Animated golem"></canvas><p>A boulder with a Septagram glowing in its chest. Slow and heavy; raises both fists and slams the ground. Grows moss, maybe a flower or a mushroom.</p><button id="quarry" class="mini" type="button">Living Quarry: 0</button></section>
+    <section class="card"><div class="side us">Summon</div><h2>Golem</h2><canvas id="cvGolem" aria-label="Animated golem"></canvas><p>A boulder with a Septagram glowing in its chest. Slow and heavy; raises both fists and slams the ground. Moss may grow on its head and either flank, each on its own, sometimes with a flower or a mushroom. Immune to panic, but it can still look alarmed.</p><button id="quarry" class="mini" type="button">Living Quarry: 0</button></section>
   </div>
   <h2 class="group">Enemies</h2>
   <div class="cards">
@@ -746,10 +752,10 @@ function rollGolemCracks() {
 }
 function golem(ctx, cx, gy, s0, t, st) {
   const q = st.quarry || 0, s = s0 * 1.3 * (1 + q * 0.1);
-  const saved = mode; if (mode === "panic") mode = "walk";          // golems never panic; they barely notice
+  const saved = mode, panicky = mode === "panic"; if (panicky) mode = "walk";   // immune to panic in battle, but it can still look alarmed
   const M = motion(t, 4.2, null, []); mode = saved;
   const atk = M.attacking, ph = (t / 1.4) % 1;
-  ctx.save(); ctx.translate(cx, gy); ctx.scale(s, s);
+  ctx.save(); ctx.translate(cx + (panicky ? Math.sin(t * 47) * 1.2 * s : 0), gy); ctx.scale(s, s);
   const LW0 = LW; LW = LW0 / s;
   // ground slam: fists rise over the head, smash down in front, rest a moment, come back
   let lean = M.walking ? Math.sin(M.p) * 0.06 : M.confused ? Math.sin(t * 1.4) * 0.07 : Math.sin(t * 1.1) * 0.02, jolt = 0, raise = 0;
@@ -792,25 +798,33 @@ function golem(ctx, cx, gy, s0, t, st) {
   ctx.fillStyle = STONE_D; ctx.beginPath(); ctx.ellipse(hx + 17, hy + 16, 26, 12, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   roundPoly(ctx, offs(GHEAD, hx, hy), 8); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
   // moss on top, maybe with a flower or a mushroom
-  const mossCs = st.moss === "patch" ? [[-17, -17, 5], [-10, -19.5, 6], [-2, -20, 5.5], [6, -19.5, 5.5], [14, -17.5, 4.5]] : [[-10, -18.5, 5], [-3, -21, 6], [4, -19.5, 5]];
-  puffs(ctx, mossCs.map(([x, y, r]) => ({ x: hx + x, y: hy + y, r })), "#86b25a", MOSS);
-  if (st.moss === "flower") {
+  const MS = st.mossSpots || {};
+  if (MS.head) puffs(ctx, [[-10, -18.5, 5], [-3, -21, 6], [4, -19.5, 5]].map(([x, y, r]) => ({ x: hx + x, y: hy + y, r })), "#86b25a", MOSS);
+  if (!MS.head) {}
+  else if (st.mossTop === "flower") {
     const fx = hx + 2, fy = hy - 27 + Math.sin(t * 2) * 0.6;
     for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.3; ell(ctx, fx + Math.cos(a) * 3.2, fy + Math.sin(a) * 3.2, 2.6, 2.6, 0, "#fff4f8", 1.6); }
     ell(ctx, fx, fy, 2, 2, 0, "#ffd24a", 1.4);
-  } else if (st.moss === "mushroom") {
+  } else if (st.mossTop === "mushroom") {
     const fx = hx - 5, fy = hy - 25;
     ctx.beginPath(); ctx.rect(fx - 1.6, fy, 3.2, 5); shape(ctx, "#f3ead8", 1.8);
     ctx.beginPath(); ctx.ellipse(fx, fy, 6, 4.5, 0, Math.PI, 0); ctx.closePath(); shape(ctx, "#d8473f", 2);
     ctx.fillStyle = "#fff"; for (const [dx, dy] of [[-2.5, -1.5], [1.8, -2.6], [3.4, -0.8]]) { ctx.beginPath(); ctx.arc(fx + dx, fy + dy, 0.9, 0, Math.PI * 2); ctx.fill(); }
   }
   // heavy stone brow over two small glowing eyes (one bigger, like every summon)
+  const eyes = [[hx - 6, hy + 5.5, 4.4], [hx + 12, hy + 4.6, 3.3]].map(([x, y, r]) => panicky ? [x, y, r * 1.5] : [x, y, r]);
   const tiltB = M.confused ? -0.35 : 0;
+  if (panicky) {                                                     // brows pop up into two half-arcs, eyes go wide
+    for (const [x, y, r] of eyes) {
+      ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 6.5 * LW; ctx.beginPath(); ctx.arc(x, y + 0.5, r * 1.9, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+      ctx.strokeStyle = STONE_D; ctx.lineWidth = 3 * LW; ctx.stroke();
+    }
+  } else {
   ctx.save(); ctx.translate(hx + 1, hy - 4); ctx.rotate(tiltB);
   ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 7 * LW; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(21, -1); ctx.stroke();
   ctx.strokeStyle = STONE_D; ctx.lineWidth = 3.5 * LW; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(21, -1); ctx.stroke();
   ctx.restore();
-  const eyes = [[hx - 6, hy + 5.5, 4.4], [hx + 12, hy + 4.6, 3.3]];
+  }
   if (M.charmed) for (const [x, y, r] of eyes) heart(ctx, x, y, (r + 1.2) * charmBeat(t), "#ff6f9c");
   else for (const [x, y, r] of eyes) glowEye(ctx, x, y, r, atk ? 1 + raise * 0.6 : 1);
   ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(hx - 1, hy + 13.5); ctx.lineTo(hx + 9, hy + 13); ctx.stroke();
@@ -824,6 +838,9 @@ function golem(ctx, cx, gy, s0, t, st) {
   roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.stroke();
   ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * LW; ctx.lineJoin = "round";
   for (const c of st.gcracks || []) { ctx.beginPath(); c.forEach(([x, y], i) => i ? ctx.lineTo(x, ty + y) : ctx.moveTo(x, ty + y)); ctx.stroke(); }
+  // moss on the flanks, rolled per golem
+  if (MS.left) puffs(ctx, [[-38, -6, 4.5], [-36, 1, 5.5], [-35, 9, 4.5], [-31, 14, 3.5]].map(([x, y, r]) => ({ x, y: ty + y, r })), "#86b25a", MOSS);
+  if (MS.right) puffs(ctx, [[35, 8, 4], [33, 14, 5.5], [29, 20, 4.5], [23, 24, 3.5]].map(([x, y, r]) => ({ x, y: ty + y, r })), "#86b25a", MOSS);
   const pulse = Math.min(1, 0.55 + 0.25 * Math.sin(t * 2.2) + raise * 0.45), rc = [-1, ty - 1];
   ctx.save(); ctx.globalAlpha = pulse; ctx.shadowColor = "#6fa8ff"; ctx.shadowBlur = 10 * s * (st.dpr || 1);
   ctx.strokeStyle = "#8fc0ff"; ctx.lineWidth = 1.8 * LW; ctx.beginPath(); ctx.arc(rc[0], rc[1], 12.5, 0, Math.PI * 2); ctx.stroke();
@@ -952,12 +969,12 @@ function wizard(ctx, cx, gy, s, t, st) {
   const G = GEAR[st.gear || "starter"], m = st.wmode || "idle";
   let dx = 0, by = Math.sin(t * 2) * 1.2, lean = 0, lift = 0, tipA = 1.95 + Math.sin(t * 1.3) * 0.12, sq = 1;
   let look = (t % 3.7) < 0.13 ? "blink" : "open", eyeDy = 0, boost = 1, flutter = 0;
-  let hF = [27, -50], hB = [-26, -48], staffA = -0.05, orbGlow = 0.55 + 0.15 * Math.sin(t * 3), c = 0, r = 0, ph = 0, hop = 0, j = 0;
+  let hF = [31, -50], hB = [-33, -48], staffA = -0.05, orbGlow = 0.55 + 0.15 * Math.sin(t * 3), c = 0, r = 0, ph = 0, hop = 0, j = 0;
   if (m === "cast") {
     ph = (t / 1.6) % 1;
     c = ph < 0.55 ? ease(ph / 0.55) : ph < 0.7 ? 1 : 1 - ease((ph - 0.7) / 0.3);
     r = ph >= 0.55 && ph < 0.7 ? Math.sin((ph - 0.55) / 0.15 * Math.PI) : 0;
-    hF = [27 + 4 * c + 8 * r, -50 - 26 * c]; hB = [-26 + 6 * c, -48 - 30 * c];
+    hF = [31 + 4 * c + 8 * r, -50 - 26 * c]; hB = [-33 + 6 * c, -48 - 30 * c];
     staffA = -0.05 + 0.3 * c + 0.3 * r; lean = -0.04 * c + 0.14 * r; orbGlow = 0.5 + 0.9 * c;
     tipA -= 0.5 * r - 0.15 * c; flutter = r * 0.6 - c * 0.2; boost = 1 + c * 0.8;
     if (c > 0.3 && look !== "blink") look = "narrow";
@@ -965,36 +982,42 @@ function wizard(ctx, cx, gy, s, t, st) {
     ph = (t / 1.5) % 1;
     j = ph < 0.07 ? ph / 0.07 : 1 - ease((ph - 0.07) / 0.5);
     dx = -8 * j; lean = -0.18 * j; lift = 10 * j; tipA = 1.95 - 1.3 * j + Math.sin(ph * 40) * 0.35 * j;
-    hF = [27 - 4 * j, -50 - 14 * j]; hB = [-26 - 6 * j, -48 - 22 * j]; staffA = -0.05 - 0.3 * j; flutter = -j * 0.5;
+    hF = [31 - 4 * j, -50 - 14 * j]; hB = [-33 - 6 * j, -48 - 22 * j]; staffA = -0.05 - 0.3 * j; flutter = -j * 0.5;
     if (j > 0.25) look = "squeeze";
   } else if (m === "cheer") {
     ph = (t / 0.9) % 1; hop = Math.sin(ph * Math.PI);
     by = -hop * 16; lift = hop * 9; tipA = 1.35 + (1 - hop) * 0.5 + Math.sin(t * 9) * 0.1;
-    hF = [24, -82 - hop * 6]; hB = [-25, -88 - hop * 8]; staffA = Math.sin(t * 9) * 0.18; orbGlow = 1.1; flutter = (hop - 0.5) * 0.5;
+    hF = [28, -84 - hop * 6]; hB = [-31, -90 - hop * 8]; staffA = Math.sin(t * 9) * 0.18; orbGlow = 1.1; flutter = (hop - 0.5) * 0.5;
     look = "happy"; boost = 1.3;
   } else if (m === "despair") {
     by = 4 + Math.pow(Math.max(0, Math.sin(t * 1.2)), 8) * 2; lean = 0.1; sq = 0.82; lift = -4; tipA = 2.8 + Math.sin(t * 0.9) * 0.05;
-    hF = [22, -40]; hB = [-20, -38]; staffA = 0.38; orbGlow = 0.2; look = "sad"; eyeDy = 1.5; boost = 0.6;
+    hF = [27, -40]; hB = [-28, -38]; staffA = 0.38; orbGlow = 0.2; look = "sad"; eyeDy = 1.5; boost = 0.6;
   }
   ctx.save(); ctx.translate(cx + dx * s, gy + by * s); ctx.scale(s, s); ctx.rotate(lean);
   const LW0 = LW; LW = LW0 / s;
   // boots peek out under the robe
-  for (const side of [-1, 1]) ell(ctx, side * 11 + 3, -4, 9, 5, 0, BOOT, 3);
+  if (st.lev) for (const side of [-1, 1]) ell(ctx, side * 9 + 4, -2, 8.5, 4.6, 1.15 + Math.sin(t * 1.8 + side) * 0.08, BOOT, 3);
+  else for (const side of [-1, 1]) ell(ctx, side * 11 + 3, -4, 9, 5, 0, BOOT, 3);
   // robe: a bell from the shoulders to a hem that sways a little
   const hemW = Math.sin(t * 2.4) * 1.2 + flutter * 5;
   const robe = () => {
-    ctx.beginPath(); ctx.moveTo(-17, -76);
-    ctx.quadraticCurveTo(-27, -40, -35 + hemW, -7);
+    ctx.beginPath(); ctx.moveTo(-22, -80);
+    ctx.quadraticCurveTo(-33, -80, -33, -68);                       // padded shoulder
+    ctx.quadraticCurveTo(-33, -38, -35 + hemW, -7);
     for (let i = 0; i < 4; i++) { const x0 = -35 + i * 17.5, x1 = x0 + 17.5; ctx.quadraticCurveTo(lerp(x0, x1, 0.5) + hemW, -2 + (i % 2 ? -2 : 1), x1 + hemW * (i === 3 ? 1 : 0.5), -7); }
-    ctx.quadraticCurveTo(27, -40, 17, -76); ctx.quadraticCurveTo(0, -84, -17, -76); ctx.closePath();
+    ctx.quadraticCurveTo(33, -38, 33, -68); ctx.quadraticCurveTo(33, -80, 22, -80); ctx.quadraticCurveTo(0, -85, -22, -80); ctx.closePath();
   };
   robe(); ctx.fillStyle = G.robe[0]; ctx.fill();
   ctx.save(); robe(); ctx.clip();
-  ctx.fillStyle = G.robe[1]; ctx.beginPath(); ctx.ellipse(26, -30, 22, 50, 0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = G.robe[1]; ctx.beginPath(); ctx.ellipse(30, -36, 18, 56, 0.05, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = G.robe[1]; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";            // a couple of folds so it hangs
+  for (const x of [-16, 12]) { ctx.beginPath(); ctx.moveTo(x, -34); ctx.quadraticCurveTo(x - 1.5, -20, x + hemW * 0.4, -9); ctx.stroke(); }
   ctx.strokeStyle = G.trim; ctx.lineWidth = 3.5 * LW; ctx.beginPath(); ctx.moveTo(-40, -11); ctx.quadraticCurveTo(0, -5 + hemW, 40, -11); ctx.stroke();
-  ctx.strokeStyle = "#c79a5a"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.moveTo(-26, -42); ctx.quadraticCurveTo(0, -37, 26, -42); ctx.stroke();
+  ctx.strokeStyle = "#c79a5a"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.moveTo(-34, -42); ctx.quadraticCurveTo(0, -37, 34, -42); ctx.stroke();
   ctx.restore();
   robe(); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  ctx.strokeStyle = G.trim; ctx.lineWidth = 2 * LW;                  // seams of the shoulder pads
+  for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * 20, -80); ctx.quadraticCurveTo(sd * 24, -70, sd * 33, -66); ctx.stroke(); }
   for (const [x, y, rr] of [[-14, -24, 2.6], [8, -58, 2], [15, -20, 2.2]]) sparkle(ctx, x, y, rr, 0.35);
   if (G.amulet) { ctx.strokeStyle = "#d9b45a"; ctx.lineWidth = 1.6 * LW; ctx.beginPath(); ctx.moveTo(-9, -78); ctx.quadraticCurveTo(0, -60, 11, -78); ctx.stroke(); ell(ctx, 1, -64, 3.6, 4.4, 0, G.amulet, 2); }
   // the face: nothing but shadow under the brim, and two yellow eyes, one bigger than the other
@@ -1095,7 +1118,8 @@ function reroll() {
     st.glow = Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1];   // both eyes, or just one
     st.cracks = rollCracks();
   }
-  GOLM.moss = ["tuft", "patch", "flower", "mushroom"][Math.floor(Math.random() * 4)];
+  GOLM.mossSpots = { head: Math.random() < 0.5, left: Math.random() < 0.5, right: Math.random() < 0.5 };   // each spot on its own: all, some or none
+  GOLM.mossTop = ["plain", "flower", "mushroom"][Math.floor(Math.random() * 3)];
   GOLM.gcracks = rollGolemCracks();
   GOBS.jewels = JEWELS.filter(() => Math.random() < 0.4);          // none, some or all three
 
@@ -1118,16 +1142,55 @@ function frame(st, t, dt) {
   st.draw(ctx, W * 0.44, gy, s, t + st.phase, st);
 }
 
+// levitation: blue motes trickle down from under the robe; later they rise from a slowly turning Septagram
+function mote(ctx, x, y, r, a) {
+  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = "#9cc8ff";
+  ctx.beginPath(); ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+  ctx.globalAlpha = a * 0.35; ctx.beginPath(); ctx.arc(x, y, r * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+function motes(ctx, cx, gy, s, t, hover, lev) {
+  const g = ctx.createRadialGradient(cx, gy - hover * s * 0.4, 0, cx, gy - hover * s * 0.4, 40 * s);
+  g.addColorStop(0, "rgba(111,168,255,.28)"); g.addColorStop(1, "rgba(111,168,255,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, gy - hover * s * 0.4, 40 * s, 22 * s, 0, 0, Math.PI * 2); ctx.fill();
+  const N = lev === 2 ? 16 : 9;
+  for (let i = 0; i < N; i++) {
+    const f = (t * (lev === 2 ? 0.45 : 0.7) + i / N) % 1, spread = lev === 2 ? 44 : 22;
+    const x = cx + Math.sin(i * 12.9898) * spread * s + Math.sin(t * 2 + i) * 2.5 * s;
+    const y = lev === 2 ? gy - f * (hover + 50) * s : gy - hover * s - 4 * s + f * (hover + 4) * s;
+    mote(ctx, x, y, (1.6 + (i % 3) * 0.8) * s * (1 + 0.3 * Math.sin(t * 6 + i)), Math.sin(f * Math.PI));
+  }
+}
+function septagram(ctx, cx, gy, s, t) {
+  ctx.save(); ctx.translate(cx, gy); ctx.scale(1, 0.3);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 60 * s);
+  g.addColorStop(0, "rgba(111,168,255,.35)"); g.addColorStop(1, "rgba(111,168,255,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 60 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.rotate(t * 0.5);
+  ctx.shadowColor = "#6fa8ff"; ctx.shadowBlur = 12 * s; ctx.strokeStyle = "rgba(160,205,255," + (0.75 + 0.2 * Math.sin(t * 2.5)) + ")"; ctx.lineWidth = 2.2 * s;
+  ctx.beginPath(); ctx.arc(0, 0, 48 * s, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, 42 * s, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7; k ? ctx.lineTo(Math.cos(a) * 42 * s, Math.sin(a) * 42 * s) : ctx.moveTo(Math.cos(a) * 42 * s, Math.sin(a) * 42 * s); }
+  ctx.stroke();
+  ctx.fillStyle = "#cfe4ff";
+  for (let k = 0; k < 7; k++) { const a = -Math.PI / 2 + k * Math.PI * 2 / 7; ctx.beginPath(); ctx.arc(Math.cos(a) * 45 * s, Math.sin(a) * 45 * s, 1.8 * s, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+}
+
 // the wizard's hillside
 function wizFrame(st, t) {
-  const ctx = st.ctx, W = st.w, s = W / 235, gy = W * 0.9;
+  const ctx = st.ctx, W = st.w, s = W / 250, gy = W * 0.92;
   LW = Math.max(0.55, s);
   ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0); ctx.clearRect(0, 0, W, W);
   ctx.fillStyle = "#f1e8d4"; for (const [x, y, r] of [[0.12, 0.12, 1.2], [0.8, 0.08, 1], [0.9, 0.3, 1.4], [0.3, 0.22, 0.9], [0.62, 0.18, 1.1]]) { ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 1.5 + x * 9); ctx.beginPath(); ctx.arc(x * W, y * W, r * s * 1.5, 0, Math.PI * 2); ctx.fill(); }
   ctx.globalAlpha = 1;
   ctx.fillStyle = GROUND; ctx.beginPath(); ctx.moveTo(0, gy + 14 * s); ctx.quadraticCurveTo(W / 2, gy - 22 * s, W, gy + 14 * s); ctx.lineTo(W, W); ctx.lineTo(0, W); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(W * 0.45, gy, 38 * s, 7 * s, 0, 0, Math.PI * 2); ctx.fill();
-  wizard(ctx, W * 0.45, gy, s, t, st);
+  const cx = W * 0.45, lev = st.lev || 0, hover = lev ? 16 + Math.sin(t * 1.8) * 3 : 0;
+  if (lev === 2) septagram(ctx, cx, gy, s, t);
+  const shrink = 1 - hover / 60;
+  ctx.fillStyle = "rgba(0,0,0," + (0.25 * shrink) + ")"; ctx.beginPath(); ctx.ellipse(cx, gy, 38 * s * shrink, 7 * s * shrink, 0, 0, Math.PI * 2); ctx.fill();
+  if (lev) motes(ctx, cx, gy, s, t, hover, lev);
+  ctx.save(); ctx.translate(0, -hover * s); wizard(ctx, cx, gy, s, t, st); ctx.restore();
 }
 
 let last = 0;
@@ -1148,6 +1211,7 @@ function pick(prefix, keys, val) { for (const k of keys) document.getElementById
 const WMODES = ["idle", "cast", "flinch", "cheer", "despair"];
 for (const k of WMODES) document.getElementById("w_" + k).addEventListener("click", () => { WIZ.wmode = k; pick("w_", WMODES, k); });
 for (const k of [0, 1, 2, 3, 4]) document.getElementById("b_" + k).addEventListener("click", () => { WIZ.beard = k; pick("b_", [0, 1, 2, 3, 4], k); });
+for (const k of [0, 1, 2]) document.getElementById("l_" + k).addEventListener("click", () => { WIZ.lev = k; pick("l_", [0, 1, 2], k); });
 for (const k of Object.keys(GEAR)) document.getElementById("g_" + k).addEventListener("click", () => { WIZ.gear = k; pick("g_", Object.keys(GEAR), k); });
 document.getElementById("quarry").addEventListener("click", e => { GOLM.quarry = (GOLM.quarry + 1) % 4; e.currentTarget.textContent = "Living Quarry: " + GOLM.quarry; });
 </script>
