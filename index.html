@@ -10,7 +10,7 @@
 <style>
 body { margin: 0; } [hidden] { display: none !important; }
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; height: 100%; }
-/* Layout: one-screen game with two views. Town = resources, three building tiles and the open building's panel. Battle = HUD / battlefield / summon cards, with field notes beside it on desktop. Single deliberate night look. */
+/* Layout: one-screen game with two views. Town = resources, three building tiles and the open building's panel. Battle = HUD / battlefield / spells / summon cards, with field notes beside it on desktop. Single deliberate night look. */
 :root {
   --night: #15131c;      /* page ground, graveyard night */
   --slate: #211e2b;      /* panels */
@@ -22,6 +22,7 @@ body { margin: 0; } [hidden] { display: none !important; }
   --gold: #e8c45a;       /* gold coins */
   --exp: #b79cff;        /* experience */
   --heal: #7fd67a;       /* healing */
+  --nemesis: #e2566a;    /* marked enemy */
   --display: "Grenze Gotisch", "Palatino Linotype", Georgia, serif;
   --body: "Alegreya Sans", "Segoe UI", Arial, sans-serif;
   color-scheme: dark;
@@ -38,7 +39,7 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   box-sizing: border-box; max-width: 1100px; margin: 0 auto;
 }
-.hud { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hud { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
 .brand { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: .02em; line-height: 1; margin-right: auto; }
 .stat { display: flex; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; font-weight: 700; }
 .stat small { font-weight: 500; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
@@ -53,9 +54,18 @@ body {
 canvas { display: block; border-radius: 6px; border: 1px solid var(--line); cursor: crosshair; touch-action: none; }
 .side { display: none; width: 280px; flex: none; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.45; color: var(--dim); overflow-y: auto; }
 .side h2 { font-family: var(--display); font-weight: 500; color: var(--bone); font-size: 22px; margin: 0; }
+.side h3 { font-family: var(--display); font-weight: 500; color: var(--bone); font-size: 18px; margin: 4px 0 0; }
 .side p { margin: 0; }
 .side b { color: var(--bone); }
 .side kbd { font-family: var(--body); font-weight: 700; color: var(--bone); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.spells { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.spell {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 10px; border-radius: 8px;
+  background: transparent; border: 1px dashed var(--line); color: var(--bone); font: inherit; cursor: pointer; min-width: 0;
+}
+.spell b { font-family: var(--display); font-weight: 500; font-size: 17px; white-space: nowrap; }
+.spell span { color: var(--mana); font-weight: 700; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.spell[aria-pressed="true"] { border-style: solid; border-color: var(--mana); background: rgba(111, 168, 255, .12); }
 .bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .card {
   min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 6px 10px; border-radius: 8px;
@@ -69,7 +79,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .btn { background: var(--slate); color: var(--bone); border: 1px solid var(--line); border-radius: 8px; font: inherit; font-weight: 700; padding: 8px 14px; cursor: pointer; }
 .btn.primary { background: var(--bone); color: var(--night); border-color: var(--bone); }
 .btn:disabled { opacity: .45; cursor: default; }
-.btn:focus-visible, .card:focus-visible, .mini:focus-visible, .bld:focus-visible, .mapbtn:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
+.btn:focus-visible, .card:focus-visible, .mini:focus-visible, .bld:focus-visible, .mapbtn:focus-visible, .spell:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
 .toast { min-height: 20px; font-size: 14px; color: var(--dim); text-align: center; font-style: italic; }
 .over {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
@@ -134,7 +144,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     </button>
     <button class="bld" id="b_tower" type="button" aria-pressed="false">
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 58V24h20v34z" fill="#4a4553"/><path d="M16 26 32 4l16 22z" fill="#5b3f8f"/><rect x="28" y="32" width="8" height="10" rx="4" fill="#6fa8ff"/><rect x="28" y="48" width="8" height="10" fill="#15131c"/><circle cx="32" cy="8" r="2" fill="#e8c45a"/></svg>
-      <b>Wizard's Tower</b>
+      <b>Spelltower</b>
     </button>
     <button class="bld" id="b_market" type="button" aria-pressed="false">
       <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="30" width="44" height="26" fill="#4a4553"/><path d="M6 30h52l-6-14H12z" fill="#b0563f"/><path d="M14 30l3-14M24 30l2-14M34 30v-14M44 30l-2-14" stroke="#ece3cf" stroke-width="2" opacity=".5"/><rect x="16" y="38" width="32" height="6" fill="#15131c"/><circle cx="22" cy="40" r="3" fill="#ece3cf"/><circle cx="30" cy="40" r="3" fill="#ece3cf"/><circle cx="40" cy="41" r="3" fill="#e8c45a"/></svg>
@@ -144,13 +154,13 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 
   <section class="panel" id="p_gate">
     <h2>Town Gate</h2>
-    <p>Pick a battlefield. Whatever you gather out there comes back as gold and experience when the ward finally falls.</p>
+    <p>Pick a battlefield. The land shifts between visits, so no two battles look quite the same. Whatever you gather out there comes back as gold and experience when the ward finally falls.</p>
     <div class="maps" id="maps"></div>
   </section>
 
   <section class="panel" id="p_tower" hidden>
-    <h2>Wizard's Tower</h2>
-    <p>Spend experience on the wizard. A bigger mana pool means more summons at once; faster regeneration means more summons over time.</p>
+    <h2>Spelltower</h2>
+    <p>Spend experience on the wizard. A bigger mana pool means more summons and spells at once; faster regeneration means more over time; summon slots set how many summons can be on the field together.</p>
     <div class="opt">
       <div class="what"><b>Mana Reservoir</b><span id="upManaInfo"></span></div>
       <button class="btn" id="upMana" type="button"></button>
@@ -158,6 +168,10 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div class="opt">
       <div class="what"><b>Mana Flow</b><span id="upRegenInfo"></span></div>
       <button class="btn" id="upRegen" type="button"></button>
+    </div>
+    <div class="opt">
+      <div class="what"><b>Summon Slots</b><span id="upSlotInfo"></span></div>
+      <button class="btn" id="upSlot" type="button"></button>
     </div>
   </section>
 
@@ -181,6 +195,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div class="stat" title="Mana"><span id="mana" style="color:var(--mana)">0</span><small>mana</small></div>
     <div class="stat" title="Bones"><span id="bones">0</span><small>bones</small></div>
     <div class="stat" title="Gold"><span id="gold" style="color:var(--gold)">0</span><small>gold</small></div>
+    <div class="stat" title="Summons on the field"><span id="slots">0</span><small>summons</small></div>
     <div class="stat" title="Ward"><span id="ward" style="color:var(--ember)">0</span><small>ward</small></div>
     <div class="stat" title="Wave"><span id="wave">1</span><small>wave</small></div>
   </div>
@@ -203,16 +218,26 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <aside class="side">
       <h2>Field notes</h2>
       <p>Pick a summon below and tap a lit tile near the ward. The ward holds as long as nothing reaches it.</p>
-      <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead.</p>
-      <p><b>Skeleton</b> walks around boulders and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile.</p>
+      <h3>Summons</h3>
+      <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
+      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile.</p>
+      <h3>Spells</h3>
+      <p><b>Command</b> calls every summon toward a tile for a second. <b>Nemesis</b> marks one enemy for five seconds, and every summon goes after it.</p>
+      <h3>Enemies</h3>
       <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. From wave 10, they arrive in tight packs.</p>
+      <h3>Terrain</h3>
+      <p><b>Sand</b> and <b>puddles</b> slow everyone a little, <b>swamp</b> a lot. <b>Bushes</b> slow enemies only. <b>Boulders</b>, <b>trees</b>, <b>lakes</b> and <b>rivers</b> stop anyone on foot; cross rivers by the <b>bridges</b>.</p>
       <p>Bones you collect here turn into a little extra experience at the end. Bought bones are used only after the ones you find.</p>
       <p>This is a summoning. Nobody is being raised from the dead. Please stop asking.</p>
-      <p><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> pick a summon, <kbd>P</kbd> pauses.</p>
+      <p><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> summons, <kbd>Q</kbd> <kbd>W</kbd> spells, <kbd>P</kbd> pauses.</p>
       <p id="best"></p>
     </aside>
   </div>
   <div class="toast" id="toast"></div>
+  <div class="spells">
+    <button class="spell" id="spell_command" type="button" aria-pressed="false"><b>Command</b><span>10 mana</span></button>
+    <button class="spell" id="spell_nemesis" type="button" aria-pressed="false"><b>Nemesis</b><span>20 mana</span></button>
+  </div>
   <div class="bar">
     <button class="card" id="card_wisp" type="button" aria-pressed="true">
       <b>Wisp</b><span class="d">Floats, mends.</span>
@@ -234,21 +259,28 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
-  wizard: { manaMax: 15, manaStart: 10, manaRegen: 1.0, ward: 5 },
+  wizard: { manaMax: 15, manaStart: 10, manaRegen: 1.0, ward: 5, summonSlots: 5 },
+  accelTime: 0.8,                                     // seconds from standing still to full speed
   tower: {
-    mana:  { per: 5,    cost: lv => 2 + lv * 2 },   // +5 max mana per level
-    regen: { per: 0.15, cost: lv => 3 + lv * 3 }    // +0.15 mana/s per level
+    mana:  { per: 5,    cost: lv => Math.round(3 * Math.pow(2.6, lv)) },   // 3, 8, 20, 53 ...
+    regen: { per: 0.15, cost: lv => Math.round(4 * Math.pow(2.6, lv)) },   // 4, 10, 27, 70 ...
+    slots: { per: 1,    cost: lv => 50 * (lv + 1) }                        // 50, 100, 150 ...
   },
   market: { bonePrice: 10 },
+  spells: {
+    command: { name: "Command", mana: 10, duration: 1 },
+    nemesis: { name: "Nemesis", mana: 20, duration: 5 }
+  },
   exp: {
     perKill: { kobold: 0.5, bog_goblin: 1, orc: 2 },
-    perUnusedBone: 0.01,                            // +0.01 exp per unused field bone
+    perUnusedBone: 0.01,
     waveMult: [ { upTo: 3, m: 0.2 }, { upTo: 10, m: 0.5 }, { upTo: 20, m: 0.7 }, { upTo: 40, m: 1.0 }, { upTo: 60, m: 1.2 } ],
-    beyondStep: 0.2                                 // +0.2 for every further 20 waves
+    beyondStep: 0.2
   },
   units: {
     wisp: { name: "Wisp", cost: { mana: 10, bone: 0 }, hp: 24, damage: 1, attackEvery: 0.8, speed: 1.8, range: 1.15,
-            move: "incorporeal", ignoresTerrain: true, heal: { amount: 1, every: 1.6, range: 1.2 } },
+            move: "incorporeal", ignoresTerrain: true, heal: { amount: 1, every: 1.6, range: 1.2 },
+            swampCharm: { chancePerSecond: 0.02, radius: 3, duration: 10 } },
     skeleton_warrior: { name: "Skeleton Warrior", cost: { mana: 5, bone: 1 }, hp: 20, damage: 3, attackEvery: 0.8, speed: 1.6, range: 1.15, move: "ground" },
     skeleton_archer: { name: "Skeleton Archer", cost: { mana: 10, bone: 2 }, hp: 13, damage: 3, attackEvery: 1.0, speed: 1.1, range: 2.1, move: "ground", ranged: true }
   },
@@ -261,46 +293,41 @@ const DATA = {
     orc: { name: "Orc", hp: 32, damage: 4, attackEvery: 1.3, speed: 0.65, range: 1.15, aggro: 2.8, move: "ground",
            drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.25, min: 2, max: 5 }] }
   },
+  // slow = speed multiplier while standing on the tile; moveCost = how much pathfinding avoids it
+  // flammable / diggable are reserved for future spells
   terrain: {
-    grass:     { moveCost: 1 },
-    boulder:   { blocks: ["ground"], moveCost: 1 },
-    swamp:     { moveCost: 3, slow: 0.45 },
-    structure: { blocks: ["ground", "incorporeal"], moveCost: 1 }
+    grass:     { name: "Grass",   moveCost: 1, flammable: true },
+    dirt:      { name: "Dirt",    moveCost: 1, diggable: true },
+    sand:      { name: "Sand",    moveCost: 1.4, slow: 0.75 },
+    rock:      { name: "Rock",    moveCost: 1 },
+    boulder:   { name: "Boulder", blocks: ["ground"], moveCost: 1 },
+    swamp:     { name: "Swamp",   moveCost: 3, slow: 0.45 },
+    bush:      { name: "Bush",    moveCost: 1, slow: 0.45, slowsOnly: "foe", flammable: true },
+    tree:      { name: "Tree",    blocks: ["ground"], moveCost: 1, flammable: true },
+    puddle:    { name: "Puddle",  moveCost: 1.6, slow: 0.7, water: true },
+    lake:      { name: "Lake",    blocks: ["ground"], moveCost: 1, water: true },
+    river:     { name: "River",   blocks: ["ground"], moveCost: 1, water: true },
+    bridge:    { name: "Bridge",  moveCost: 1 },
+    structure: { name: "Ward",    blocks: ["ground", "incorporeal"], moveCost: 1 }
   },
   waves: {
     firstDelay: 6, gap: 12,
-    sizes: [2, 3, 4],          // waves 1-3
-    growthAfter: 2,            // then +2 enemies per wave
+    sizes: [2, 3, 4], growthAfter: 2,
     goblinsFrom: 3, goblinShare: 0.4,
     orcsFrom: 5, orcEvery: 3,
-    packsFrom: 10              // from here enemies arrive in tight packs
+    packsFrom: 10
   },
-  // Map legend: . grass, # boulder, ~ swamp, W ward structure (wizard or outpost)
+  // Each battle generates a fresh field. "river" lists the rows a river may wander through.
   levels: {
-    hillside: {
-      name: "Hillside", spawn: ["top"], summonRange: 3,
-      note: "Enemies come down from the hills. The ward runs along the bottom edge.",
-      map: [
-        ".........", ".........", "..#...#..", "..#......", ".....~~..", "....~~~..", ".#...~...",
-        ".#.......", "......#..", "..~~..#..", "..~~.....", ".........", ".........", "........."
-      ]
-    },
-    crossroads: {
-      name: "Crossroads", spawn: ["top", "bottom", "left", "right"], summonRange: 2,
-      note: "You stand in the middle. Enemies come from every side.",
-      map: [
-        ".........", "...#.....", "......#..", ".~~......", ".~~...#..", ".........", "..#......",
-        "....W....", "......#..", ".........", "..#...~~.", "......~~.", ".....#...", "........."
-      ]
-    },
-    outpost: {
-      name: "Outpost", spawn: ["top", "left", "right"], summonRange: 3,
-      note: "A small outpost on the southern edge. Enemies come from three sides.",
-      map: [
-        ".........", "..#...#..", ".........", "....~~...", "...~~~...", ".#.....#.", ".........",
-        "...#.....", "......~~.", ".~~...~~.", ".........", ".........", "...WWW...", "...WWW..."
-      ]
-    }
+    hillside: { name: "Hillside", spawn: ["top"], summonRange: 3, structs: [],
+      river: { chance: 0.6, rows: [4, 8] },
+      note: "Enemies come down from the hills. The ward runs along the bottom edge." },
+    crossroads: { name: "Crossroads", spawn: ["top", "bottom", "left", "right"], summonRange: 2, structs: [[4, 7]],
+      river: { chance: 0.5, rows: [2, 3] },
+      note: "You stand in the middle. Enemies come from every side." },
+    outpost: { name: "Outpost", spawn: ["top", "left", "right"], summonRange: 3, structs: [[3, 12], [4, 12], [5, 12], [3, 13], [4, 13], [5, 13]],
+      river: { chance: 0.6, rows: [3, 6] },
+      note: "A small outpost on the southern edge. Enemies come from three sides." }
   }
 };
 const QUIPS = {
@@ -311,29 +338,126 @@ const QUIPS = {
 
 // ---------- Saved progress (this browser only) ----------
 const SAVE_KEY = "summonancer_save_v1";
-let META = { gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, best: {} };
+let META = { gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, slotLv: 0, best: {} };
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) META = Object.assign(META, JSON.parse(raw)); } catch (e) {}
 function saveMeta() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(META)); } catch (e) {} }
 const wizManaMax = () => DATA.wizard.manaMax + META.manaLv * DATA.tower.mana.per;
 const wizRegen = () => DATA.wizard.manaRegen + META.regenLv * DATA.tower.regen.per;
+const wizSlots = () => DATA.wizard.summonSlots + META.slotLv * DATA.tower.slots.per;
 
 // ---------- State ----------
 const C = DATA.grid.cols, R = DATA.grid.rows;
-let S = null, L = null, levelKey = "hillside", selected = "wisp", tile = 32, dpr = 1, paused = false, lastT = 0, inBattle = false;
+let S = null, L = null, levelKey = "hillside", selected = "wisp", spellMode = null, tile = 32, dpr = 1, paused = false, lastT = 0, inBattle = false;
 const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
 const $ = id => document.getElementById(id);
 const rnd = n => Math.floor(Math.random() * n);
+const chance = p => Math.random() < p;
+const inGrid = (x, y) => x >= 0 && y >= 0 && x < C && y < R;
+const DIRS4 = [[1,0],[-1,0],[0,1],[0,-1]];
+const DIRS8 = DIRS4.concat([[1,1],[1,-1],[-1,1],[-1,-1]]);
+
+// ---------- Battlefield generation ----------
+function wardDistFn(structs) {
+  return structs.length
+    ? (x, y) => Math.min(...structs.map(s => Math.max(Math.abs(s[0] - x), Math.abs(s[1] - y))))
+    : (x, y) => R - 1 - y;
+}
+
+function generateField(d) {
+  const wd = wardDistFn(d.structs);
+  const safe = (x, y) => wd(x, y) <= d.summonRange;           // summoning area stays open and dry
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const g = Array.from({ length: R }, () => Array(C).fill("grass"));
+    const blob = (type, n, size, okFn) => {
+      for (let i = 0; i < n; i++) {
+        let x = rnd(C), y = rnd(R);
+        for (let k = 0; k < size; k++) {
+          if (inGrid(x, y) && (!okFn || okFn(x, y))) g[y][x] = type;
+          const [dx, dy] = DIRS4[rnd(4)]; x += dx; y += dy;
+        }
+      }
+    };
+    const open = (x, y) => !safe(x, y) && (g[y][x] === "grass" || g[y][x] === "dirt" || g[y][x] === "sand");
+    blob("dirt", 4 + rnd(3), 6, null);
+    blob("sand", 1 + rnd(2), 5, null);
+    blob("rock", 1 + rnd(2), 3, null);
+
+    // river: a meandering band across the whole field with 1-3 bridges
+    const rivers = [];
+    if (chance(d.river.chance)) {
+      const [r0, r1] = d.river.rows;
+      let y = r0 + rnd(r1 - r0 + 1);
+      const cols = [];
+      for (let x = 0; x < C; x++) {
+        const here = [y];
+        if (x > 0 && chance(0.35)) {
+          const ny = Math.max(r0, Math.min(r1, y + (chance(0.5) ? 1 : -1)));
+          if (ny !== y) { here.push(ny); y = ny; }
+        }
+        cols.push(here);
+        for (const yy of here) { g[yy][x] = "river"; rivers.push([x, yy]); }
+      }
+      const single = cols.map((c, x) => c.length === 1 ? x : -1).filter(x => x >= 0).sort(() => Math.random() - .5);
+      const nb = Math.min(single.length, 1 + rnd(3));
+      for (let i = 0; i < nb; i++) {
+        const x = single[i], yy = cols[x][0];
+        g[yy][x] = "bridge";
+        for (const dy of [-1, 1]) if (inGrid(x, yy + dy) && g[yy + dy][x] !== "river") g[yy + dy][x] = "dirt";
+      }
+    }
+    const nearRiver = (x, y) => DIRS8.some(([dx, dy]) => inGrid(x + dx, y + dy) && /river|bridge/.test(g[y + dy][x + dx]));
+
+    // lakes: 2-9 connected tiles inside a 3x3 square
+    for (let i = rnd(3); i > 0; i--) {
+      const ox = rnd(C - 2), oy = rnd(R - 2), want = 2 + rnd(8);
+      let cells = [[ox + rnd(3), oy + rnd(3)]];
+      for (let k = 0; k < 30 && cells.length < want; k++) {
+        const [cx, cy] = cells[rnd(cells.length)], [dx, dy] = DIRS4[rnd(4)], nx = cx + dx, ny = cy + dy;
+        if (nx >= ox && nx < ox + 3 && ny >= oy && ny < oy + 3 && !cells.some(c => c[0] === nx && c[1] === ny)) cells.push([nx, ny]);
+      }
+      if (cells.every(([x, y]) => open(x, y) && !nearRiver(x, y))) cells.forEach(([x, y]) => { g[y][x] = "lake"; });
+    }
+    for (let i = 1 + rnd(3); i > 0; i--) { const x = rnd(C), y = rnd(R); if (open(x, y)) g[y][x] = "puddle"; }
+    blob("swamp", rnd(3), 4, open);
+    blob("bush", 2 + rnd(3), 2, open);
+    for (let i = 2 + rnd(4); i > 0; i--) { const x = rnd(C), y = rnd(R); if (open(x, y)) g[y][x] = "tree"; }
+    for (let i = 1 + rnd(3); i > 0; i--) { const x = rnd(C), y = rnd(R); if (open(x, y)) g[y][x] = "boulder"; }
+    for (const [x, y] of d.structs) g[y][x] = "structure";
+
+    if (connected(g, d, wd)) return g;
+  }
+  // very unlucky: plain grass with the ward
+  const g = Array.from({ length: R }, () => Array(C).fill("grass"));
+  for (const [x, y] of d.structs) g[y][x] = "structure";
+  return g;
+}
+
+// every tile a walker can stand on must be able to reach the ward
+function connected(g, d, wd) {
+  const reachAt = d.structs.length ? 1 : 0;
+  const walk = (x, y) => !(DATA.terrain[g[y][x]].blocks || []).includes("ground");
+  const seen = new Set(), q = [];
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) if (walk(x, y) && wd(x, y) <= reachAt) { seen.add(y * C + x); q.push([x, y]); }
+  while (q.length) {
+    const [x, y] = q.pop();
+    for (const [dx, dy] of DIRS4) {
+      const nx = x + dx, ny = y + dy, k = ny * C + nx;
+      if (inGrid(nx, ny) && !seen.has(k) && walk(nx, ny)) { seen.add(k); q.push([nx, ny]); }
+    }
+  }
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) if (walk(x, y) && !seen.has(y * C + x)) return false;
+  return true;
+}
 
 function buildLevel(key) {
   const d = DATA.levels[key];
-  const terrain = d.map.map(row => row.split("").map(ch => ch === "#" ? "boulder" : ch === "~" ? "swamp" : ch === "W" ? "structure" : "grass"));
-  const structs = [];
-  terrain.forEach((row, y) => row.forEach((t, x) => { if (t === "structure") structs.push({ x, y }); }));
-  const wardDist = structs.length
-    ? (x, y) => Math.min(...structs.map(s => Math.max(Math.abs(s.x - x), Math.abs(s.y - y))))
-    : (x, y) => R - 1 - y;
+  const terrain = generateField(d);
+  const structs = d.structs.map(([x, y]) => ({ x, y }));
+  const wardDist = wardDistFn(d.structs);
   const reachAt = structs.length ? 1 : 0;
-  return { key, d, terrain, structs, wardDist,
+  const swamps = [];
+  terrain.forEach((row, y) => row.forEach((t, x) => { if (t === "swamp") swamps.push({ x, y }); }));
+  return { key, d, terrain, structs, wardDist, swamps,
     reach: (x, y) => terrain[y][x] !== "structure" && wardDist(x, y) <= reachAt,
     summon: (x, y) => terrain[y][x] !== "structure" && wardDist(x, y) <= d.summonRange };
 }
@@ -343,12 +467,14 @@ function startBattle(key) {
   L = buildLevel(levelKey);
   const carried = META.bones; META.bones = 0; saveMeta();   // bought bones march out with you
   S = {
-    mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(),
+    mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(), slots: wizSlots(),
     bones: 0, carried, gold: 0, ward: DATA.wizard.ward,
     wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
     slain: { kobold: 0, bog_goblin: 0, orc: 0 },
-    units: [], enemies: [], shots: [], floaters: [], goblinDeaths: [], over: false
+    units: [], enemies: [], shots: [], floaters: [], goblinDeaths: [], over: false,
+    command: null, nemesis: null
   };
+  setSpell(null);
   $("over").hidden = true;
   paused = false; $("pause").textContent = "Pause";
   $("mapname").innerHTML = "<b>" + L.d.name + "</b>";
@@ -358,16 +484,14 @@ function startBattle(key) {
 }
 
 // ---------- Grid helpers ----------
-const inGrid = (x, y) => x >= 0 && y >= 0 && x < C && y < R;
 const terr = (x, y) => DATA.terrain[L.terrain[y][x]];
 const passable = (x, y, move) => inGrid(x, y) && !(terr(x, y).blocks || []).includes(move);
 const cellOf = e => ({ x: Math.round(e.x), y: Math.round(e.y) });
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-const DIRS4 = [[1,0],[-1,0],[0,1],[0,-1]];
-const DIRS8 = DIRS4.concat([[1,1],[1,-1],[-1,1],[-1,-1]]);
+const tileCost = (t, d, side) => d.ignoresTerrain || (t.slowsOnly && t.slowsOnly !== side) ? 1 : t.moveCost;
 
 // A* with terrain move costs; incorporeal movers may also cut diagonally
-function findPath(sx, sy, goal, h, d) {
+function findPath(sx, sy, goal, h, d, side) {
   const key = (x, y) => y * C + x, diag = !!d.ignoresTerrain;
   const open = [{ x: sx, y: sy, f: 0 }], came = new Map(), g = new Map([[key(sx, sy), 0]]);
   let guard = 0;
@@ -384,8 +508,7 @@ function findPath(sx, sy, goal, h, d) {
       const nx = cur.x + dx, ny = cur.y + dy;
       if (!passable(nx, ny, d.move)) continue;
       if (dx && dy && (!passable(cur.x + dx, cur.y, d.move) || !passable(cur.x, cur.y + dy, d.move))) continue;
-      const step = (dx && dy) ? 1.414 : 1;
-      const ng = cg + step * (d.ignoresTerrain ? 1 : terr(nx, ny).moveCost), nk = key(nx, ny);
+      const ng = cg + ((dx && dy) ? 1.414 : 1) * tileCost(terr(nx, ny), d, side), nk = key(nx, ny);
       if (ng < (g.has(nk) ? g.get(nk) : Infinity)) {
         g.set(nk, ng); came.set(nk, key(cur.x, cur.y));
         open.push({ x: nx, y: ny, f: ng + h(nx, ny) });
@@ -398,28 +521,57 @@ function findPath(sx, sy, goal, h, d) {
 // ---------- Entities ----------
 function makeActor(side, kind, x, y) {
   const d = side === "ally" ? DATA.units[kind] : DATA.enemies[kind];
-  return { side, kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0, enter: null, panic: 0 };
+  return { side, kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0, enter: null, panic: 0, ramp: 0, moved: false, charm: 0, charmTick: 0 };
 }
 
 function summonAt(cx, cy) {
-  if (S.over || paused) return;
   const d = DATA.units[selected];
   if (!L.summon(cx, cy)) return say("You can only summon on the lit tiles near your ward.");
-  if (!passable(cx, cy, d.move)) return say("There's a boulder there. Skeletons respect boulders. Wisps don't.");
+  if (!passable(cx, cy, d.move)) return say("Something's in the way there. Skeletons respect obstacles. Wisps don't.");
+  if (S.units.length >= S.slots) return say("All " + S.slots + " summon slots are in use. The Spelltower can add more.");
   if (S.mana < d.cost.mana) return say("Not enough mana. Wizards also need a moment.");
   if (S.bones + S.carried < d.cost.bone) return say("Not enough bones. Send a wisp to fetch some.");
   S.mana -= d.cost.mana;
-  // spend bones found on this field first, then the ones bought at the market
-  const fromField = Math.min(S.bones, d.cost.bone);
+  const fromField = Math.min(S.bones, d.cost.bone);           // found bones first, bought bones after
   S.bones -= fromField; S.carried -= d.cost.bone - fromField;
   S.units.push(makeActor("ally", selected, cx, cy));
   if (d.cost.bone) float(cx, cy, "-" + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : ""), "#ece3cf");
   const q = QUIPS[selected]; say(q[rnd(q.length)]);
 }
 
+// ---------- Spells ----------
+function castAt(fx, fy) {
+  const sp = DATA.spells[spellMode];
+  if (S.mana < sp.mana) { say("Not enough mana for " + sp.name + "."); return; }
+  if (spellMode === "command") {
+    const x = Math.max(0, Math.min(C - 1, Math.floor(fx))), y = Math.max(0, Math.min(R - 1, Math.floor(fy)));
+    S.mana -= sp.mana; S.command = { x, y, t: sp.duration };
+    for (const u of S.units) { u.path = []; u.repath = 0; }
+    say("Command! Everyone to that spot.");
+  } else {
+    const pt = { x: fx - 0.5, y: fy - 0.5 };
+    const target = nearest(pt, S.enemies, 1.2);
+    if (!target) { say("Tap right on an enemy to mark it."); return; }
+    S.mana -= sp.mana; S.nemesis = { target, t: sp.duration };
+    for (const u of S.units) { u.path = []; u.repath = 0; }
+    say("Nemesis! That " + target.d.name.toLowerCase() + " has made a powerful enemy.");
+  }
+  setSpell(null);
+}
+function setSpell(k) {
+  spellMode = k;
+  for (const s in DATA.spells) $("spell_" + s).setAttribute("aria-pressed", s === k ? "true" : "false");
+}
+for (const s in DATA.spells) $("spell_" + s).addEventListener("click", () => {
+  if (spellMode === s) { setSpell(null); say("Spell cancelled."); return; }
+  setSpell(s);
+  say(s === "command" ? "Command: tap any tile to call your summons there." : "Nemesis: tap the enemy you want hunted down.");
+});
+
+// ---------- Waves ----------
 function edgeSpot(side) {
   const sideRows = levelKey === "outpost" ? R - 4 : R;
-  for (let tries = 0; tries < 30; tries++) {
+  for (let tries = 0; tries < 40; tries++) {
     let x, y;
     if (side === "top") { x = rnd(C); y = 0; }
     else if (side === "bottom") { x = rnd(C); y = R - 1; }
@@ -464,6 +616,7 @@ function spawnWave() {
       "Wave " + S.wave + ": " + roster.length + " enemies" + (orcs ? ", including " + (orcs > 1 ? orcs + " orcs" : "an orc") : "") + ".");
 }
 
+// ---------- Movement ----------
 function nearest(from, list, maxD, filter) {
   let best = null, bd = maxD;
   for (const o of list) {
@@ -476,16 +629,20 @@ function nearest(from, list, maxD, filter) {
 function speedAt(a) {
   const c = cellOf(a);
   if (a.d.ignoresTerrain || !inGrid(c.x, c.y)) return a.d.speed;
-  return a.d.speed * (terr(c.x, c.y).slow || 1);
+  const t = terr(c.x, c.y);
+  if (t.slowsOnly && t.slowsOnly !== a.side) return a.d.speed;
+  return a.d.speed * (t.slow || 1);
 }
 
-// move straight toward a point; returns true on arrival, false if a tile blocks the way
+// move straight toward a point, easing up to full speed; false if a tile blocks the way
 function moveDirect(a, tx, ty, dt, checkTiles) {
-  const dx = tx - a.x, dy = ty - a.y, d = Math.hypot(dx, dy), sp = speedAt(a) * dt;
+  const dx = tx - a.x, dy = ty - a.y, d = Math.hypot(dx, dy);
   if (d < 1e-6) return true;
+  const ramp = Math.min(1, a.ramp + dt / DATA.accelTime);
+  const sp = speedAt(a) * (0.15 + 0.85 * ramp) * dt;
   const nx = d <= sp ? tx : a.x + dx / d * sp, ny = d <= sp ? ty : a.y + dy / d * sp;
   if (checkTiles && !passable(Math.round(nx), Math.round(ny), a.d.move)) return false;
-  a.x = nx; a.y = ny;
+  a.x = nx; a.y = ny; a.ramp = ramp; a.moved = true;
   return d <= sp;
 }
 
@@ -495,7 +652,7 @@ function travel(a, goal, h, dt) {
   if (a.repath <= 0 || !a.path.length) {
     a.repath = 0.5;
     const c = cellOf(a);
-    a.path = findPath(Math.max(0, Math.min(C - 1, c.x)), Math.max(0, Math.min(R - 1, c.y)), goal, h, a.d) || [];
+    a.path = findPath(Math.max(0, Math.min(C - 1, c.x)), Math.max(0, Math.min(R - 1, c.y)), goal, h, a.d, a.side) || [];
   }
   if (a.path.length && moveDirect(a, a.path[0].x, a.path[0].y, dt, false)) a.path.shift();
   return a.path.length > 0;
@@ -510,6 +667,12 @@ function approach(a, target, dt) {
   return travel(a, (x, y) => Math.abs(x - tc.x) <= 1 && Math.abs(y - tc.y) <= 1 && (x === tc.x || y === tc.y || a.d.ignoresTerrain), h, dt);
 }
 
+function goToTile(a, tx, ty, dt) {
+  if (dist(a, { x: tx, y: ty }) < 0.6) return;
+  if (a.d.ignoresTerrain && moveDirect(a, tx, ty, dt, true) !== false) return;
+  travel(a, (x, y) => Math.abs(x - tx) + Math.abs(y - ty) <= (passable(tx, ty, a.d.move) ? 0 : 1), (x, y) => Math.hypot(x - tx, y - ty), dt);
+}
+
 function strike(a, target) {
   a.cd = a.d.attackEvery;
   if (a.d.ranged) { S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage }); return; }
@@ -517,7 +680,33 @@ function strike(a, target) {
 }
 function hurt(t, dmg, color) { t.hp -= dmg; t.hit = 0.15; float(t.x, t.y, "-" + dmg, color); }
 
+// ---------- Behaviour ----------
 function updateAlly(a, dt) {
+  // wisps near a swamp sometimes drift off to admire it
+  if (a.kind === "wisp") {
+    const SC = a.d.swampCharm;
+    if (a.charm > 0) {
+      a.orbit = (a.orbit || 0) + dt * 1.6;
+      moveDirect(a, a.charmSpot.x + Math.cos(a.orbit) * 0.8, a.charmSpot.y + Math.sin(a.orbit) * 0.8, dt, true);
+      return;
+    }
+    a.charmTick += dt;
+    if (a.charmTick >= 1) {
+      a.charmTick -= 1;
+      const near = L.swamps.filter(s => dist(a, s) <= SC.radius);
+      if (near.length && chance(SC.chancePerSecond)) {
+        a.charm = SC.duration; a.charmSpot = near[rnd(near.length)]; a.orbit = Math.atan2(a.y - a.charmSpot.y, a.x - a.charmSpot.x);
+        float(a.x, a.y, "ooh, a swamp", "#d9a6ff"); a.path = [];
+        return;
+      }
+    }
+  }
+  if (S.command) { goToTile(a, S.command.x, S.command.y, dt); return; }
+  const nem = S.nemesis && S.nemesis.target.hp > 0 ? S.nemesis.target : null;
+  if (nem) {
+    if (dist(a, nem) <= a.d.range) { a.path = []; if (a.cd === 0) strike(a, nem); return; }
+    approach(a, nem, dt); return;
+  }
   // a wisp with company becomes a medic
   if (a.kind === "wisp") {
     const others = S.units.filter(u => u.kind !== "wisp" && u.hp > 0);
@@ -546,7 +735,7 @@ function updateFoe(e, dt) {
   const target = nearest(e, S.units, e.d.aggro);
   if (target) {
     if (dist(e, target) <= e.d.range) { e.path = []; if (e.cd === 0) strike(e, target); return; }
-    if (approach(e, target, dt)) return;   // an unreachable target (a wisp over a boulder) is ignored
+    if (approach(e, target, dt)) return;   // an unreachable target (a wisp over water) is ignored
   }
   travel(e, (x, y) => L.reach(x, y), (x, y) => L.wardDist(x, y), dt);
 }
@@ -588,11 +777,15 @@ function update(dt) {
   S.mana = Math.min(S.manaMax, S.mana + S.regen * dt);
   S.nextWave -= dt;
   if (S.nextWave <= 0) { spawnWave(); S.nextWave = DATA.waves.gap; }
+  if (S.command && (S.command.t -= dt) <= 0) S.command = null;
+  if (S.nemesis && ((S.nemesis.t -= dt) <= 0 || S.nemesis.target.hp <= 0)) S.nemesis = null;
 
   for (const a of S.units.concat(S.enemies)) {
-    a.cd = Math.max(0, a.cd - dt); a.hit = Math.max(0, a.hit - dt); a.panic = Math.max(0, a.panic - dt);
-    if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false)) a.enter = null; continue; }
-    if (a.side === "ally") updateAlly(a, dt); else updateFoe(a, dt);
+    a.cd = Math.max(0, a.cd - dt); a.hit = Math.max(0, a.hit - dt); a.panic = Math.max(0, a.panic - dt); a.charm = Math.max(0, a.charm - dt);
+    a.moved = false;
+    if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false)) a.enter = null; }
+    else if (a.side === "ally") updateAlly(a, dt); else updateFoe(a, dt);
+    if (!a.moved) a.ramp = Math.max(0, a.ramp - dt * 3);   // standing still loses momentum quickly
   }
   separate(S.units); separate(S.enemies);
 
@@ -624,7 +817,7 @@ function update(dt) {
     S.kills++; S.slain[e.kind] = (S.slain[e.kind] || 0) + 1;
     let lift = 0.3;
     for (const dr of e.d.drops) {
-      if (Math.random() >= dr.chance) continue;
+      if (!chance(dr.chance)) continue;
       const n = dr.min + rnd(dr.max - dr.min + 1);
       if (dr.res === "bone") { S.bones += n; float(e.x, e.y - lift, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf"); }
       else { S.gold += n; float(e.x, e.y - lift, "+" + n + " gold", "#e8c45a"); }
@@ -655,7 +848,7 @@ function waveMultiplier(w) {
 const fmt = n => (Math.round(n * 100) / 100).toLocaleString("en-US");
 
 function endBattle() {
-  S.over = true;
+  S.over = true; setSpell(null);
   const E = DATA.exp, rows = [];
   let killExp = 0;
   for (const k of ["kobold", "bog_goblin", "orc"]) {
@@ -704,6 +897,57 @@ function resize() {
   cv.width = Math.round(tile * C * dpr); cv.height = Math.round(tile * R * dpr);
 }
 
+const GROUND = {
+  grass: ["#26301f", "#232b22"], dirt: ["#3a3026", "#362c23"], sand: ["#4d4532", "#48412f"], rock: ["#3b3a42", "#38373f"],
+  swamp: ["#28403d", "#253a3a"], water: ["#1e3552", "#1c324d"]
+};
+function drawTile(x, y, t) {
+  const T = tile, X = x * T, Y = y * T, alt = (x + y) % 2;
+  const base = t === "dirt" || t === "puddle" ? "dirt" : t === "sand" ? "sand" : t === "rock" ? "rock" : t === "swamp" ? "swamp"
+             : (t === "lake" || t === "river" || t === "bridge") ? "water" : "grass";
+  ctx.fillStyle = GROUND[base][alt]; ctx.fillRect(X, Y, T, T);
+  const h = (x * 7 + y * 13) % 5;                         // stable per-tile variation
+  if (t === "grass") {
+    ctx.strokeStyle = "rgba(143,191,106,.22)"; ctx.lineWidth = 1;
+    for (let i = 0; i < 3; i++) { const gx = X + T * (.2 + .3 * i) + h, gy = Y + T * (.35 + .2 * ((i + h) % 3)); ctx.beginPath(); ctx.moveTo(gx, gy + 4); ctx.lineTo(gx + 1, gy); ctx.stroke(); }
+  } else if (t === "sand") {
+    ctx.fillStyle = "rgba(236,227,207,.18)";
+    for (let i = 0; i < 4; i++) ctx.fillRect(X + T * ((i * .23 + h * .07) % 1), Y + T * ((i * .31 + h * .11) % 1), 1.5, 1.5);
+  } else if (t === "rock") {
+    ctx.fillStyle = "#4d4b55";
+    ctx.beginPath(); ctx.moveTo(X + T * .15, Y + T * .7); ctx.lineTo(X + T * .35, Y + T * .45); ctx.lineTo(X + T * .6, Y + T * .55); ctx.lineTo(X + T * .5, Y + T * .75); ctx.fill();
+  } else if (t === "swamp") {
+    ctx.strokeStyle = "rgba(160,210,200,0.25)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(X + T * .2, Y + T * .55); ctx.quadraticCurveTo(X + T * .5, Y + T * .4, X + T * .8, Y + T * .55); ctx.stroke();
+  } else if (t === "puddle") {
+    ctx.fillStyle = "#2a4a6e"; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T * .55, T * .36, T * .24, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(170,210,255,.35)"; ctx.beginPath(); ctx.moveTo(X + T * .35, Y + T * .5); ctx.lineTo(X + T * .5, Y + T * .5); ctx.stroke();
+  } else if (t === "lake" || t === "river") {
+    ctx.strokeStyle = "rgba(170,210,255,.22)"; ctx.lineWidth = 1;
+    const off = t === "river" ? (S ? (S.time * 6) % T : 0) : 0;
+    ctx.beginPath(); ctx.moveTo(X + ((T * .15 + off) % T), Y + T * .4); ctx.lineTo(X + ((T * .15 + off) % T) + T * .25, Y + T * .4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X + ((T * .5 + off) % T), Y + T * .7); ctx.lineTo(X + ((T * .5 + off) % T) + T * .25, Y + T * .7); ctx.stroke();
+  } else if (t === "bridge") {
+    ctx.fillStyle = "#6b4f33"; ctx.fillRect(X + T * .12, Y, T * .76, T);
+    ctx.strokeStyle = "#4a3523"; ctx.lineWidth = 1;
+    for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(X + T * .12, Y + T * i / 5); ctx.lineTo(X + T * .88, Y + T * i / 5); ctx.stroke(); }
+  } else if (t === "bush") {
+    ctx.fillStyle = "#35512b";
+    ctx.beginPath(); ctx.arc(X + T * .35, Y + T * .58, T * .22, 0, Math.PI * 2); ctx.arc(X + T * .62, Y + T * .55, T * .24, 0, Math.PI * 2); ctx.arc(X + T * .5, Y + T * .4, T * .2, 0, Math.PI * 2); ctx.fill();
+  } else if (t === "tree") {
+    ctx.fillStyle = "#4a3523"; ctx.fillRect(X + T * .44, Y + T * .55, T * .12, T * .35);
+    ctx.fillStyle = "#2c4a26"; ctx.beginPath(); ctx.arc(X + T / 2, Y + T * .42, T * .38, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#3a5f31"; ctx.beginPath(); ctx.arc(X + T * .42, Y + T * .34, T * .16, 0, Math.PI * 2); ctx.fill();
+  } else if (t === "boulder") {
+    ctx.fillStyle = "#6c6676"; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T * .58, T * .42, T * .34, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#8a8495"; ctx.beginPath(); ctx.ellipse(X + T * .42, Y + T * .48, T * .2, T * .13, -.4, 0, Math.PI * 2); ctx.fill();
+  } else if (t === "structure") {
+    ctx.fillStyle = "#4a4553"; ctx.fillRect(X, Y, T, T);
+    ctx.strokeStyle = "#2c2934"; ctx.lineWidth = 1;
+    ctx.strokeRect(X + .5, Y + .5, T - 1, T / 2 - 1); ctx.strokeRect(X + .5, Y + T / 2 + .5, T - 1, T / 2 - 1);
+  }
+}
+
 function drawWizard(px, py, T) {
   ctx.fillStyle = "#5b3f8f"; ctx.beginPath(); ctx.moveTo(px, py - T * .42); ctx.lineTo(px - T * .3, py + T * .38); ctx.lineTo(px + T * .3, py + T * .38); ctx.fill();
   ctx.fillStyle = "#ece3cf"; ctx.beginPath(); ctx.arc(px, py - T * .02, T * .12, 0, Math.PI * 2); ctx.fill();
@@ -725,9 +969,9 @@ function drawActor(a) {
   const T = tile, px = a.x * T + T / 2, py = a.y * T + T / 2;
   let r = T * .32;
   if (a.kind === "wisp") {
-    const pulse = 1 + Math.sin((S.time + a.x) * 5) * .08;
+    const pulse = 1 + Math.sin((S.time + a.x) * 5) * .08, tint = a.charm > 0 ? "217,166,255" : "111,168,255";
     const g = ctx.createRadialGradient(px, py, 0, px, py, r * 1.4 * pulse);
-    g.addColorStop(0, a.hit ? "#ffffff" : "#d9ecff"); g.addColorStop(.35, "rgba(111,168,255,.85)"); g.addColorStop(1, "rgba(111,168,255,0)");
+    g.addColorStop(0, a.hit ? "#ffffff" : "#e8f2ff"); g.addColorStop(.35, "rgba(" + tint + ",.85)"); g.addColorStop(1, "rgba(" + tint + ",0)");
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 1.4 * pulse, 0, Math.PI * 2); ctx.fill();
   } else if (a.kind === "skeleton_warrior") {
     drawSkull(px, py, r, a.hit);
@@ -762,6 +1006,13 @@ function drawActor(a) {
     ctx.beginPath(); ctx.moveTo(px + r * .7, py - r * .3); ctx.lineTo(px + r * 1.25, py - r * .75); ctx.lineTo(px + r * .45, py - r * .6); ctx.fill();
     ctx.fillStyle = "#f5e05a"; ctx.beginPath(); ctx.arc(px - r * .28, py - r * .1, r * .13, 0, Math.PI * 2); ctx.arc(px + r * .28, py - r * .1, r * .13, 0, Math.PI * 2); ctx.fill();
   }
+  if (S.nemesis && S.nemesis.target === a) {
+    ctx.strokeStyle = "#e2566a"; ctx.lineWidth = 2;
+    const rr = T * .48 + Math.sin(S.time * 8) * 2;
+    ctx.beginPath(); ctx.arc(px, py, rr, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px - rr - 3, py); ctx.lineTo(px - rr + 4, py); ctx.moveTo(px + rr - 4, py); ctx.lineTo(px + rr + 3, py);
+    ctx.moveTo(px, py - rr - 3); ctx.lineTo(px, py - rr + 4); ctx.moveTo(px, py + rr - 4); ctx.lineTo(px, py + rr + 3); ctx.stroke();
+  }
   if (a.panic > 0) {
     ctx.fillStyle = "#f5e05a"; ctx.textAlign = "center"; ctx.font = "700 " + Math.round(T * .5) + "px 'Alegreya Sans', Arial, sans-serif";
     ctx.fillText("!", px, py - T * .45);
@@ -778,24 +1029,9 @@ function draw() {
   const T = tile;
   for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
     const t = L.terrain[y][x];
-    ctx.fillStyle = (x + y) % 2 ? "#232b22" : "#26301f";
-    if (t === "swamp") ctx.fillStyle = (x + y) % 2 ? "#253a3a" : "#28403d";
-    ctx.fillRect(x * T, y * T, T, T);
-    if (t !== "structure" && t !== "boulder" && L.summon(x, y)) { ctx.fillStyle = "rgba(111,168,255,0.10)"; ctx.fillRect(x * T, y * T, T, T); }
+    drawTile(x, y, t);
+    if (t !== "structure" && L.summon(x, y)) { ctx.fillStyle = "rgba(111,168,255,0.10)"; ctx.fillRect(x * T, y * T, T, T); }
     if (t !== "structure" && L.reach(x, y)) { ctx.fillStyle = "rgba(224,144,74,0.14)"; ctx.fillRect(x * T, y * T, T, T); }
-    if (t === "swamp") {
-      ctx.strokeStyle = "rgba(160,210,200,0.25)"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x * T + T * .2, y * T + T * .55); ctx.quadraticCurveTo(x * T + T * .5, y * T + T * .4, x * T + T * .8, y * T + T * .55); ctx.stroke();
-    }
-    if (t === "boulder") {
-      ctx.fillStyle = "#6c6676"; ctx.beginPath(); ctx.ellipse(x * T + T / 2, y * T + T * .58, T * .42, T * .34, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#8a8495"; ctx.beginPath(); ctx.ellipse(x * T + T * .42, y * T + T * .48, T * .2, T * .13, -.4, 0, Math.PI * 2); ctx.fill();
-    }
-    if (t === "structure") {
-      ctx.fillStyle = "#4a4553"; ctx.fillRect(x * T, y * T, T, T);
-      ctx.strokeStyle = "#2c2934"; ctx.lineWidth = 1;
-      ctx.strokeRect(x * T + .5, y * T + .5, T - 1, T / 2 - 1); ctx.strokeRect(x * T + .5, y * T + T / 2 + .5, T - 1, T / 2 - 1);
-    }
   }
   ctx.strokeStyle = "#e0904a"; ctx.lineWidth = 2;
   if (L.structs.length) {
@@ -811,6 +1047,13 @@ function draw() {
   } else { ctx.fillStyle = "#e0904a"; ctx.fillRect(0, R * T - 3, C * T, 3); }
 
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, C * T, R * T); ctx.clip();
+  if (S.command) {
+    const cx = S.command.x * T + T / 2, cy = S.command.y * T + T / 2, k = 1 - S.command.t / DATA.spells.command.duration;
+    ctx.strokeStyle = "#6fa8ff"; ctx.lineWidth = 2; ctx.globalAlpha = 1 - k * .6;
+    ctx.beginPath(); ctx.arc(cx, cy, T * (.2 + .35 * k), 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, T * .1, 0, Math.PI * 2); ctx.fillStyle = "#6fa8ff"; ctx.fill();
+    ctx.globalAlpha = 1;
+  }
   S.enemies.forEach(drawActor); S.units.forEach(drawActor);
   ctx.strokeStyle = "#ece3cf"; ctx.lineWidth = 2;
   for (const s of S.shots) {
@@ -836,12 +1079,15 @@ function hud() {
   $("manafill").style.width = (S.mana / S.manaMax * 100) + "%";
   $("bones").textContent = S.bones + (S.carried ? " +" + S.carried : "");
   $("gold").textContent = S.gold;
+  $("slots").textContent = S.units.length + "/" + S.slots;
   $("ward").textContent = Math.max(0, S.ward);
   $("wave").textContent = Math.max(1, S.wave);
+  const full = S.units.length >= S.slots;
   for (const k in DATA.units) {
     const c = DATA.units[k].cost;
-    $("card_" + k).style.opacity = S.mana >= c.mana && S.bones + S.carried >= c.bone ? 1 : .55;
+    $("card_" + k).style.opacity = !full && S.mana >= c.mana && S.bones + S.carried >= c.bone ? 1 : .55;
   }
+  for (const s in DATA.spells) $("spell_" + s).style.opacity = S.mana >= DATA.spells[s].mana ? 1 : .55;
 }
 
 function say(t) { $("toast").textContent = t; }
@@ -869,11 +1115,13 @@ for (const k in DATA.levels) {
 function renderTown() {
   $("tGold").textContent = META.gold; $("tExp").textContent = META.exp; $("tBones").textContent = META.bones;
   const T = DATA.tower;
-  const mCost = T.mana.cost(META.manaLv), rCost = T.regen.cost(META.regenLv);
+  const mCost = T.mana.cost(META.manaLv), rCost = T.regen.cost(META.regenLv), sCost = T.slots.cost(META.slotLv);
   $("upManaInfo").textContent = "Level " + META.manaLv + " · max mana " + wizManaMax() + " → " + (wizManaMax() + T.mana.per);
   $("upMana").textContent = "Upgrade · " + mCost + " exp"; $("upMana").disabled = META.exp < mCost;
   $("upRegenInfo").textContent = "Level " + META.regenLv + " · " + fmt(wizRegen()) + " → " + fmt(wizRegen() + T.regen.per) + " mana per second";
   $("upRegen").textContent = "Upgrade · " + rCost + " exp"; $("upRegen").disabled = META.exp < rCost;
+  $("upSlotInfo").textContent = wizSlots() + " summons on the field at once → " + (wizSlots() + T.slots.per);
+  $("upSlot").textContent = "Add a slot · " + sCost + " exp"; $("upSlot").disabled = META.exp < sCost;
   const P = DATA.market.bonePrice;
   $("boneInfo").textContent = P + " gold each · you have " + META.bones + " stored";
   $("buy1").disabled = META.gold < P; $("buy5").disabled = META.gold < P * 5;
@@ -883,8 +1131,13 @@ function renderTown() {
     $("map_" + k).querySelector(".bestline").textContent = b ? "Longest stand: wave " + b : "Not yet attempted";
   }
 }
-$("upMana").addEventListener("click", () => { const c = DATA.tower.mana.cost(META.manaLv); if (META.exp >= c) { META.exp -= c; META.manaLv++; saveMeta(); renderTown(); } });
-$("upRegen").addEventListener("click", () => { const c = DATA.tower.regen.cost(META.regenLv); if (META.exp >= c) { META.exp -= c; META.regenLv++; saveMeta(); renderTown(); } });
+function upgrade(key, lvKey) {
+  const c = DATA.tower[key].cost(META[lvKey]);
+  if (META.exp >= c) { META.exp -= c; META[lvKey]++; saveMeta(); renderTown(); }
+}
+$("upMana").addEventListener("click", () => upgrade("mana", "manaLv"));
+$("upRegen").addEventListener("click", () => upgrade("regen", "regenLv"));
+$("upSlot").addEventListener("click", () => upgrade("slots", "slotLv"));
 function buyBones(n) { const c = DATA.market.bonePrice * n; if (META.gold >= c) { META.gold -= c; META.bones += n; saveMeta(); renderTown(); } }
 $("buy1").addEventListener("click", () => buyBones(1));
 $("buy5").addEventListener("click", () => buyBones(5));
@@ -899,14 +1152,17 @@ function showView(v) {
 // ---------- Battle input ----------
 const UNIT_KEYS = Object.keys(DATA.units);
 function select(kind) {
-  selected = kind;
+  selected = kind; setSpell(null);
   for (const k of UNIT_KEYS) $("card_" + k).setAttribute("aria-pressed", k === kind ? "true" : "false");
 }
 for (const k of UNIT_KEYS) $("card_" + k).addEventListener("click", () => { select(k); say(DATA.units[k].name + " selected. Tap a lit tile to summon."); });
 
 cv.addEventListener("pointerdown", ev => {
+  if (!S || S.over || paused) return;
   const r = cv.getBoundingClientRect();
-  const x = Math.floor((ev.clientX - r.left) / tile), y = Math.floor((ev.clientY - r.top) / tile);
+  const fx = (ev.clientX - r.left) / tile, fy = (ev.clientY - r.top) / tile;
+  if (spellMode) { castAt(fx, fy); return; }
+  const x = Math.floor(fx), y = Math.floor(fy);
   if (inGrid(x, y)) summonAt(x, y);
 });
 function togglePause() {
@@ -916,7 +1172,11 @@ function togglePause() {
 $("pause").addEventListener("click", togglePause);
 document.addEventListener("keydown", e => {
   if (!inBattle) return;
-  if (e.key === "p" || e.key === "P") togglePause();
+  const k = e.key.toLowerCase();
+  if (k === "p") togglePause();
+  if (k === "q") $("spell_command").click();
+  if (k === "w") $("spell_nemesis").click();
+  if (k === "escape") setSpell(null);
   const i = "123".indexOf(e.key); if (i >= 0 && UNIT_KEYS[i]) select(UNIT_KEYS[i]);
 });
 document.addEventListener("visibilitychange", () => { if (document.hidden && inBattle && !paused) togglePause(); });

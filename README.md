@@ -9,12 +9,17 @@ Open `index.html` in a browser. No build step, no install.
 Current prototype:
 - Town view with three buildings:
   - Town Gate: pick a battlefield
-  - Wizard's Tower: spend experience on max mana and mana regeneration
+  - Spelltower: spend experience on max mana, mana regeneration and summon slots (5 at start, then 50 / 100 / 150 ... exp each)
   - Market: buy bones with gold (10 gold each); bought bones go to the next battle and come back if unused
 - Three maps: Hillside (ward along one edge), Crossroads (wizard in the middle, enemies from every side), Outpost (outpost on one edge, enemies from three sides)
-- Terrain: boulders block walking, swamp slows it
+- Each battle generates a fresh field: grass, dirt, sand, rock, boulders, swamp, bushes, trees, puddles, lakes (2-9 tiles in a 3x3 area) and sometimes a river crossing the whole field with 1-3 bridges. Every walkable tile is guaranteed to connect to the ward.
+  - Sand and puddles slow a little, swamp a lot, bushes slow enemies only
+  - Boulders, trees, lakes and rivers block walkers; wisps float over everything
+  - Grass, bushes and trees are flagged flammable and dirt diggable for future spells
+- Spells: Command (10 mana, every summon heads to a tile for 1 s) and Nemesis (20 mana, every summon attacks one marked enemy for 5 s)
+- Units accelerate to full speed over 0.8 s
 - Summons:
-  - Wisp (10 mana): floats through terrain and moves diagonally; fights alone, but heals other summons when they are around
+  - Wisp (10 mana): floats through terrain and moves diagonally; fights alone, but heals other summons when they are around; 2 % chance per second to wander off for 10 s when a swamp is within 3 tiles
   - Skeleton Warrior (5 mana + 1 bone): sturdy melee
   - Skeleton Archer (10 mana + 2 bones): shoots from two tiles, slow and fragile
 - Enemies and drops:
