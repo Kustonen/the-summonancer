@@ -1527,10 +1527,10 @@ function endBattle(retreated) {
   rows.push("<tr class='sum'><td>Battle total</td><td></td><td>" + fmt(subtotal) + " exp</td></tr>");
   rows.push("<tr><td>Reached wave " + S.wave + "</td><td></td><td>× " + fmt(wm) + "</td></tr>");
   rows.push("<tr class='total'><td>Experience</td><td></td><td>+" + total + "</td></tr>");
-  rows.push("<tr><td>Gold found</td><td></td><td class='g'>+" + S.gold + "</td></tr>");
-  rows.push("<tr><td>Bones to the warehouse</td><td></td><td>+" + S.bones + "</td></tr>");
-  if (S.skulls) rows.push("<tr><td>Skulls to the warehouse</td><td></td><td>+" + S.skulls + "</td></tr>");
-  for (const k in DATA.materials) if (S.loot[k]) rows.push("<tr><td>" + DATA.materials[k].name + " to the warehouse</td><td></td><td>+" + S.loot[k] + "</td></tr>");
+  rows.push("<tr><td>Gold</td><td></td><td class='g'>+" + S.gold + "</td></tr>");
+  rows.push("<tr><td>Bones</td><td></td><td>+" + S.bones + "</td></tr>");
+  if (S.skulls) rows.push("<tr><td>Skulls</td><td></td><td>+" + S.skulls + "</td></tr>");
+  for (const k in DATA.materials) if (S.loot[k]) rows.push("<tr><td>" + DATA.materials[k].name + "</td><td></td><td>+" + S.loot[k] + "</td></tr>");
   $("tally").innerHTML = rows.join("");
 
   META.exp += total; META.gold += S.gold;
