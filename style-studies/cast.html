@@ -1188,11 +1188,12 @@ function rainCloud(ctx, x, y, t, cl) {
     ctx.beginPath(); ctx.moveTo(x - 13 + i * 5.4, y + 8 + f * 32); ctx.lineTo(x - 14 + i * 5.4, y + 13 + f * 32); ctx.stroke(); ctx.restore();
   }
   if (cl.bolt > 0) {
-    const pts = [[x + 4, y - 8], [x, y - 17], [x + 8, y - 20], [x + 3, y - 31], [x + 12, y - 27], [x + 9, y - 42]];
+    const pts = cl.path || [[x + 4, y - 8], [x, y - 17], [x + 8, y - 20], [x + 3, y - 31], [x + 12, y - 27], [x + 9, y - 42]];
     ctx.save(); ctx.globalAlpha = cl.bolt; ctx.lineJoin = "round"; ctx.lineCap = "round";
     ctx.shadowColor = "#fff6a0"; ctx.shadowBlur = 14;
     ctx.strokeStyle = INK; ctx.lineWidth = 5 * LW; ctx.beginPath(); pts.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); ctx.stroke();
     ctx.strokeStyle = "#ffe95a"; ctx.lineWidth = 2.4 * LW; ctx.stroke(); ctx.restore();
+    const end = pts[pts.length - 1]; if (cl.bolt > 0.5) burst(ctx, end[0], end[1], 1, 0.9, "#ffe95a");
   }
   const dark = cl.bolt > 0 ? ["#9a95ad", "#7d7892"] : ["#77718a", "#5f5a72"];
   puffs(ctx, [[-12, 2, 7], [-3, -4, 9], [9, 0, 8], [2, 4, 7]].map(([a, b, r]) => ({ x: x + a * g, y: y + b * g, r: r * g })), dark[0], dark[1]);
@@ -1240,9 +1241,15 @@ function runSeq(st, t) {
   };
   const fadeScene = (t0, next) => { out.black = e < t0 + 0.35 ? clamp01((e - t0) / 0.35) : clamp01(1 - (e - t0 - 0.35) / 0.35); if (e >= t0 + 0.35) st.scene = next; };
   if (S.kind === "defeat") {
+    if (!S.boltPath) {
+      const side = Math.random() < 0.5 ? -1 : 1, ex = side * (60 + Math.random() * 30), ey = -2 - Math.random() * 30;
+      const sx = 2 + side * 14, sy = -168, pts = [[sx, sy]];
+      for (let k = 1; k < 6; k++) { const u = k / 6; pts.push([lerp(sx, ex, u) + (k % 2 ? 1 : -1) * (5 + Math.random() * 5), lerp(sy, ey, u) + (Math.random() - 0.5) * 6]); }
+      pts.push([ex, ey]); S.boltPath = pts;
+    }
     if (e < 4.95) {
       st.scene = "battle"; st.wmode = "despair";
-      st.cloud = { grow: ease(clamp01((e - 0.2) / 0.9)), bolt: e > 1.3 && e < 1.8 ? (e < 1.42 || e > 1.5 ? 1 : 0.25) * (1 - clamp01((e - 1.6) / 0.2)) : 0, rain: clamp01((e - 1.8) / 0.2), fade: 1 - clamp01((e - 3.9) / 0.6) };
+      st.cloud = { grow: ease(clamp01((e - 0.2) / 0.9)), bolt: e > 1.3 && e < 1.8 ? (e < 1.42 || e > 1.5 ? 1 : 0.25) * (1 - clamp01((e - 1.6) / 0.2)) : 0, rain: clamp01((e - 1.8) / 0.2), fade: 1 - clamp01((e - 3.9) / 0.6), path: S.boltPath };
       if (e > 3.2) vanish(3.2);
       if (e > 4.1) out.squash = 1;
       if (e > 4.4) fadeScene(4.6, "town");
@@ -1299,9 +1306,13 @@ function wizFrame(st, t, dt) {
     o.save(); o.translate(0, -hover * s); wizard(o, cx, gy, s, t, st); o.restore(); LW = Math.max(0.55, s);
     if (fx.shimmer > 0) { o.globalCompositeOperation = "source-atop"; o.fillStyle = "hsla(" + ((t * 420) % 360) + ",95%,62%," + (0.6 * fx.shimmer) + ")"; o.fillRect(0, 0, W, W); o.globalCompositeOperation = "source-over"; }
     const ccy = gy - (hover + 70) * s;
-    ctx.save(); ctx.translate(cx, ccy); ctx.scale(Math.max(0.001, 1 - fx.squash), 1 + fx.squash * 0.8); ctx.translate(-cx, -ccy);
-    const sh = 4 * s;
-    for (let y = 0; y < W; y += sh) { const dx = Math.sin(y * 0.15 + t * 22) * 5 * s * fx.shimmer; ctx.drawImage(off, 0, y * D, W * D, sh * D, dx, y, W, sh); }
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.translate(cx * D, ccy * D); ctx.scale(Math.max(0.001, 1 - fx.squash), 1 + fx.squash * 0.8); ctx.translate(-cx * D, -ccy * D);
+    if (fx.shimmer <= 0) ctx.drawImage(off, 0, 0);
+    else {
+      const sh = Math.max(2, Math.round(4 * s * D));
+      for (let y = 0; y < off.height; y += sh) { const dx = Math.round(Math.sin(y / D * 0.15 + t * 22) * 5 * s * D * fx.shimmer); ctx.drawImage(off, 0, y, off.width, sh + 1, dx, y, off.width, sh + 1); }
+    }
     ctx.restore();
   }
   if (st.cloud) { ctx.save(); ctx.translate(cx, gy - hover * s); ctx.scale(s, s); const L0 = LW; LW = L0 / s; rainCloud(ctx, 2, -172, t, st.cloud); LW = L0; ctx.restore(); }
