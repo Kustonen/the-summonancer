@@ -149,6 +149,13 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .prog { height: 6px; border-radius: 3px; background: var(--night); border: 1px solid var(--line); overflow: hidden; }
 .prog > div { height: 100%; background: var(--exp); }
 .blank { color: var(--dim); font-style: italic; }
+.quote { color: var(--bone) !important; font-family: var(--display); font-size: 20px; }
+.goods { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.good { background: var(--night); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; }
+.good b { font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.good span { color: var(--dim); font-size: 13px; }
+.opt .cost { color: var(--dim); font-size: 13px; }
+.done { color: var(--heal); font-weight: 700; }
 .book { display: inline-flex; align-items: center; gap: 5px; }
 .book svg { width: 18px; height: 18px; flex: none; }
 .overlay { position: fixed; inset: 0; z-index: 20; background: rgba(21, 19, 28, .9); overflow-y: auto;
@@ -175,7 +182,6 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div class="res">
       <div class="stat"><span id="tGold" style="color:var(--gold)">0</span><small>gold</small></div>
       <div class="stat"><span id="tExp" style="color:var(--exp)">0</span><small>exp</small></div>
-      <div class="stat"><span id="tBones">0</span><small>stored bones</small></div>
 <button class="mini book" id="bookTown" type="button" aria-label="Open the Grimoire" title="The Grand Grimoire of Everything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c3-1.5 6-1.5 9 1v14c-3-2.5-6-2.5-9-1z" fill="#5b3f8f" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M21 5c-3-1.5-6-1.5-9 1v14c3-2.5 6-2.5 9-1z" fill="#4a3374" stroke="#ece3cf" stroke-width="1.2" stroke-linejoin="round"/><path d="M16.5 9.5l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#e8c45a"/></svg>Grimoire</button>
       <button class="mini dev" id="devBtn" type="button" aria-expanded="false">DEV</button>
     </div>
@@ -192,11 +198,19 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <input class="num" id="devGold" type="number" min="0" step="1" inputmode="numeric">
     </div>
     <div class="opt">
-      <div class="what"><b>Apply</b><span id="devMsg">Saves the two values above.</span></div>
-      <button class="btn primary" id="devApply" type="button">Set exp and gold</button>
+      <label class="what" for="devBones"><b>Bones</b><span>Set the amount in the warehouse</span></label>
+      <input class="num" id="devBones" type="number" min="0" step="1" inputmode="numeric">
     </div>
     <div class="opt">
-      <div class="what"><b>Reset Spelltower</b><span>Mana Reservoir, Mana Flow and Summon Slots back to level 0. Spent exp is not refunded.</span></div>
+      <label class="what" for="devSkulls"><b>Skulls</b><span>Set the amount in the warehouse</span></label>
+      <input class="num" id="devSkulls" type="number" min="0" step="1" inputmode="numeric">
+    </div>
+    <div class="opt">
+      <div class="what"><b>Apply</b><span id="devMsg">Saves the values above.</span></div>
+      <button class="btn primary" id="devApply" type="button">Set values</button>
+    </div>
+    <div class="opt">
+      <div class="what"><b>Reset upgrades</b><span>Spelltower abilities back to level 0, research cleared and built buildings removed. Nothing spent is refunded.</span></div>
       <button class="btn" id="devResetTower" type="button">Reset abilities</button>
     </div>
     <div class="opt">
@@ -214,13 +228,21 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 58V24h20v34z" fill="#4a4553"/><path d="M16 26 32 4l16 22z" fill="#5b3f8f"/><rect x="28" y="32" width="8" height="10" rx="4" fill="#6fa8ff"/><rect x="28" y="48" width="8" height="10" fill="#15131c"/><circle cx="32" cy="8" r="2" fill="#e8c45a"/></svg>
       <b>Spelltower</b>
     </button>
-    <button class="bld" id="b_market" type="button" aria-pressed="false">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="30" width="44" height="26" fill="#4a4553"/><path d="M6 30h52l-6-14H12z" fill="#b0563f"/><path d="M14 30l3-14M24 30l2-14M34 30v-14M44 30l-2-14" stroke="#ece3cf" stroke-width="2" opacity=".5"/><rect x="16" y="38" width="32" height="6" fill="#15131c"/><circle cx="22" cy="40" r="3" fill="#ece3cf"/><circle cx="30" cy="40" r="3" fill="#ece3cf"/><circle cx="40" cy="41" r="3" fill="#e8c45a"/></svg>
-      <b>Market</b>
+    <button class="bld" id="b_builder" type="button" aria-pressed="false">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M44 8l12 7-4 6-12-7z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M44 18l-12 20" stroke="#8a5a34" stroke-width="4" stroke-linecap="round"/><ellipse cx="26" cy="54" rx="10" ry="4" fill="#ece3cf"/><ellipse cx="26" cy="46" rx="8" ry="6" fill="#ece3cf" stroke="#2a1f2e" stroke-width="2"/><path d="M12 22a14 13 0 0 1 28 0c0 6-3 9-6 11v3H18v-3c-3-2-6-5-6-11z" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2.5"/><circle cx="20" cy="23" r="4.5" fill="#2a1f2e"/><circle cx="31" cy="22" r="2.6" fill="#2a1f2e"/><circle cx="32" cy="38" r="3.5" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2"/><path d="M8 18l6-6M10 10l2 4" stroke="#e8c45a" stroke-width="2" stroke-linecap="round"/></svg>
+      <b>Builder</b>
     </button>
     <button class="bld" id="b_grimoire" type="button" aria-pressed="false">
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 14c8-4 16-4 22 2v40c-6-6-14-6-22-2z" fill="#5b3f8f"/><path d="M54 14c-8-4-16-4-22 2v40c6-6 14-6 22-2z" fill="#4a3374"/><path d="M14 18c6-2 11-2 15 2M14 24c6-2 11-2 15 2M35 20c4-4 9-4 15-2M35 26c4-4 9-4 15-2" stroke="#ece3cf" stroke-width="1.5" opacity=".55" fill="none"/><path d="M42 34l2 5 5 .5-4 3.3 1.3 5-4.3-2.8-4.3 2.8 1.3-5-4-3.3 5-.5z" fill="#e8c45a"/></svg>
       <b>Grimoire</b>
+    </button>
+    <button class="bld" id="b_lab" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V26L32 10l24 16v32z" fill="#3a3547"/><path d="M8 26L32 10l24 16" fill="none" stroke="#2a1f2e" stroke-width="2"/><rect x="26" y="40" width="12" height="18" fill="#15131c"/><path d="M28 18h8M30 18v8l-6 10h16l-6-10v-8" fill="none" stroke="#ece3cf" stroke-width="2" stroke-linejoin="round"/><path d="M26 34h12l2 2H24z" fill="#8fbf6a"/><circle cx="31" cy="30" r="1.5" fill="#8fbf6a"/><circle cx="34" cy="27" r="1" fill="#8fbf6a"/></svg>
+      <b>Cryptic Laboratory</b>
+    </button>
+    <button class="bld" id="b_well" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 18h36" stroke="#8a5a34" stroke-width="4" stroke-linecap="round"/><path d="M18 18v20M46 18v20" stroke="#8a5a34" stroke-width="3"/><path d="M10 16l22-8 22 8z" fill="#b0563f"/><ellipse cx="32" cy="40" rx="20" ry="6" fill="#1e3552"/><circle cx="32" cy="40" r="6" fill="#6fa8ff" opacity=".55"/><circle cx="32" cy="40" r="2.5" fill="#e8f2ff"/><path d="M12 40v14c0 3 9 6 20 6s20-3 20-6V40c0 3-9 6-20 6s-20-3-20-6z" fill="#6c6676"/><path d="M12 47c6 3 34 3 40 0" stroke="#4a4553" stroke-width="2" fill="none"/><path d="M32 18v14" stroke="#ece3cf" stroke-width="1.5"/></svg>
+      <b>Wisping Well</b>
     </button>
   </div>
 
@@ -247,14 +269,24 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     </div>
   </section>
 
-  <section class="panel" id="p_market" hidden>
-    <h2>Market</h2>
-    <p>Bones, ethically sourced and slightly overpriced. Bought bones go with you to the next battle and are used when you summon skeletons. Whatever you don't use comes back home with you.</p>
-    <div class="opt">
-      <div class="what"><b>Bone</b><span id="boneInfo"></span></div>
-      <button class="btn" id="buy1" type="button">Buy 1</button>
-      <button class="btn" id="buy5" type="button">Buy 5</button>
-    </div>
+  <section class="panel" id="p_builder" hidden>
+    <h2>Builder</h2>
+    <p>A skeleton with a hammer and a can-do attitude. Give it gold and it will put up whatever you point at, mostly in the right place.</p>
+    <div id="buildList"></div>
+  </section>
+
+  <section class="panel" id="p_lab" hidden>
+    <h2>Cryptic Laboratory</h2>
+    <p class="quote">“It's not a crypt! It's a Laboratory!”</p>
+    <p>Research for your skeletons, warriors and archers alike. Paid in gold, and in bones and skulls once things get serious.</p>
+    <div id="labList"></div>
+  </section>
+
+  <section class="panel" id="p_well" hidden>
+    <h2>Wisping Well</h2>
+    <p class="quote">“Drop a coin in the well and you probably just lose a coin.”</p>
+    <p>Wisps gather here between battles. Offerings make them brighter, steadier and a little less easily distracted by swamps.</p>
+    <div id="wellList"></div>
   </section>
 
   <section class="panel" id="p_grimoire" hidden>
@@ -262,6 +294,12 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <p>Everything the wizard has learned about the things that try to reach the ward. Each page fills in as you defeat more of that kind: first how it looks and walks, then how it fights, what it carries, how it behaves and, eventually, the embarrassing details.</p>
     <div class="foes" id="foes"></div>
     <div class="page" id="page"></div>
+  </section>
+
+  <section class="panel" id="warehouse">
+    <h2>Warehouse</h2>
+    <p>Everything carried back from the battlefield ends up here.</p>
+    <div class="goods" id="goods"></div>
   </section>
 
   <div class="foot">Progress is saved in this browser.</div>
@@ -274,6 +312,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div class="stat" title="Mana"><span id="mana" style="color:var(--mana)">0</span><small>mana</small></div>
     <div class="stat" title="Bones"><span id="bones">0</span><small>bones</small></div>
     <div class="stat" title="Gold"><span id="gold" style="color:var(--gold)">0</span><small>gold</small></div>
+    <div class="stat" title="Skulls" id="skullStat" hidden><span id="skulls">0</span><small>skulls</small></div>
     <div class="stat" title="Summons on the field"><span id="slots">0</span><small>summons</small></div>
     <div class="stat" title="Ward"><span id="ward" style="color:var(--ember)">0</span><small>ward</small></div>
     <div class="stat" title="Wave"><span id="wave">1</span><small>wave</small></div>
@@ -358,7 +397,30 @@ const DATA = {
     regen: { per: 0.15, cost: lv => Math.round(4 + 5 * lv + 1.5 * lv * lv) },// 4, 11, 20, 32 ... level 24: 988
     slots: { per: 1,    cost: lv => lv < 4 ? 25 * (lv + 1) : 150 + (lv - 4) * 50 }   // 25, 50, 75, 100, 150, then +50 per slot
   },
-  market: { bonePrice: 10 },
+  // buildings the Builder can put up, and the research they offer
+  builder: {
+    lab:  { name: "Cryptic Laboratory", cost: 40, about: "Research that makes skeletons hit harder, move faster and last longer." },
+    well: { name: "Wisping Well",       cost: 40, about: "Offerings that make wisps brighter, steadier and less easily charmed." }
+  },
+  research: {
+    lab: [
+      { key: "dmg",   name: "Sharpened Knuckles", max: 10, gold: 8,  fx: lv => "+" + lv * 10 + " % damage" },
+      { key: "rate",  name: "Loose Joints",       max: 8,  gold: 10, fx: lv => "attacks " + Math.round((1 - Math.pow(0.95, lv)) * 100) + " % faster" },
+      { key: "speed", name: "Hollow Bones",       max: 8,  gold: 8,  fx: lv => "+" + lv * 5 + " % move speed" },
+      { key: "armor", name: "Calcium Plating",    max: 8,  gold: 12, fx: lv => "blocks " + fmt(lv * 0.3) + " damage per hit" },
+      { key: "hp",    name: "Extra Ribs",         max: 10, gold: 10, fx: lv => "+" + lv * 10 + " % health" }
+    ],
+    well: [
+      { key: "charm", name: "Swamp Resolve",  max: 8,  gold: 8,  fx: lv => "swamp daydreams last " + Math.max(2, 10 - lv) + " s" },
+      { key: "heal",  name: "Soothing Glow",  max: 8,  gold: 10, fx: lv => "heals " + Math.round((1 - Math.pow(0.92, lv)) * 100) + " % faster" },
+      { key: "self",  name: "Self-Mending",   max: 8,  gold: 12, fx: lv => lv ? "mends itself 1 HP every " + fmt(12 * Math.pow(0.85, lv - 1)) + " s" : "no self-healing" },
+      { key: "dmg",   name: "Brighter Spark", max: 6,  gold: 8,  fx: lv => "+" + lv * 50 + " % damage" },
+      { key: "hp",    name: "Steady Glow",    max: 10, gold: 10, fx: lv => "+" + lv * 10 + " % health" },
+      { key: "speed", name: "Quick Drift",    max: 8,  gold: 8,  fx: lv => "+" + lv * 5 + " % move speed" }
+    ],
+    // price of the next level: gold grows, bones from level 2, skulls from level 6
+    cost: (r, lv) => ({ gold: Math.round(r.gold * (lv + 1) * (1 + lv * 0.25)), bones: lv >= 2 ? lv * 2 : 0, skulls: lv >= 6 ? lv - 5 : 0 })
+  },
   spells: {
     command: { name: "Command", mana: 10, duration: 1 },
     nemesis: { name: "Nemesis", mana: 20, duration: 5 }
@@ -378,12 +440,12 @@ const DATA = {
   },
   enemies: {
     kobold: { name: "Kobold", hp: 7, damage: 1, attackEvery: 0.9, speed: 1.15, range: 1.15, aggro: 2.4, move: "ground",
-              drops: [{ res: "bone", chance: 1, min: 1, max: 1 }, { res: "gold", chance: 0.10, min: 1, max: 1 }], panicOnKinDeath: 1 },
+              drops: [{ res: "bone", chance: 1, min: 1, max: 1 }, { res: "gold", chance: 0.10, min: 1, max: 1 }], skullChance: 0.01, panicOnKinDeath: 1 },
     bog_goblin: { name: "Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.15, aggro: 2.6, move: "ground",
-                  drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.20, min: 1, max: 2 }],
+                  drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.20, min: 1, max: 2 }], skullChance: 0.02,
                   panic: { deaths: 4, window: 5, min: 1, max: 5, steadiedBy: "orc", steadyRange: 3 } },
     orc: { name: "Orc", hp: 32, damage: 4, attackEvery: 1.3, speed: 0.65, range: 1.15, aggro: 2.8, move: "ground",
-           drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.25, min: 2, max: 5 }] }
+           drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.25, min: 2, max: 5 }], skullChance: 0.03 }
   },
   // The Grand Grimoire of Everything: what each page reveals, and after how many defeats
   grimoire: {
@@ -462,8 +524,12 @@ const QUIPS = {
 
 // ---------- Saved progress (this browser only) ----------
 const SAVE_KEY = "summonancer_save_v1";
-let META = { gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, slotLv: 0, best: {}, kills: {} };
+let META = { gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, slotLv: 0, best: {}, kills: {}, warehouse: { bones: 0, skulls: 0 }, built: {}, research: { lab: {}, well: {} } };
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) META = Object.assign(META, JSON.parse(raw)); } catch (e) {}
+// older saves kept bought bones separately; they now live in the warehouse
+META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {}; META.research = META.research || { lab: {}, well: {} };
+META.research.lab = META.research.lab || {}; META.research.well = META.research.well || {};
+if (META.bones) { META.warehouse.bones += META.bones; META.bones = 0; }
 function saveMeta() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(META)); } catch (e) {} }
 const wizManaMax = () => DATA.wizard.manaMax + META.manaLv * DATA.tower.mana.per;
 const wizRegen = () => DATA.wizard.manaRegen + META.regenLv * DATA.tower.regen.per;
@@ -589,20 +655,21 @@ function buildLevel(key) {
 function startBattle(key) {
   levelKey = key;
   L = buildLevel(levelKey);
-  const carried = META.bones; META.bones = 0; saveMeta();   // bought bones march out with you
+  const carried = 0;
   S = {
     mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(), slots: wizSlots(),
-    bones: 0, carried, gold: 0, ward: DATA.wizard.ward,
+    bones: 0, carried, skulls: 0, gold: 0, ward: DATA.wizard.ward,
     wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
     slain: { kobold: 0, bog_goblin: 0, orc: 0 },
     units: [], enemies: [], shots: [], floaters: [], goblinDeaths: [], over: false,
     command: null, nemesis: null
   };
+  S.defs = {}; for (const k in DATA.units) S.defs[k] = unitDef(k);
   setSpell(null);
   $("over").hidden = true;
   paused = false; $("pause").textContent = "Pause";
   $("mapname").innerHTML = "<b>" + L.d.name + "</b>";
-  say(L.d.note + (carried ? " You brought " + carried + " bones from the market." : " Start with a wisp."));
+  say(L.d.note + " Start with a wisp.");
   showView("battle");
   showBest();
 }
@@ -643,8 +710,30 @@ function findPath(sx, sy, goal, h, d, side) {
 }
 
 // ---------- Entities ----------
+// a summon's stats for this battle, with Cryptic Laboratory and Wisping Well research applied
+function unitDef(kind) {
+  const b = DATA.units[kind], d = Object.assign({}, b);
+  if (b.heal) d.heal = Object.assign({}, b.heal);
+  if (b.swampCharm) d.swampCharm = Object.assign({}, b.swampCharm);
+  const lv = (where, key) => (META.research[where] && META.research[where][key]) || 0;
+  if (kind === "wisp") {
+    d.swampCharm.duration = Math.max(2, b.swampCharm.duration - lv("well", "charm"));
+    d.heal.every = b.heal.every * Math.pow(0.92, lv("well", "heal"));
+    if (lv("well", "self")) d.selfHeal = 12 * Math.pow(0.85, lv("well", "self") - 1);
+    d.damage = b.damage * (1 + 0.5 * lv("well", "dmg"));
+    d.hp = Math.round(b.hp * (1 + 0.1 * lv("well", "hp")));
+    d.speed = b.speed * (1 + 0.05 * lv("well", "speed"));
+  } else {
+    d.damage = b.damage * (1 + 0.1 * lv("lab", "dmg"));
+    d.attackEvery = b.attackEvery * Math.pow(0.95, lv("lab", "rate"));
+    d.speed = b.speed * (1 + 0.05 * lv("lab", "speed"));
+    d.armor = 0.3 * lv("lab", "armor");
+    d.hp = Math.round(b.hp * (1 + 0.1 * lv("lab", "hp")));
+  }
+  return d;
+}
 function makeActor(side, kind, x, y) {
-  const d = side === "ally" ? DATA.units[kind] : DATA.enemies[kind];
+  const d = side === "ally" ? (S && S.defs ? S.defs[kind] : DATA.units[kind]) : DATA.enemies[kind];
   return { side, kind, d, x, y, hp: d.hp, cd: 0, path: [], repath: 0, hit: 0, enter: null, panic: 0, heading: null, spd: 0, moved: false, charm: 0, charmTick: 0,
            look: null, phase: Math.random() * 10, lastStrike: null, flip: side === "foe" ? Math.random() < 0.5 : false };
 }
@@ -822,7 +911,10 @@ function strike(a, target) {
   if (a.d.ranged) { S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage }); return; }
   hurt(target, a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");
 }
-function hurt(t, dmg, color) { t.hp -= dmg; t.hit = 0.15; float(t.x, t.y, "-" + dmg, color); }
+function hurt(t, dmg, color) {
+  if (t.d.armor) dmg = Math.max(dmg * 0.25, dmg - t.d.armor);            // Calcium Plating
+  t.hp -= dmg; t.hit = 0.15; float(t.x, t.y, "-" + fmt(Math.round(dmg * 10) / 10), color);
+}
 
 // ---------- Behaviour ----------
 function updateAlly(a, dt) {
@@ -929,6 +1021,7 @@ function update(dt) {
     a.moved = false;
     if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false, 0.2)) a.enter = null; }
     else if (a.side === "ally") updateAlly(a, dt); else updateFoe(a, dt);
+    if (a.d.selfHeal && a.hp < a.d.hp && (a.selfT = (a.selfT || 0) + dt) >= a.d.selfHeal) { a.selfT = 0; a.hp = Math.min(a.d.hp, a.hp + 1); float(a.x, a.y, "+1", "#7fd67a"); }
     if (!a.moved) a.spd = Math.max(0, a.spd - speedAt(a) / DATA.movement.brakeTime * dt);   // holding still: brake, keep heading
   }
   separate(S.units); separate(S.enemies);
@@ -963,7 +1056,8 @@ function update(dt) {
     for (const dr of e.d.drops) {
       if (!chance(dr.chance)) continue;
       const n = dr.min + rnd(dr.max - dr.min + 1);
-      if (dr.res === "bone") { S.bones += n; float(e.x, e.y - lift, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf"); }
+      if (dr.res === "bone" && chance(e.d.skullChance || 0)) { S.skulls++; float(e.x, e.y - lift, "+1 skull", "#d9c6ff"); }   // rarely a whole skull instead
+      else if (dr.res === "bone") { S.bones += n; float(e.x, e.y - lift, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf"); }
       else { S.gold += n; float(e.x, e.y - lift, "+" + n + " gold", "#e8c45a"); }
       lift += 0.35;
     }
@@ -1000,17 +1094,17 @@ function endBattle() {
     killExp += x;
     rows.push("<tr><td>" + DATA.enemies[k].name + (n === 1 ? "" : "s") + "</td><td>" + n + " × " + fmt(E.perKill[k]) + "</td><td>" + fmt(x) + " exp</td></tr>");
   }
-  const boneExp = S.bones * E.perUnusedBone, wm = waveMultiplier(S.wave);
-  const subtotal = killExp + boneExp, total = Math.ceil(subtotal * wm - 1e-9);
-  rows.push("<tr><td>Unused bones</td><td>" + S.bones + " × " + fmt(E.perUnusedBone) + "</td><td>" + fmt(boneExp) + " exp</td></tr>");
+  const wm = waveMultiplier(S.wave), subtotal = killExp, total = Math.ceil(subtotal * wm - 1e-9);
   rows.push("<tr class='sum'><td>Battle total</td><td></td><td>" + fmt(subtotal) + " exp</td></tr>");
   rows.push("<tr><td>Reached wave " + S.wave + "</td><td></td><td>× " + fmt(wm) + "</td></tr>");
   rows.push("<tr class='total'><td>Experience</td><td></td><td>+" + total + "</td></tr>");
   rows.push("<tr><td>Gold found</td><td></td><td class='g'>+" + S.gold + "</td></tr>");
-  if (S.carried) rows.push("<tr><td>Bought bones returned</td><td></td><td>" + S.carried + "</td></tr>");
+  rows.push("<tr><td>Bones to the warehouse</td><td></td><td>+" + S.bones + "</td></tr>");
+  if (S.skulls) rows.push("<tr><td>Skulls to the warehouse</td><td></td><td>+" + S.skulls + "</td></tr>");
   $("tally").innerHTML = rows.join("");
 
-  META.exp += total; META.gold += S.gold; META.bones += S.carried;
+  META.exp += total; META.gold += S.gold;
+  META.warehouse.bones += S.bones; META.warehouse.skulls += S.skulls;
   META.kills = META.kills || {};
   for (const k in S.slain) META.kills[k] = (META.kills[k] || 0) + S.slain[k];
   META.best[levelKey] = Math.max(META.best[levelKey] || 0, S.wave);
@@ -1261,7 +1355,8 @@ function draw() {
 function hud() {
   $("mana").textContent = Math.floor(S.mana) + "/" + S.manaMax;
   $("manafill").style.width = (S.mana / S.manaMax * 100) + "%";
-  $("bones").textContent = S.bones + (S.carried ? " +" + S.carried : "");
+  $("bones").textContent = S.bones;
+  $("skulls").textContent = S.skulls; $("skullStat").hidden = !S.skulls;
   $("gold").textContent = S.gold;
   $("slots").textContent = S.units.length + "/" + S.slots;
   $("ward").textContent = Math.max(0, S.ward);
@@ -1281,7 +1376,7 @@ function showBest() {
 }
 
 // ---------- Town ----------
-const BUILDINGS = ["gate", "tower", "market", "grimoire"];
+const BUILDINGS = ["gate", "tower", "builder", "grimoire", "lab", "well"];
 function openBuilding(k) {
   for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
   if (k === "grimoire") renderGrimoire();
@@ -1298,7 +1393,11 @@ for (const k in DATA.levels) {
 }
 
 function renderTown() {
-  $("tGold").textContent = META.gold; $("tExp").textContent = META.exp; $("tBones").textContent = META.bones;
+  $("tGold").textContent = META.gold; $("tExp").textContent = META.exp;
+  const W = META.warehouse;
+  $("goods").innerHTML = [["Gold", META.gold], ["Bones", W.bones], ["Skulls", W.skulls]].map(([n, v]) => "<div class='good'><b>" + v + "</b><span>" + n + "</span></div>").join("");
+  for (const k in DATA.builder) $("b_" + k).hidden = !META.built[k];
+  renderBuilder(); renderResearch("lab"); renderResearch("well");
   const T = DATA.tower;
   const mCost = T.mana.cost(META.manaLv), rCost = T.regen.cost(META.regenLv), sCost = T.slots.cost(META.slotLv);
   $("upManaInfo").textContent = "Level " + META.manaLv + " · max mana " + wizManaMax() + " → " + (wizManaMax() + T.mana.per);
@@ -1307,10 +1406,6 @@ function renderTown() {
   $("upRegen").textContent = "Upgrade · " + rCost + " exp"; $("upRegen").disabled = META.exp < rCost;
   $("upSlotInfo").textContent = wizSlots() + " summons on the field at once → " + (wizSlots() + T.slots.per);
   $("upSlot").textContent = "Add a slot · " + sCost + " exp"; $("upSlot").disabled = META.exp < sCost;
-  const P = DATA.market.bonePrice;
-  $("boneInfo").textContent = P + " gold each · you have " + META.bones + " stored";
-  $("buy1").disabled = META.gold < P; $("buy5").disabled = META.gold < P * 5;
-  $("buy1").textContent = "Buy 1 · " + P + " gold"; $("buy5").textContent = "Buy 5 · " + P * 5 + " gold";
   for (const k in DATA.levels) {
     const b = META.best[k] || 0;
     $("map_" + k).querySelector(".bestline").textContent = b ? "Longest stand: wave " + b : "Not yet attempted";
@@ -1323,26 +1418,51 @@ function upgrade(key, lvKey) {
 $("upMana").addEventListener("click", () => upgrade("mana", "manaLv"));
 $("upRegen").addEventListener("click", () => upgrade("regen", "regenLv"));
 $("upSlot").addEventListener("click", () => upgrade("slots", "slotLv"));
-function buyBones(n) { const c = DATA.market.bonePrice * n; if (META.gold >= c) { META.gold -= c; META.bones += n; saveMeta(); renderTown(); } }
-$("buy1").addEventListener("click", () => buyBones(1));
-$("buy5").addEventListener("click", () => buyBones(5));
+// ---------- Builder, Cryptic Laboratory, Wisping Well ----------
+function renderBuilder() {
+  $("buildList").innerHTML = Object.entries(DATA.builder).map(([k, b]) =>
+    "<div class='opt'><div class='what'><b>" + b.name + "</b><span>" + b.about + "</span></div>" +
+    (META.built[k] ? "<span class='done'>Built</span>" : "<button class='btn' type='button' data-build='" + k + "'" + (META.gold < b.cost ? " disabled" : "") + ">Build · " + b.cost + " gold</button>") + "</div>").join("");
+  for (const btn of $("buildList").querySelectorAll("[data-build]")) btn.addEventListener("click", () => {
+    const k = btn.dataset.build, b = DATA.builder[k];
+    if (META.gold < b.cost || META.built[k]) return;
+    META.gold -= b.cost; META.built[k] = true; saveMeta(); renderTown();
+  });
+}
+const costText = c => [c.gold + " gold", c.bones ? c.bones + " bones" : "", c.skulls ? c.skulls + (c.skulls > 1 ? " skulls" : " skull") : ""].filter(Boolean).join(" · ");
+const canPay = c => META.gold >= c.gold && META.warehouse.bones >= c.bones && META.warehouse.skulls >= c.skulls;
+function renderResearch(where) {
+  const list = DATA.research[where], lvs = META.research[where];
+  $(where + "List").innerHTML = list.map(r => {
+    const lv = lvs[r.key] || 0, maxed = lv >= r.max, c = DATA.research.cost(r, lv);
+    return "<div class='opt'><div class='what'><b>" + r.name + "</b><span>Level " + lv + "/" + r.max + " · " + r.fx(lv) + (maxed ? "" : " → " + r.fx(lv + 1)) + "</span></div>" +
+      (maxed ? "<span class='done'>Mastered</span>" : "<button class='btn' type='button' data-r='" + r.key + "'" + (canPay(c) ? "" : " disabled") + ">" + costText(c) + "</button>") + "</div>";
+  }).join("");
+  for (const btn of $(where + "List").querySelectorAll("[data-r]")) btn.addEventListener("click", () => {
+    const r = list.find(x => x.key === btn.dataset.r), lv = lvs[r.key] || 0, c = DATA.research.cost(r, lv);
+    if (lv >= r.max || !canPay(c)) return;
+    META.gold -= c.gold; META.warehouse.bones -= c.bones; META.warehouse.skulls -= c.skulls; lvs[r.key] = lv + 1;
+    saveMeta(); renderTown();
+  });
+}
 $("toTown").addEventListener("click", () => showView("town"));
 
 // ---------- DEV console (remove before release) ----------
-function fillDev() { $("devExp").value = META.exp; $("devGold").value = META.gold; }
+function fillDev() { $("devExp").value = META.exp; $("devGold").value = META.gold; $("devBones").value = META.warehouse.bones; $("devSkulls").value = META.warehouse.skulls; }
 $("devBtn").addEventListener("click", () => {
   const open = $("devPanel").hidden; $("devPanel").hidden = !open;
   $("devBtn").setAttribute("aria-expanded", open ? "true" : "false");
-  if (open) { fillDev(); $("devMsg").textContent = "Saves the two values above."; }
+  if (open) { fillDev(); $("devMsg").textContent = "Saves the values above."; }
 });
 $("devApply").addEventListener("click", () => {
-  const e = Math.max(0, Math.floor(+$("devExp").value || 0)), g = Math.max(0, Math.floor(+$("devGold").value || 0));
-  META.exp = e; META.gold = g; saveMeta(); renderTown(); fillDev();
-  $("devMsg").textContent = "Set to " + e + " exp and " + g + " gold.";
+  const num = id => Math.max(0, Math.floor(+$(id).value || 0));
+  META.exp = num("devExp"); META.gold = num("devGold"); META.warehouse.bones = num("devBones"); META.warehouse.skulls = num("devSkulls");
+  saveMeta(); renderTown(); fillDev();
+  $("devMsg").textContent = "Saved: " + META.exp + " exp, " + META.gold + " gold, " + META.warehouse.bones + " bones, " + META.warehouse.skulls + " skulls.";
 });
 $("devResetTower").addEventListener("click", () => {
-  META.manaLv = 0; META.regenLv = 0; META.slotLv = 0; saveMeta(); renderTown();
-  $("devMsg").textContent = "Spelltower abilities reset to level 0.";
+  META.manaLv = 0; META.regenLv = 0; META.slotLv = 0; META.research = { lab: {}, well: {} }; META.built = {}; saveMeta(); renderTown();
+  $("devMsg").textContent = "Spelltower abilities, research and buildings reset.";
 });
 
 
@@ -2010,7 +2130,7 @@ function rollCracks() {
 const GRIM = { foe: "kobold", anim: "walk", looks: {}, t: 0 };
 const kills = k => (META.kills && META.kills[k]) || 0;
 const unlocked = (k, key) => DATA.grimoire.tiers.find(x => x.key === key).at <= kills(k);
-const pct = p => Math.round(p * 100) + " %";
+const pct = p => fmt(p * 100) + " %";
 const range = (a, b) => a === b ? String(a) : a + "–" + b;
 
 function renderGrimoire() {
@@ -2044,6 +2164,7 @@ function renderGrimoire() {
     sec("stats", "Combat", "<table class='facts'><tr><th>Health</th><td>" + d.hp + "</td></tr><tr><th>Damage</th><td>" + d.damage + " per hit, every " + d.attackEvery + " s</td></tr>" +
       "<tr><th>Speed</th><td>" + d.speed + " tiles per second</td></tr><tr><th>Attacks</th><td>" + pg.attacks + "</td></tr></table>") +
     sec("loot", "Drops and rewards", "<table class='facts'><tr><th>Bones</th><td>" + pct(bone.chance) + " chance of " + range(bone.min, bone.max) + "</td></tr>" +
+      "<tr><th>Skull</th><td>" + pct(d.skullChance || 0) + " of bone drops are a whole skull instead</td></tr>" +
       "<tr><th>Gold</th><td>" + pct(gold.chance) + " chance of " + range(gold.min, gold.max) + "</td></tr><tr><th>Experience</th><td>" + DATA.exp.perKill[k] + " per defeat, before the wave multiplier</td></tr></table>") +
     sec("behaviour", "Behaviour", "<p>" + pg.behaviour + "</p>") +
     sec("notes", "Field notes", "<p>" + pg.notes + "</p>") +

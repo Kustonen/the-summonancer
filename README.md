@@ -10,7 +10,11 @@ Current prototype:
 - Town view with three buildings:
   - Town Gate: pick a battlefield
   - Spelltower: spend experience on max mana, mana regeneration and summon slots (5 at start, then 25 / 50 / 75 / 100 / 150 exp, +50 per slot after that)
-  - Market: buy bones with gold (10 gold each); bought bones go to the next battle and come back if unused
+  - Builder: spend gold to put up new buildings (Cryptic Laboratory, Wisping Well, 40 gold each)
+  - Cryptic Laboratory ("It's not a crypt! It's a Laboratory!"): skeleton research for damage, attack speed, move speed, armor and health
+  - Wisping Well ("Drop a coin in the well and you probably just lose a coin."): wisp research for shorter swamp daydreams, faster healing, self-mending, damage, health and speed
+  - Research costs gold, plus bones from level 2 and skulls from level 6
+  - Warehouse: everything carried back from battle (gold, bones, skulls)
   - The Grand Grimoire of Everything (also opens from the book button in the top bar, which pauses a battle while it's open): a bestiary that fills in as enemies are defeated (1 / 5 / 15 / 30 / 60 defeats unlock appearance and walk, combat stats with stand and attack animations, drops and rewards, behaviour with the panic animation, and field notes with the charmed and confused animations)
 - Three maps: Hillside (ward along one edge), Crossroads (wizard in the middle, enemies from every side), Outpost (outpost on one edge, enemies from three sides)
 - Each battle generates a fresh field: grass, dirt, sand, rock, boulders, swamp, bushes, trees, puddles, lakes (2-9 tiles in a 3x3 area) and sometimes a river crossing the whole field with 1-3 bridges. Every walkable tile is guaranteed to connect to the ward.
@@ -24,12 +28,13 @@ Current prototype:
   - Skeleton Warrior (5 mana + 1 bone): sturdy melee
   - Skeleton Archer (10 mana + 2 bones): shoots from two tiles, slow and fragile
 - Enemies and drops:
+  - Every bone drop has a small chance (kobold 1 %, goblin 2 %, orc 3 %) to be a whole skull instead
   - Kobold: weak and fast; always 1 bone, 10 % chance of 1 gold; all kobolds flee for 1 s when one dies
   - Goblin: 50 % chance of 1-2 bones, 20 % chance of 1-2 gold; panics when four fall within 5 s unless an orc is within 3 tiles
   - Orc: strong and slow; 50 % chance of 1-3 bones, 25 % chance of 2-5 gold
 - Waves: kobolds only in waves 1-2, goblins from wave 3, orcs from wave 5, tight packs from wave 10
-- End-of-battle tally: 0.5 / 1 / 2 exp per kobold / goblin / orc, +0.01 exp per unused field bone, multiplied by the wave reached (0.5x for waves 1-3, 0.75x 4-6, 0.9x 7-9, 1.0x 10-19, 1.1x 20-39, 1.2x 40-59, then +0.2x per 20 waves), rounded up
-- Progress (gold, exp, stored bones, upgrades) is saved in the browser's local storage
+- End-of-battle tally: 0.5 / 1 / 2 exp per kobold / goblin / orc, multiplied by the wave reached (0.5x for waves 1-3, 0.75x 4-6, 0.9x 7-9, 1.0x 10-19, 1.1x 20-39, 1.2x 40-59, then +0.2x per 20 waves), rounded up
+- Progress (gold, exp, warehouse, buildings, research, upgrades, grimoire) is saved in the browser's local storage
 - Background music with a mute toggle
 
 All tunable values live in the `DATA` object at the top of the script.
