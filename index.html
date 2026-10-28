@@ -171,7 +171,15 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .talk .who { font-family: var(--display); font-size: 20px; line-height: 1; color: var(--gold); }
 .talk p { margin: 0; line-height: 1.45; }
 .talk.idle p { color: var(--dim); font-style: italic; }
-.talk .btn { align-self: flex-start; }
+.talk .hint { color: var(--dim); font-size: 13px; font-style: italic; }
+/* while someone is talking the rest of the town dims and the speaker steps forward; a tap anywhere moves on */
+#talkDim { position: fixed; inset: 0; z-index: 30; background: rgba(10, 8, 14, .74); cursor: pointer; }
+.scene.speaking { position: relative; z-index: 31; cursor: pointer; }
+.scene #wizCv, .scene .talk p { transition: width .25s ease, height .25s ease, font-size .25s ease; }
+.scene.speaking #wizCv { width: 190px; height: 190px; }
+.scene.speaking .talk { border-color: var(--gold); }
+.scene.speaking .talk p { font-size: 17px; }
+@media (max-width: 480px) { .scene.speaking #wizCv { width: 132px; height: 132px; } .scene.speaking .talk p { font-size: 16px; } }
 .bld.glow, .btn.glow { animation: glow 1.1s ease-in-out infinite; border-color: var(--gold); }
 @keyframes glow { 50% { box-shadow: 0 0 16px rgba(232, 196, 90, .65); } }
 .tabs { display: flex; gap: 6px; }
@@ -204,7 +212,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div class="talk idle" id="talk" aria-live="polite">
       <div class="who" id="talkWho"></div>
       <p id="talkText"></p>
-      <button class="btn primary" id="talkNext" type="button" hidden>Continue</button>
+      <div class="hint" id="talkNext" hidden>Tap anywhere to continue</div>
     </div>
   </div>
   <section class="panel devpanel" id="devPanel" hidden>
@@ -469,6 +477,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
   </div>
 </div>
 
+ <div id="talkDim" hidden></div>
  <div class="overlay" id="grimOverlay" hidden>
   <div class="overlay-inner" id="grimSlot">
     <button class="mini close" id="grimClose" type="button">Close</button>
@@ -1814,33 +1823,54 @@ const LINES = {
   ],
   skeletons: [{ who: "The Summonancer", text: "Skeletons! Now we're talking. Well, they aren't. But still." }]
 };
+// the wizard comments on everything new in town
+const WIZ_SAYS = {
+  septagram: "Seven points of binding, and not a single amateur pentagram in sight. Now, about those bones...",
+  lab: "A laboratory. Definitely not a crypt. I checked twice.",
+  well: "The wisps seem to like it. Or they're plotting something. Hard to tell with wisps.",
+  golematorium: "A workshop for golems. Mind your toes; they don't.",
+  library: "A library! Half the spellbooks are overdue. Not mine. Mostly not mine.",
+  stones: "Standing stones around the ward. The sheep seem unimpressed. So do the druids.",
+  archivus: "Forbidden tomes! ...Which I'm apparently forbidden to read. Fine. For now.",
+  skeleton_archer: "Archers! Skeletons that hit things from further away. That's what I call progress.",
+  golem: "A golem! Heavy, slow and very, very hard to argue with."
+};
+const wizSays = text => [{ who: "The Summonancer", text }];
 const IDLE = ["The town is quiet. Suspiciously quiet.", "Somewhere a villager is muttering the word 'necromancer'.", "The wizard adjusts his hat. The patch holds. For now.",
               "A cat watches the wizard from a rooftop. It does not approve.", "The well gurgles. Probably just the wisps."];
 let TALK = null;
 const TOWN = { st: wizLook(), seq: null, idle: IDLE[0] };
-function talk(lines, done) { TALK = { lines, i: 0, done }; showTalk(); }
+function talk(lines, done) {
+  if (TALK) { TALK.lines = TALK.lines.concat(lines); if (done) { const d0 = TALK.done; TALK.done = () => { if (d0) d0(); done(); }; } showTalk(); return; }
+  TALK = { lines, i: 0, done }; showTalk();
+}
 function idleLine() {
   if (META.stage === "builder") return "The Builder's sign is lit. Maybe pay him a visit.";
   if (META.stage === "septagram") return "The Septagram hums quietly. Bones in the warehouse: " + META.warehouse.bones + ".";
   return TOWN.idle;
 }
 function showTalk() {
-  const box = $("talk");
+  const box = $("talk"), speaking = !!TALK && !$("townView").hidden;
+  $("talkDim").hidden = !speaking; document.querySelector(".scene").classList.toggle("speaking", speaking);
   if (TALK) {
     const l = TALK.lines[TALK.i];
-    box.classList.remove("idle"); $("talkWho").textContent = l.who; $("talkText").textContent = l.text;
-    $("talkNext").hidden = false; $("talkNext").textContent = TALK.i < TALK.lines.length - 1 ? "Continue" : "Close";
+    box.classList.remove("idle"); $("talkWho").textContent = l.who; $("talkText").textContent = l.text; $("talkNext").hidden = false;
+    if (speaking) $("townView").scrollTop = 0;
   } else {
     box.classList.add("idle"); $("talkWho").textContent = ""; $("talkText").textContent = idleLine(); $("talkNext").hidden = true;
   }
 }
-$("talkNext").addEventListener("click", () => {
+// a tap anywhere (or Enter, Space, Escape) moves the conversation on
+function nextLine() {
   if (!TALK) return;
   if (++TALK.i < TALK.lines.length) { showTalk(); return; }
   const d = TALK.done; TALK = null;
   if (d) d();
   renderTown(); showTalk();
-});
+}
+$("talkDim").addEventListener("click", nextLine);
+document.querySelector(".scene").addEventListener("click", () => { if (TALK) nextLine(); });
+document.addEventListener("keydown", e => { if (TALK && !$("townView").hidden && ["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); nextLine(); } });
 function enterTown() {
   TOWN.idle = IDLE[rnd(IDLE.length)];
   if (META.stage === "monologue" && !TALK) talk(LINES.monologue, () => { META.stage = "builder"; saveMeta(); });
@@ -1916,7 +1946,8 @@ function renderBuilder() {
     META.gold -= b.cost; META.built[k] = true;
     if (b.cost) SFX.play("coins"); else SFX.play("appear");
     if (k === "septagram" && META.stage === "builder") META.stage = "septagram";
-    saveMeta(); renderTown(); showTalk();
+    saveMeta(); renderTown();
+    if (WIZ_SAYS[k]) talk(wizSays(WIZ_SAYS[k]));
   });
 }
 // the Septagram: bind each kind of summon once
@@ -1935,8 +1966,9 @@ function renderSeptagram() {
     SFX.play(c.gold ? "coins" : "summon", k); if (c.gold) SFX.play("summon", k);
     if (k === "skeleton_warrior") {
       if (META.builder === "alive") META.builder = "dead_pending";
-      if (META.stage === "septagram") { META.stage = "done"; talk(LINES.skeletons); }
-    }
+      if (META.stage === "septagram") META.stage = "done";
+      talk(LINES.skeletons);
+    } else if (WIZ_SAYS[k]) talk(wizSays(WIZ_SAYS[k]));
     saveMeta(); renderTown();
   });
 }
@@ -3357,7 +3389,7 @@ $("devNewGame").addEventListener("click", () => { META = freshMeta(); saveMeta()
 function showView(v) {
   inBattle = v === "battle";
   $("townView").hidden = inBattle; $("battleView").hidden = !inBattle;
-  if (inBattle) { resize(); requestAnimationFrame(resize); } else { renderTown(); openBuilding("gate"); enterTown(); }
+  if (inBattle) { $("talkDim").hidden = true; resize(); requestAnimationFrame(resize); } else { renderTown(); openBuilding("gate"); enterTown(); }
 }
 
 // ---------- Battle input ----------
