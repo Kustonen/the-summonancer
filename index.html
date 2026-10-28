@@ -120,6 +120,10 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 .mapbtn b { font-family: var(--display); font-weight: 500; font-size: 20px; }
 .mapbtn span { color: var(--dim); font-size: 14px; }
 .foot { color: var(--dim); font-size: 13px; }
+.dev { border-style: dashed; color: var(--ember); border-color: var(--ember); }
+.devpanel { border: 1px dashed var(--ember); }
+.num { width: 9em; max-width: 100%; box-sizing: border-box; background: var(--night); color: var(--bone); border: 1px solid var(--line); border-radius: 8px; font: inherit; font-variant-numeric: tabular-nums; padding: 8px 10px; }
+.num:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
 @media (max-width: 560px) { .card span.d { display: none; } }
 @media (min-width: 860px) { .side { display: flex; } .brand { font-size: 28px; } .maps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } }
@@ -135,8 +139,29 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <div class="stat"><span id="tGold" style="color:var(--gold)">0</span><small>gold</small></div>
       <div class="stat"><span id="tExp" style="color:var(--exp)">0</span><small>exp</small></div>
       <div class="stat"><span id="tBones">0</span><small>stored bones</small></div>
+      <button class="mini dev" id="devBtn" type="button" aria-expanded="false">DEV</button>
     </div>
   </div>
+  <section class="panel devpanel" id="devPanel" hidden>
+    <h2>Developer console</h2>
+    <p>For testing only. This will be removed from the finished game.</p>
+    <div class="opt">
+      <label class="what" for="devExp"><b>Experience</b><span>Set the amount available in town</span></label>
+      <input class="num" id="devExp" type="number" min="0" step="1" inputmode="numeric">
+    </div>
+    <div class="opt">
+      <label class="what" for="devGold"><b>Gold</b><span>Set the amount available in town</span></label>
+      <input class="num" id="devGold" type="number" min="0" step="1" inputmode="numeric">
+    </div>
+    <div class="opt">
+      <div class="what"><b>Apply</b><span id="devMsg">Saves the two values above.</span></div>
+      <button class="btn primary" id="devApply" type="button">Set exp and gold</button>
+    </div>
+    <div class="opt">
+      <div class="what"><b>Reset Spelltower</b><span>Mana Reservoir, Mana Flow and Summon Slots back to level 0. Spent exp is not refunded.</span></div>
+      <button class="btn" id="devResetTower" type="button">Reset abilities</button>
+    </div>
+  </section>
   <div class="towns">
     <button class="bld" id="b_gate" type="button" aria-pressed="true">
       <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="18" width="14" height="40" fill="#4a4553"/><rect x="44" y="18" width="14" height="40" fill="#4a4553"/><rect x="6" y="12" width="4" height="8" fill="#4a4553"/><rect x="13" y="12" width="4" height="8" fill="#4a4553"/><rect x="44" y="12" width="4" height="8" fill="#4a4553"/><rect x="51" y="12" width="4" height="8" fill="#4a4553"/><rect x="18" y="26" width="28" height="32" fill="#3a3547"/><path d="M22 58V38a10 10 0 0 1 20 0v20z" fill="#15131c"/><path d="M24 58V40M28 58V36M32 58V35M36 58V36M40 58V40" stroke="#e0904a" stroke-width="1.5"/></svg>
@@ -262,8 +287,8 @@ const DATA = {
   wizard: { manaMax: 15, manaStart: 10, manaRegen: 1.0, ward: 5, summonSlots: 5 },
   accelTime: 0.8,                                     // seconds from standing still to full speed
   tower: {
-    mana:  { per: 5,    cost: lv => Math.round(3 * Math.pow(2.6, lv)) },   // 3, 8, 20, 53 ...
-    regen: { per: 0.15, cost: lv => Math.round(4 * Math.pow(2.6, lv)) },   // 4, 10, 27, 70 ...
+    mana:  { per: 5,    cost: lv => 3 + 4 * lv + lv * lv },                 // 3, 8, 15, 24 ... level 16: 323
+    regen: { per: 0.15, cost: lv => Math.round(4 + 5 * lv + 1.5 * lv * lv) },// 4, 11, 20, 32 ... level 24: 988
     slots: { per: 1,    cost: lv => 50 * (lv + 1) }                        // 50, 100, 150 ...
   },
   market: { bonePrice: 10 },
@@ -1142,6 +1167,23 @@ function buyBones(n) { const c = DATA.market.bonePrice * n; if (META.gold >= c) 
 $("buy1").addEventListener("click", () => buyBones(1));
 $("buy5").addEventListener("click", () => buyBones(5));
 $("toTown").addEventListener("click", () => showView("town"));
+
+// ---------- DEV console (remove before release) ----------
+function fillDev() { $("devExp").value = META.exp; $("devGold").value = META.gold; }
+$("devBtn").addEventListener("click", () => {
+  const open = $("devPanel").hidden; $("devPanel").hidden = !open;
+  $("devBtn").setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) { fillDev(); $("devMsg").textContent = "Saves the two values above."; }
+});
+$("devApply").addEventListener("click", () => {
+  const e = Math.max(0, Math.floor(+$("devExp").value || 0)), g = Math.max(0, Math.floor(+$("devGold").value || 0));
+  META.exp = e; META.gold = g; saveMeta(); renderTown(); fillDev();
+  $("devMsg").textContent = "Set to " + e + " exp and " + g + " gold.";
+});
+$("devResetTower").addEventListener("click", () => {
+  META.manaLv = 0; META.regenLv = 0; META.slotLv = 0; saveMeta(); renderTown();
+  $("devMsg").textContent = "Spelltower abilities reset to level 0.";
+});
 
 function showView(v) {
   inBattle = v === "battle";

@@ -38,3 +38,7 @@ Design decisions are kept in the design document; code lives here.
 ## Music
 
 `music/ghost_of_sherwood.mp3` – "Ghost of Sherwood", made by the project owner with Suno.
+
+## Developer console
+
+The DEV button in the town view sets exp and gold and resets Spelltower abilities. It is for testing and will be removed before release.
