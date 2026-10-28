@@ -492,7 +492,7 @@ div.mapbtn { cursor: default; }
       <h3>Spells</h3>
       <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward.</p>
       <h3>Assault</h3>
-      <p>On the Assault field the enemies pour out of a <b>red ward</b> at the top. Summons with nothing to fight nearby march up and attack it. Break it to win; spells that hit a tile can't touch it.</p>
+      <p>On the Assault field the enemies pour out of a <b>red ward</b> at the top. Summons with nothing to fight nearby march up and attack it. It is armoured (wisps barely scratch it; wards are built to keep spirits out), it pulses to hurt summons right next to it, and every fifth of its health lost it spits out a squad of defenders. Break it to win; spells that hit a tile can't touch it.</p>
       <h3>Enemies</h3>
       <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. From wave 10, they arrive in tight packs, and from wave 40 every wave makes them a little tougher and harder-hitting.</p>
       <h3>Terrain</h3>
@@ -655,7 +655,7 @@ const DATA = {
     beyondStep: 0.2
   },
   units: {
-    wisp: { name: "Wisp", freezeImmune: true, cost: { mana: 10, bone: 0 }, hp: 24, damage: 1, attackEvery: 0.8, speed: 1.8, range: 1.15,
+    wisp: { name: "Wisp", freezeImmune: true, wardMult: 0.3, cost: { mana: 10, bone: 0 }, hp: 24, damage: 1, attackEvery: 0.8, speed: 1.8, range: 1.15,
             move: "incorporeal", ignoresTerrain: true, heal: { amount: 1, every: 1.6, range: 1.2 },
             swampCharm: { chancePerSecond: 0.02, radius: 3, duration: 10 } },
     skeleton_warrior: { name: "Skeleton Warrior", freezeImmune: true, cost: { mana: 5, bone: 1 }, hp: 20, damage: 3, attackEvery: 0.8, speed: 1.6, range: 1.15, move: "ground" },
@@ -795,10 +795,12 @@ const DATA = {
       note: "A red enemy ward up the hill. Enemies pour out of it; break it with your summons before they break yours. Spells that hit a tile can't touch it." }
   },
   // Assault difficulty: the enemy ward's health, seconds between waves, and how much tougher the enemies are
+  // armor: blocked from every hit (at least a quarter always gets through); pulse: damage to summons right next to it, every few seconds;
+  // alarm: every fifth of its health lost, it spits out a squad of defenders
   assault: {
-    easy:   { name: "Easy",   wardHp: 80,  gap: 14, strength: 1.0, reward: { exp: 25,  gold: 25 } },
-    normal: { name: "Normal", wardHp: 220, gap: 11, strength: 1.3, reward: { exp: 60,  gold: 60 } },
-    hard:   { name: "Hard",   wardHp: 450, gap: 8,  strength: 1.7, reward: { exp: 140, gold: 140 } }
+    easy:   { name: "Easy",   wardHp: 150, armor: 1, pulse: { dmg: 2, every: 3 },   alarm: ["kobold", "kobold", "bog_goblin"],               gap: 14, strength: 1.0, reward: { exp: 25,  gold: 25 } },
+    normal: { name: "Normal", wardHp: 300, armor: 1.2, pulse: { dmg: 2.5, every: 2.5 }, alarm: ["kobold", "bog_goblin", "bog_goblin"], gap: 11, strength: 1.3, reward: { exp: 60,  gold: 60 } },
+    hard:   { name: "Hard",   wardHp: 600, armor: 2, pulse: { dmg: 4, every: 2 },   alarm: ["bog_goblin", "bog_goblin", "orc", "orc", "kobold"], gap: 8, strength: 1.7, reward: { exp: 140, gold: 140 } }
   }
 };
 const QUIPS = {
@@ -1352,6 +1354,15 @@ function foeDef(kind) {
   if (!S.foeDefs[key]) { const d = Object.assign({}, DATA.enemies[kind]); d.hp = Math.round(d.hp * m); d.damage = d.damage * m; S.foeDefs[key] = d; }
   return S.foeDefs[key];
 }
+// the enemy ward sounds the alarm: a squad of defenders pours out at once
+function wardAlarm() {
+  for (const kind of S.assault.alarm) {
+    const c = L.foeWard[rnd(L.foeWard.length)];
+    const e = makeActor("foe", kind, c.x + (Math.random() - 0.5) * 0.4, 0.6); e.d = foeDef(kind); e.hp = e.d.hp;
+    e.enter = { x: c.x, y: 1 }; S.enemies.push(e);
+  }
+  say("The enemy ward howls and spits out defenders!"); SFX.play("gong");
+}
 function spawnWave() {
   S.wave++; S.cheered = false;
   const roster = waveRoster(S.wave), packs = S.wave >= DATA.waves.packsFrom;
@@ -1473,10 +1484,16 @@ function strike(a, target) {
     }
     return;
   }
-  hurt(target, a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");
+  hurt(target, target.isWard && a.d.wardMult ? a.d.damage * a.d.wardMult : a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");   // wards are built to keep spirits out
 }
 function hurt(t, dmg, color) {
-  if (t.isWard) { t.hp -= dmg; S.wardFlash = 0.15; float(t.x, t.y + 0.4, "-" + fmt(Math.round(dmg * 10) / 10), color); return; }
+  if (t.isWard) {
+    dmg = Math.max(dmg * 0.25, dmg - S.assault.armor);
+    const before = S.foeWardHp; t.hp -= dmg; S.wardFlash = 0.15; float(t.x, t.y + 0.4, "-" + fmt(Math.round(dmg * 10) / 10), color);
+    const step = S.foeWardMax / 5;                 // every fifth of its health: the alarm goes off
+    if (S.foeWardHp > 0 && Math.floor(before / step) > Math.floor(S.foeWardHp / step)) wardAlarm();
+    return;
+  }
   if (S.nemesis && S.nemesis.target === t && S.sp.nemesis.exposed) dmg *= 1 + S.sp.nemesis.exposed;   // Exposed
   if (t.d.armor) dmg = Math.max(dmg * 0.25, dmg - t.d.armor);            // Calcium Plating, Granite Skin
   t.hp -= dmg; t.hit = 0.15; float(t.x, t.y, "-" + fmt(Math.round(dmg * 10) / 10), color);
@@ -1608,6 +1625,14 @@ function update(dt) {
   S.nextWave -= dt;
   if (S.nextWave <= 0) { spawnWave(); S.nextWave = S.waveGap; }
   S.wardFlash = Math.max(0, S.wardFlash - dt);
+  if (S.assault) {                                 // the enemy ward pulses: summons right next to it get hurt
+    S.pulseFx = Math.max(0, (S.pulseFx || 0) - dt);
+    if ((S.pulseT = (S.pulseT || 0) + dt) >= S.assault.pulse.every) {
+      S.pulseT = 0; let hit = 0;
+      for (const u of S.units) if (u.hp > 0 && S.wardTargets.some(w => dist(u, w) <= 1.6)) { hurt(u, S.assault.pulse.dmg, "#e2566a"); hit++; }
+      if (hit) { S.pulseFx = 0.5; SFX.play("wardHit"); }
+    }
+  }
   if (S.command && (S.command.t -= dt) <= 0) S.command = null;
   S.shoveCd = Math.max(0, S.shoveCd - dt); S.shoveFx = Math.max(0, S.shoveFx - dt);
   if (S.mendLv && S.ward < S.wardMax && (S.mendT += dt) >= 90 - 15 * S.mendLv) { S.mendT = 0; S.ward++; say("The stones mend a crack in the ward."); }
@@ -2067,6 +2092,7 @@ function draw() {
     const x0 = Math.min(...L.foeWard.map(c => c.x)), x1 = Math.max(...L.foeWard.map(c => c.x)) + 1;
     ctx.fillStyle = "#e2566a"; ctx.fillRect(x0 * T, T - 3, (x1 - x0) * T, 3);
     if (S.wardFlash > 0) { ctx.fillStyle = "rgba(255,255,255," + S.wardFlash * 3 + ")"; ctx.fillRect(x0 * T, 0, (x1 - x0) * T, T); }
+    if (S.pulseFx > 0) { const k = 1 - S.pulseFx / 0.5; ctx.fillStyle = "rgba(226,86,106," + (0.45 * (1 - k)) + ")"; ctx.fillRect((x0 - 1.1 * k) * T, 0, (x1 - x0 + 2.2 * k) * T, T * (1 + 1.2 * k)); }
     if (S.assault) {
       const f = Math.max(0, S.foeWardHp / S.foeWardMax);
       ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(x0 * T + 4, 3, (x1 - x0) * T - 8, 6);
