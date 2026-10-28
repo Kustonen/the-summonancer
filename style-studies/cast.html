@@ -26,7 +26,14 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(32px, 6vw, 
 .tag { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--mana); }
 .intro { color: var(--dim); max-width: 62ch; margin: 0; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 12px; }
-@media (min-width: 640px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 640px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } .cards.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 860px) { .cards.four { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.group { font-family: var(--display); font-weight: 500; font-size: 26px; margin: 8px 0 -8px; }
+.hero { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .hero { grid-template-columns: minmax(0, 380px) 1fr; align-items: start; } }
+.hero .info { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.hero p { font-size: 15px; }
+.mini { font-size: 13px; padding: 4px 12px; align-self: flex-start; }
 .card { background: var(--slate); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .card h2 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 0; line-height: 1.1; }
 .card p { margin: 0; color: var(--dim); font-size: 14px; }
@@ -48,7 +55,38 @@ button:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
     <div class="tag">The Summonancer · style study</div>
     <h1>The cast so far</h1>
   </div>
-  <p class="intro">Two summons and three enemies, side by side and in sync. Skeletons never panic, so in Panic mode they just keep walking; the wisp is more excitable. Charmed shows what any character looks like under a charm: hearts for eyes. Confused tilts heads, raises an eyebrow and sends question marks flying. Every skeleton rolls its own missing teeth, one or two glowing eyes and a few skull cracks, every goblin its gold rings, every kobold the side its tongue hangs from and maybe a lost horn and every orc its scars and plasters.</p>
+  <section class="card hero">
+    <canvas id="cvWiz" aria-label="Animated Summonancer"></canvas>
+    <div class="info">
+      <div class="side us">The Summonancer</div>
+      <h2>The wizard himself</h2>
+      <p>Stands on the hillside behind the ward. A wide hat that folds over and droops at the tip, and under the brim nothing but shadow: no face, just two yellow eyes, one a little bigger than the other. The beard grows a stage with every prestige. Hat, robe, staff and amulet are drawn as separate layers, so gear he equips later can show on him.</p>
+      <div class="controls" role="group" aria-label="Wizard animation">
+        <span>Animation</span>
+        <button id="w_idle" type="button" aria-pressed="true">Idle</button>
+        <button id="w_cast" type="button" aria-pressed="false">Cast</button>
+        <button id="w_flinch" type="button" aria-pressed="false">Ward hit</button>
+        <button id="w_cheer" type="button" aria-pressed="false">Victory</button>
+        <button id="w_despair" type="button" aria-pressed="false">Defeat</button>
+      </div>
+      <div class="controls" role="group" aria-label="Beard by prestige">
+        <span>Beard (prestige)</span>
+        <button id="b_0" type="button" aria-pressed="false">Apprentice fuzz</button>
+        <button id="b_1" type="button" aria-pressed="false">Bushy</button>
+        <button id="b_2" type="button" aria-pressed="true">Proper</button>
+        <button id="b_3" type="button" aria-pressed="false">Venerable</button>
+        <button id="b_4" type="button" aria-pressed="false">Legendary</button>
+      </div>
+      <div class="controls" role="group" aria-label="Gear">
+        <span>Gear</span>
+        <button id="g_starter" type="button" aria-pressed="true">Starter gear</button>
+        <button id="g_ember" type="button" aria-pressed="false">Ember set</button>
+        <button id="g_frost" type="button" aria-pressed="false">Frost set</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="intro">Four summons and three enemies share one set of animation buttons. Skeletons and golems never panic, so in Panic mode they just keep walking; the wisp is more excitable. Charmed shows what any character looks like under a charm: hearts for eyes. Confused tilts heads, raises an eyebrow and sends question marks flying. Every skeleton rolls its own missing teeth, one or two glowing eyes and a few skull cracks, every goblin its gold rings, every kobold the side its tongue hangs from and maybe a lost horn and every orc its scars and plasters.</p>
 
   <div class="controls" role="group" aria-label="Animation">
     <span>Animation</span>
@@ -64,10 +102,15 @@ button:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
     <button id="reroll" type="button">Roll new looks</button>
   </div>
 
-  <div class="cards">
+  <h2 class="group">Summons</h2>
+  <div class="cards four">
     <section class="card"><div class="side us">Summon</div><h2>Skeleton</h2><canvas id="cvSkel" aria-label="Animated skeleton warrior"></canvas><p>Punches, kicks or headbutts, picked at random each swing.</p></section>
     <section class="card"><div class="side us">Summon</div><h2>Archer</h2><canvas id="cvArch" aria-label="Animated skeleton archer"></canvas><p>Bow in one hand, arrow in the other. On release the arrow is gone.</p></section>
     <section class="card"><div class="side us">Summon</div><h2>Wisp</h2><canvas id="cvWisp" aria-label="Animated wisp"></canvas><p>A shimmering orb. Pulses as it moves, flashes red when it strikes, shimmers yellow in a panic and turns pink over a swamp.</p></section>
+    <section class="card"><div class="side us">Summon</div><h2>Golem</h2><canvas id="cvGolem" aria-label="Animated golem"></canvas><p>A boulder with a Septagram glowing in its chest. Slow and heavy; raises both fists and slams the ground. Grows moss, maybe a flower or a mushroom.</p><button id="quarry" class="mini" type="button">Living Quarry: 0</button></section>
+  </div>
+  <h2 class="group">Enemies</h2>
+  <div class="cards">
     <section class="card"><div class="side them">Enemy</div><h2>Goblin</h2><canvas id="cvGob" aria-label="Animated goblin"></canvas><p>Stabs with its knife or kicks. Wears gold rings in its ears or nose, anywhere from none to all three.</p></section>
     <section class="card"><div class="side them">Enemy</div><h2>Kobold</h2><canvas id="cvKob" aria-label="Animated kobold"></canvas><p>Head narrows into a dragon muzzle, tongue out on the left or right, sometimes a horn missing. Swipes, kicks or headbutts.</p></section>
     <section class="card"><div class="side them">Enemy</div><h2>Orc</h2><canvas id="cvOrc" aria-label="Animated orc"></canvas><p>Smashes, kicks or headbutts. Each cheek and the forehead may carry a scar or a plaster. Ready to panic, should anything ever scare it.</p></section>
@@ -665,6 +708,346 @@ function wisp(ctx, cx, gy, s, t, st) {
   if (M.panicking) exclaim(ctx, x, y - R * 1.15, s, t);
 }
 
+// ---------- Golem (summon) ----------
+const STONE = "#a8a293", STONE_D = "#878171", STONE_L = "#c4beaf", MOSS = "#6f9a4a";
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : (1 - Math.cos(x * Math.PI)) / 2;
+const lerp = (a, b, u) => a + (b - a) * u;
+function roundPoly(ctx, pts, r) {
+  const n = pts.length;
+  ctx.beginPath(); ctx.moveTo((pts[n - 1][0] + pts[0][0]) / 2, (pts[n - 1][1] + pts[0][1]) / 2);
+  for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; ctx.arcTo(p[0], p[1], q[0], q[1], r); }
+  ctx.closePath();
+}
+const offs = (pts, x, y) => pts.map(([a, b]) => [a + x, b + y]);
+// puffy outline: ink circles first, then the fill on top, so overlapping puffs merge into one cloud
+function puffs(ctx, cs, fill, shade) {
+  ctx.fillStyle = INK; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 1.9 * LW, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = shade || fill; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill(); }
+  if (shade) { ctx.fillStyle = fill; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x - c.r * 0.18, c.y - c.r * 0.22, c.r * 0.72, 0, Math.PI * 2); ctx.fill(); } }
+}
+function glowEye(ctx, x, y, r, boost) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.6);
+  g.addColorStop(0, "rgba(255,215,90," + (0.6 * (boost || 1)) + ")"); g.addColorStop(1, "rgba(255,215,90,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 2.6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y, r, r * 1.1, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.35, r * 0.3, 0, Math.PI * 2); ctx.fill();
+}
+const TORSO = [[-30, -28], [29, -31], [38, -6], [33, 24], [-33, 25], [-39, -4]];
+const GHEAD = [[-25, -16], [24, -18], [28, 5], [22, 18], [-22, 18], [-28, 4]];
+const FIST = [[-12, -10], [11, -11], [14, 2], [10, 11], [-11, 10], [-14, 0]];
+function rollGolemCracks() {
+  const starts = [[-37, -3, 0.2], [27, -30, 2.1], [34, 18, 3.6], [-26, 24, -1.1], [8, -31, 1.7]];
+  starts.sort(() => Math.random() - 0.5);
+  return starts.slice(0, 1 + Math.floor(Math.random() * 2)).map(([x, y, d]) => {
+    const pts = [[x, y]];
+    for (let j = 0; j < 3; j++) { const a = d + (j % 2 ? 0.7 : -0.7) * (0.5 + Math.random() * 0.5); x += Math.cos(a) * (5 + Math.random() * 4); y += Math.sin(a) * (5 + Math.random() * 4); pts.push([x, y]); }
+    return pts;
+  });
+}
+function golem(ctx, cx, gy, s0, t, st) {
+  const q = st.quarry || 0, s = s0 * 1.3 * (1 + q * 0.1);
+  const saved = mode; if (mode === "panic") mode = "walk";          // golems never panic; they barely notice
+  const M = motion(t, 4.2, null, []); mode = saved;
+  const atk = M.attacking, ph = (t / 1.4) % 1;
+  ctx.save(); ctx.translate(cx, gy); ctx.scale(s, s);
+  const LW0 = LW; LW = LW0 / s;
+  // ground slam: fists rise over the head, smash down in front, rest a moment, come back
+  let lean = M.walking ? Math.sin(M.p) * 0.06 : M.confused ? Math.sin(t * 1.4) * 0.07 : Math.sin(t * 1.1) * 0.02, jolt = 0, raise = 0;
+  if (atk) {
+    if (ph < 0.4) { raise = ease(ph / 0.4); lean = -0.08 * raise; }
+    else if (ph < 0.52) { raise = 1; lean = lerp(-0.08, 0.12, (ph - 0.4) / 0.12); }
+    else if (ph < 0.75) { lean = 0.12; jolt = ph < 0.6 ? Math.sin((ph - 0.52) / 0.08 * Math.PI) * 3 : 0; }
+    else lean = lerp(0.12, 0, ease((ph - 0.75) / 0.25));
+  }
+  const bob = M.bob * 0.7;
+  const fistAt = side => {
+    const rest = [side * 40 - side * M.swing * 9, -44 + bob + (M.walking ? 0 : Math.sin(t * 2 + side) * 1.5)];
+    if (!atk) return rest;
+    const up = [10 + side * 13, -122], down = [38 + side * 15, -13];
+    if (ph < 0.4) { const u = ease(ph / 0.4); return [lerp(rest[0], up[0], u), lerp(rest[1], up[1], u)]; }
+    if (ph < 0.52) { const u = Math.pow((ph - 0.4) / 0.12, 2); return [lerp(up[0], down[0], u), lerp(up[1], down[1], u)]; }
+    if (ph < 0.75) return down;
+    const u = ease((ph - 0.75) / 0.25); return [lerp(down[0], rest[0], u), lerp(down[1], rest[1], u)];
+  };
+  const drawFist = side => {
+    const [fx, fy] = fistAt(side), ax = side * 30, ay = -58 + bob;
+    for (let i = 1; i <= 2; i++) {                                  // floating pebbles stand in for arms
+      const u = i / 3; ell(ctx, lerp(ax, fx, u) + Math.sin(t * 3 + i + side) * 1.5, lerp(ay, fy, u) + Math.cos(t * 2.6 + i) * 1.5, 4 - i * 0.6, 3.6 - i * 0.5, 0, STONE, 2.5);
+    }
+    roundPoly(ctx, offs(FIST, fx, fy), 5); shape(ctx, STONE, 3.5);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";
+    for (const dy of [-4, 2]) { ctx.beginPath(); ctx.moveTo(fx + 4, fy + dy); ctx.lineTo(fx + 10, fy + dy - 1); ctx.stroke(); }
+  };
+  // stubby boulder feet
+  for (const side of [-1, 1]) {
+    const fwd = M.walking ? side * M.swing : 0;
+    ell(ctx, side * 17 + fwd * 10 + 2, -6 - Math.max(0, fwd) * 5, 13, 7.5, 0, STONE_D, 3.5);
+  }
+  if (!atk) drawFist(-1);
+  ctx.save(); ctx.rotate(lean);
+  const ty = -46 + bob + jolt, hx = 3 + lean * 8, hy = ty - 40 + (M.walking ? Math.abs(Math.sin(M.p)) * 1.5 : 0);
+  // head, sunk into the shoulders
+  roundPoly(ctx, offs(GHEAD, hx, hy), 8); shape(ctx, STONE, 3.5);
+  ctx.save(); roundPoly(ctx, offs(GHEAD, hx, hy), 8); ctx.clip();
+  ctx.fillStyle = STONE_D; ctx.beginPath(); ctx.ellipse(hx + 17, hy + 16, 26, 12, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  roundPoly(ctx, offs(GHEAD, hx, hy), 8); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  // moss on top, maybe with a flower or a mushroom
+  const mossCs = st.moss === "patch" ? [[-17, -17, 5], [-10, -19.5, 6], [-2, -20, 5.5], [6, -19.5, 5.5], [14, -17.5, 4.5]] : [[-10, -18.5, 5], [-3, -21, 6], [4, -19.5, 5]];
+  puffs(ctx, mossCs.map(([x, y, r]) => ({ x: hx + x, y: hy + y, r })), "#86b25a", MOSS);
+  if (st.moss === "flower") {
+    const fx = hx + 2, fy = hy - 27 + Math.sin(t * 2) * 0.6;
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.3; ell(ctx, fx + Math.cos(a) * 3.2, fy + Math.sin(a) * 3.2, 2.6, 2.6, 0, "#fff4f8", 1.6); }
+    ell(ctx, fx, fy, 2, 2, 0, "#ffd24a", 1.4);
+  } else if (st.moss === "mushroom") {
+    const fx = hx - 5, fy = hy - 25;
+    ctx.beginPath(); ctx.rect(fx - 1.6, fy, 3.2, 5); shape(ctx, "#f3ead8", 1.8);
+    ctx.beginPath(); ctx.ellipse(fx, fy, 6, 4.5, 0, Math.PI, 0); ctx.closePath(); shape(ctx, "#d8473f", 2);
+    ctx.fillStyle = "#fff"; for (const [dx, dy] of [[-2.5, -1.5], [1.8, -2.6], [3.4, -0.8]]) { ctx.beginPath(); ctx.arc(fx + dx, fy + dy, 0.9, 0, Math.PI * 2); ctx.fill(); }
+  }
+  // heavy stone brow over two small glowing eyes (one bigger, like every summon)
+  const tiltB = M.confused ? -0.35 : 0;
+  ctx.save(); ctx.translate(hx + 1, hy - 4); ctx.rotate(tiltB);
+  ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 7 * LW; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(21, -1); ctx.stroke();
+  ctx.strokeStyle = STONE_D; ctx.lineWidth = 3.5 * LW; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(21, -1); ctx.stroke();
+  ctx.restore();
+  const eyes = [[hx - 6, hy + 5.5, 4.4], [hx + 12, hy + 4.6, 3.3]];
+  if (M.charmed) for (const [x, y, r] of eyes) heart(ctx, x, y, (r + 1.2) * charmBeat(t), "#ff6f9c");
+  else for (const [x, y, r] of eyes) glowEye(ctx, x, y, r, atk ? 1 + raise * 0.6 : 1);
+  ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(hx - 1, hy + 13.5); ctx.lineTo(hx + 9, hy + 13); ctx.stroke();
+  // torso: one big boulder with the Septagram that bound it glowing in the chest
+  roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.fillStyle = STONE; ctx.fill();
+  ctx.save(); roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.clip();
+  ctx.fillStyle = STONE_D; ctx.beginPath(); ctx.ellipse(20, ty + 22, 36, 20, -0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = STONE_L; ctx.beginPath(); ctx.ellipse(-15, ty - 20, 15, 6, -0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = STONE_D; for (const [x, y] of [[-22, 6], [-12, 15], [16, -18], [24, 4], [-27, -12]]) { ctx.beginPath(); ctx.arc(x, ty + y, 1.4, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * LW; ctx.lineJoin = "round";
+  for (const c of st.gcracks || []) { ctx.beginPath(); c.forEach(([x, y], i) => i ? ctx.lineTo(x, ty + y) : ctx.moveTo(x, ty + y)); ctx.stroke(); }
+  const pulse = Math.min(1, 0.55 + 0.25 * Math.sin(t * 2.2) + raise * 0.45), rc = [-1, ty - 1];
+  ctx.save(); ctx.globalAlpha = pulse; ctx.shadowColor = "#6fa8ff"; ctx.shadowBlur = 10 * s * (st.dpr || 1);
+  ctx.strokeStyle = "#8fc0ff"; ctx.lineWidth = 1.8 * LW; ctx.beginPath(); ctx.arc(rc[0], rc[1], 12.5, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7, x = rc[0] + Math.cos(a) * 10.5, y = rc[1] + Math.sin(a) * 10.5; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke(); ctx.restore();
+  // Living Quarry: quartz grows out of the shoulders
+  const shards = [[-24, -30, -0.35, 9], [-15, -32, 0.1, 12], [22, -33, 0.3, 10], [30, -28, 0.7, 8]];
+  for (let i = 0; i < Math.max(0, q - 1) * 2; i++) {
+    const [x, y, a, h] = shards[i];
+    ctx.save(); ctx.translate(x, ty + y); ctx.rotate(a);
+    ctx.beginPath(); ctx.moveTo(-3.5, 2); ctx.lineTo(-3.5, -h * 0.6); ctx.lineTo(0, -h); ctx.lineTo(3.5, -h * 0.6); ctx.lineTo(3.5, 2); ctx.closePath(); shape(ctx, "#b79cf0", 2.4);
+    ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillRect(-2, -h * 0.55, 1.2, h * 0.45);
+    ctx.restore();
+  }
+  ctx.restore();
+  if (!atk) drawFist(1); else { drawFist(-1); drawFist(1); }
+  // shockwave, dust and a few flying chips where the fists land
+  if (atk && ph >= 0.52 && ph < 0.95) {
+    const pr = (ph - 0.52) / 0.43, a = 1 - pr, gx = 38, R = 12 + pr * 80;
+    ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = "#efe2c0"; ctx.lineWidth = (1 + 3 * a) * LW;
+    ctx.beginPath(); ctx.ellipse(gx, -2, R, R * 0.22, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = a * 0.7; ctx.fillStyle = "#bfb39b";
+    for (let i = 0; i < 5; i++) { const an = Math.PI * (0.1 + i * 0.2); ctx.beginPath(); ctx.arc(gx + Math.cos(an) * pr * 58 * (i % 2 ? 1 : -1) * 0.9, -6 - Math.sin(an) * pr * 16 - pr * 6, 5 + pr * 6, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    for (let i = 0; i < 3; i++) {
+      const vx = (i - 1) * 30 + 8, x = gx + vx * pr, y = -8 - (70 * pr - 95 * pr * pr) * (1 + i * 0.2);
+      if (y < 0) { ctx.save(); ctx.translate(x, y); ctx.rotate(pr * 8 + i); ctx.beginPath(); ctx.rect(-2.2, -2.2, 4.4, 4.4); shape(ctx, STONE, 1.6); ctx.restore(); }
+    }
+    if (ph < 0.62) burst(ctx, gx, -16, 1, 1 - (ph - 0.52) / 0.1);
+  }
+  ctx.restore(); LW = LW0;
+  qMarks(ctx, st, cx + (hx + 4) * s, gy + (hy - 22) * s, s0, M.confused);
+}
+
+// ---------- The Summonancer ----------
+// Gear is drawn in layers (hat, robe, staff, amulet) so equipment can change how he looks later
+const GEAR = {
+  starter: { name: "Starter gear", hat: ["#4b3780", "#3a2a66"], band: "#2a1d40", buckle: "#d9b45a", patch: true, feather: null,
+             robe: ["#5a3e8e", "#45306e"], trim: "#d9b45a", orb: [111, 168, 255], head: "claw", amulet: null },
+  ember:   { name: "Ember set", hat: ["#8a3329", "#6a261f"], band: "#2b1512", buckle: "#f0a040", patch: false, feather: "#ff9a3c",
+             robe: ["#7c3a2c", "#5e2a20"], trim: "#f0a040", orb: [255, 140, 60], head: "claw", amulet: "#e0403a" },
+  frost:   { name: "Frost set", hat: ["#2f5f8a", "#234a6c"], band: "#e8f2ff", buckle: "#9fd8ff", patch: false, feather: null,
+             robe: ["#35648f", "#284e72"], trim: "#cfe3f5", orb: [150, 230, 255], head: "crystal", amulet: "#7fd0ff" }
+};
+const FACE = "#0f0b15", BEARD = "#efeae0", BEARD_D = "#c9c1b1", GLOVE = "#7a5536", WOOD = "#8a5a34", BOOT = "#3b2a22";
+const BEARDS = ["Apprentice fuzz", "Bushy", "Proper", "Venerable", "Legendary"];
+const rgba = (c, a) => "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
+function wizEyes(ctx, look, boost, dy) {
+  const E = [[-3, -95 + dy, 5.2], [10, -96.5 + dy, 3.9]];
+  ctx.lineCap = "round"; ctx.strokeStyle = GLOW; ctx.lineWidth = 2.3 * LW;
+  E.forEach(([x, y, r], i) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3);
+    g.addColorStop(0, "rgba(255,215,90," + Math.min(0.85, 0.45 * boost) + ")"); g.addColorStop(1, "rgba(255,215,90,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3, 0, Math.PI * 2); ctx.fill();
+    if (look === "blink") { ctx.beginPath(); ctx.moveTo(x - r, y + 1); ctx.lineTo(x + r, y + 1); ctx.stroke(); }
+    else if (look === "narrow") { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y + 0.5, r * 1.1, r * 0.45, 0, 0, Math.PI * 2); ctx.fill(); }
+    else if (look === "squeeze") { const d = i ? -1 : 1; ctx.beginPath(); ctx.moveTo(x - d * r, y - r * 0.8); ctx.lineTo(x + d * r * 0.7, y); ctx.lineTo(x - d * r, y + r * 0.8); ctx.stroke(); }
+    else if (look === "happy") { ctx.beginPath(); ctx.arc(x, y + r * 0.5, r * 0.95, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
+    else if (look === "sad") { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y + 1, r * 0.75, r * 0.6, 0, -0.25 * (i ? -1 : 1), Math.PI - 0.25 * (i ? -1 : 1)); ctx.fill(); }
+    else { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y, r, r * 1.15, 0, 0, Math.PI * 2); ctx.fill();
+           ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.4, r * 0.3, 0, Math.PI * 2); ctx.fill(); }
+  });
+}
+// the beard grows a stage with every prestige: from apprentice fuzz to a legendary beard with a gold ring near the tip
+function wizBeard(ctx, stage, t, flutter) {
+  const chin = -83, x0 = 3, L = [5, 15, 27, 41, 57][stage], W = [7, 13, 17, 19, 20][stage], cs = [];
+  const mr = stage === 0 ? 3.6 : 5.6;
+  cs.push({ x: x0 - 8, y: chin + 1, r: mr }, { x: x0 + 9, y: chin, r: mr });
+  const n = Math.max(2, Math.round(L / 6));
+  for (let i = 0; i <= n; i++) {
+    const u = i / n, y = chin + 3 + L * u, w = W * (1 - 0.8 * Math.pow(u, 1.5)), r = (6.5 - 2.2 * u) * (stage === 0 ? 0.65 : 1);
+    const count = Math.max(1, Math.ceil(2 * w / (r * 1.3)));
+    const sw = Math.sin(t * 1.6 + u * 2.5) * u * (1.5 + stage * 0.6) + flutter * u * 6;
+    for (let j = 0; j < count; j++) cs.push({ x: x0 + sw + (count === 1 ? 0 : -w + 2 * w * j / (count - 1)), y, r });
+  }
+  puffs(ctx, cs, BEARD, BEARD_D);
+  if (stage === 4) {
+    const y = chin + 3 + L * 0.82, sw = Math.sin(t * 1.6 + 2) * 0.82 * 4 + flutter * 5;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0 + sw - 5, y - 2.5, 10, 5, 2) : ctx.rect(x0 + sw - 5, y - 2.5, 10, 5); shape(ctx, "#e2b84a", 2);
+  }
+}
+// tall pointy hat: straight at the bottom, then it folds over and droops at the tip
+function wizHat(ctx, G, lift, tipA, sq, t) {
+  const bx = 1, by = -110 - lift;
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, 0, Math.PI * 2); shape(ctx, G.hat[0], 3.5);
+  const N = 20, Lc = 50 * sq + 30, step = Lc / (N - 1), P = [];
+  let x = bx + 1, y = by - 2;
+  for (let i = 0; i < N; i++) {
+    const u = i / (N - 1), ang = -0.05 + (tipA + 0.05) * Math.pow(ease(Math.max(0, (u - 0.42) / 0.58)), 0.9);
+    P.push({ x, y, ang, w: 21 * Math.pow(1 - u, 1.05) + 1.4 });
+    x += Math.sin(ang) * step; y -= Math.cos(ang) * step;
+  }
+  const L = P.map(p => [p.x - Math.cos(p.ang) * p.w, p.y - Math.sin(p.ang) * p.w]), R = P.map(p => [p.x + Math.cos(p.ang) * p.w, p.y + Math.sin(p.ang) * p.w]);
+  const outline = () => { ctx.beginPath(); L.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); const e = P[N - 1]; ctx.arc(e.x, e.y, e.w, e.ang + Math.PI, e.ang, true); for (let i = N - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); };
+  outline(); ctx.fillStyle = G.hat[0]; ctx.fill();
+  ctx.beginPath(); P.forEach((p, i) => i ? ctx.lineTo(p.x + Math.cos(p.ang) * p.w * 0.2, p.y + Math.sin(p.ang) * p.w * 0.2) : ctx.moveTo(p.x + Math.cos(p.ang) * p.w * 0.2, p.y + Math.sin(p.ang) * p.w * 0.2));
+  for (let i = N - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); ctx.fillStyle = G.hat[1]; ctx.fill();
+  outline(); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  // band and buckle
+  ctx.beginPath(); for (let i = 0; i <= 3; i++) i ? ctx.lineTo(L[i][0], L[i][1]) : ctx.moveTo(L[i][0], L[i][1]); for (let i = 3; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); shape(ctx, G.band, 2.5);
+  const bp = P[2]; ctx.save(); ctx.translate(bp.x + Math.cos(bp.ang) * bp.w * 0.35, bp.y - 1); ctx.rotate(bp.ang);
+  ctx.beginPath(); ctx.rect(-3.5, -3.5, 7, 7); shape(ctx, G.buckle, 2); ctx.fillStyle = G.band; ctx.fillRect(-1.5, -1.5, 3, 3); ctx.restore();
+  if (G.feather) {
+    const fp = P[3]; ctx.save(); ctx.translate(fp.x - fp.w * 0.7, fp.y - 2); ctx.rotate(-0.9 + Math.sin(t * 2) * 0.06);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-7, -14, 2, -30); ctx.quadraticCurveTo(8, -14, 0, 0); shape(ctx, G.feather, 2);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.2 * LW; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(1, -14, 2, -28); ctx.stroke(); ctx.restore();
+  }
+  // a patch, because hats are expensive
+  if (G.patch) {
+    const pp = P[9]; ctx.save(); ctx.translate(pp.x - Math.cos(pp.ang) * pp.w * 0.25, pp.y - Math.sin(pp.ang) * pp.w * 0.25); ctx.rotate(pp.ang + 0.25);
+    ctx.beginPath(); ctx.rect(-4.5, -4, 9, 8); shape(ctx, "#7b62b4", 2);
+    ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 1.1 * LW; ctx.setLineDash([1.6, 1.6]); ctx.beginPath(); ctx.rect(-3, -2.6, 6, 5.2); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+  }
+  if (G.head === "crystal") { const e = P[N - 1]; ell(ctx, e.x + Math.sin(e.ang) * 2, e.y - Math.cos(e.ang) * 2, 3.6, 3.6, 0, "#f4fbff", 2); }
+  // the front half of the brim goes over the bottom of the cone
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, 0, Math.PI); ctx.fillStyle = G.hat[0]; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, -0.08, Math.PI + 0.08); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(bx, by + 3, 38, 5, 0.05, 0.3, Math.PI - 0.3); ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 2 * LW; ctx.stroke();
+}
+function wizHand(ctx, x, y, side, G, rot) {
+  ell(ctx, x - side * 6, y + 3, 8, 6.5, rot || side * 0.4, G.robe[0], 3);
+  ctx.beginPath(); ctx.arc(x, y, 6.5, 0, Math.PI * 2); shape(ctx, GLOVE, 3);
+}
+function wizard(ctx, cx, gy, s, t, st) {
+  const G = GEAR[st.gear || "starter"], m = st.wmode || "idle";
+  let dx = 0, by = Math.sin(t * 2) * 1.2, lean = 0, lift = 0, tipA = 1.95 + Math.sin(t * 1.3) * 0.12, sq = 1;
+  let look = (t % 3.7) < 0.13 ? "blink" : "open", eyeDy = 0, boost = 1, flutter = 0;
+  let hF = [27, -50], hB = [-26, -48], staffA = -0.05, orbGlow = 0.55 + 0.15 * Math.sin(t * 3), c = 0, r = 0, ph = 0, hop = 0, j = 0;
+  if (m === "cast") {
+    ph = (t / 1.6) % 1;
+    c = ph < 0.55 ? ease(ph / 0.55) : ph < 0.7 ? 1 : 1 - ease((ph - 0.7) / 0.3);
+    r = ph >= 0.55 && ph < 0.7 ? Math.sin((ph - 0.55) / 0.15 * Math.PI) : 0;
+    hF = [27 + 4 * c + 8 * r, -50 - 26 * c]; hB = [-26 + 6 * c, -48 - 30 * c];
+    staffA = -0.05 + 0.3 * c + 0.3 * r; lean = -0.04 * c + 0.14 * r; orbGlow = 0.5 + 0.9 * c;
+    tipA -= 0.5 * r - 0.15 * c; flutter = r * 0.6 - c * 0.2; boost = 1 + c * 0.8;
+    if (c > 0.3 && look !== "blink") look = "narrow";
+  } else if (m === "flinch") {
+    ph = (t / 1.5) % 1;
+    j = ph < 0.07 ? ph / 0.07 : 1 - ease((ph - 0.07) / 0.5);
+    dx = -8 * j; lean = -0.18 * j; lift = 10 * j; tipA = 1.95 - 1.3 * j + Math.sin(ph * 40) * 0.35 * j;
+    hF = [27 - 4 * j, -50 - 14 * j]; hB = [-26 - 6 * j, -48 - 22 * j]; staffA = -0.05 - 0.3 * j; flutter = -j * 0.5;
+    if (j > 0.25) look = "squeeze";
+  } else if (m === "cheer") {
+    ph = (t / 0.9) % 1; hop = Math.sin(ph * Math.PI);
+    by = -hop * 16; lift = hop * 9; tipA = 1.35 + (1 - hop) * 0.5 + Math.sin(t * 9) * 0.1;
+    hF = [24, -82 - hop * 6]; hB = [-25, -88 - hop * 8]; staffA = Math.sin(t * 9) * 0.18; orbGlow = 1.1; flutter = (hop - 0.5) * 0.5;
+    look = "happy"; boost = 1.3;
+  } else if (m === "despair") {
+    by = 4 + Math.pow(Math.max(0, Math.sin(t * 1.2)), 8) * 2; lean = 0.1; sq = 0.82; lift = -4; tipA = 2.8 + Math.sin(t * 0.9) * 0.05;
+    hF = [22, -40]; hB = [-20, -38]; staffA = 0.38; orbGlow = 0.2; look = "sad"; eyeDy = 1.5; boost = 0.6;
+  }
+  ctx.save(); ctx.translate(cx + dx * s, gy + by * s); ctx.scale(s, s); ctx.rotate(lean);
+  const LW0 = LW; LW = LW0 / s;
+  // boots peek out under the robe
+  for (const side of [-1, 1]) ell(ctx, side * 11 + 3, -4, 9, 5, 0, BOOT, 3);
+  // robe: a bell from the shoulders to a hem that sways a little
+  const hemW = Math.sin(t * 2.4) * 1.2 + flutter * 5;
+  const robe = () => {
+    ctx.beginPath(); ctx.moveTo(-17, -76);
+    ctx.quadraticCurveTo(-27, -40, -35 + hemW, -7);
+    for (let i = 0; i < 4; i++) { const x0 = -35 + i * 17.5, x1 = x0 + 17.5; ctx.quadraticCurveTo(lerp(x0, x1, 0.5) + hemW, -2 + (i % 2 ? -2 : 1), x1 + hemW * (i === 3 ? 1 : 0.5), -7); }
+    ctx.quadraticCurveTo(27, -40, 17, -76); ctx.quadraticCurveTo(0, -84, -17, -76); ctx.closePath();
+  };
+  robe(); ctx.fillStyle = G.robe[0]; ctx.fill();
+  ctx.save(); robe(); ctx.clip();
+  ctx.fillStyle = G.robe[1]; ctx.beginPath(); ctx.ellipse(26, -30, 22, 50, 0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = G.trim; ctx.lineWidth = 3.5 * LW; ctx.beginPath(); ctx.moveTo(-40, -11); ctx.quadraticCurveTo(0, -5 + hemW, 40, -11); ctx.stroke();
+  ctx.strokeStyle = "#c79a5a"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.moveTo(-26, -42); ctx.quadraticCurveTo(0, -37, 26, -42); ctx.stroke();
+  ctx.restore();
+  robe(); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  for (const [x, y, rr] of [[-14, -24, 2.6], [8, -58, 2], [15, -20, 2.2]]) sparkle(ctx, x, y, rr, 0.35);
+  if (G.amulet) { ctx.strokeStyle = "#d9b45a"; ctx.lineWidth = 1.6 * LW; ctx.beginPath(); ctx.moveTo(-9, -78); ctx.quadraticCurveTo(0, -60, 11, -78); ctx.stroke(); ell(ctx, 1, -64, 3.6, 4.4, 0, G.amulet, 2); }
+  // the face: nothing but shadow under the brim, and two yellow eyes, one bigger than the other
+  ell(ctx, 3, -94, 21, 14.5, 0, FACE, 3);
+  wizEyes(ctx, look, boost, eyeDy);
+  wizBeard(ctx, st.beard == null ? 2 : st.beard, t, flutter);
+  wizHand(ctx, hB[0], hB[1], -1, G);
+  wizHat(ctx, G, lift, tipA, sq, t);
+  // staff, then the hand gripping it
+  const up = [Math.sin(staffA), -Math.cos(staffA)], top = [hF[0] + up[0] * 62, hF[1] + up[1] * 62], bot = [hF[0] - up[0] * 46, hF[1] - up[1] * 46];
+  ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 7.5 * LW; ctx.beginPath(); ctx.moveTo(bot[0], bot[1]); ctx.lineTo(top[0], top[1]); ctx.stroke();
+  ctx.strokeStyle = WOOD; ctx.lineWidth = 7.5 * LW - 3.5 * LW; ctx.stroke();
+  const ob = [top[0] + up[0] * 7, top[1] + up[1] * 7];
+  const g = ctx.createRadialGradient(ob[0], ob[1], 0, ob[0], ob[1], 7 * (2 + orbGlow * 1.6));
+  g.addColorStop(0, rgba(G.orb, Math.min(0.6, 0.35 * orbGlow + 0.1))); g.addColorStop(1, rgba(G.orb, 0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ob[0], ob[1], 7 * (2 + orbGlow * 1.6), 0, Math.PI * 2); ctx.fill();
+  if (G.head === "crystal") {
+    ctx.save(); ctx.translate(ob[0], ob[1]); ctx.rotate(staffA);
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(6, -2); ctx.lineTo(0, 8); ctx.lineTo(-6, -2); ctx.closePath(); shape(ctx, rgba(G.orb, 1), 2.5);
+    ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(-3, -2); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill(); ctx.restore();
+  } else {
+    ctx.beginPath(); ctx.arc(ob[0], ob[1], 7, 0, Math.PI * 2);
+    const og = ctx.createRadialGradient(ob[0] - 2, ob[1] - 2, 0, ob[0], ob[1], 7);
+    og.addColorStop(0, "#ffffff"); og.addColorStop(0.45, rgba(G.orb, 1)); og.addColorStop(1, rgba(G.orb.map(v => Math.round(v * 0.6)), 1));
+    shape(ctx, og, 2.5);
+    ctx.save(); ctx.translate(ob[0], ob[1]); ctx.rotate(staffA);
+    ctx.strokeStyle = INK; ctx.lineWidth = 5.5 * LW; ctx.beginPath(); ctx.arc(0, 0, 8.5, 0.35, Math.PI - 0.35); ctx.stroke();
+    ctx.strokeStyle = WOOD; ctx.lineWidth = 2.5 * LW; ctx.stroke(); ctx.restore();
+  }
+  wizHand(ctx, hF[0], hF[1], 1, G);
+  // effects
+  if (m === "cast") {
+    if (c > 0.15 && ph < 0.55) for (let i = 0; i < 5; i++) { const a = i * 1.2566 + t * 3, rr = (1 - ((t * 1.6 + i / 5) % 1)) * 26; sparkle(ctx, ob[0] + Math.cos(a) * rr, ob[1] + Math.sin(a) * rr, 2.6, c); }
+    if (c > 0.3) sparkle(ctx, hB[0] - 2, hB[1] - 9, 3.2 * c, c * 0.9);
+    if (ph >= 0.55 && ph < 0.95) {
+      const pr = (ph - 0.55) / 0.4;
+      for (let k = 5; k >= 0; k--) {
+        const pk = Math.max(0, pr - k * 0.04), x = ob[0] + 8 + pk * 150, y = ob[1] - pk * 25;
+        ctx.save(); ctx.globalAlpha = (1 - pr) * (1 - k / 6); ctx.fillStyle = k ? rgba(G.orb, 1) : "#ffffff";
+        ctx.beginPath(); ctx.arc(x, y, (k ? 5 - k * 0.6 : 4), 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+    }
+  }
+  if (m === "flinch") { if (ph < 0.3) burst(ctx, 48, -66, 1, 1 - ph / 0.3, "#ff8a8a"); if (j > 0.2) sweat(ctx, -14, -108 - lift, 1, t); }
+  if (m === "cheer") for (let i = 0; i < 6; i++) { const a = t * 3 + i * 1.047; sparkle(ctx, ob[0] + Math.cos(a) * 20, ob[1] + Math.sin(a) * 15, 3, 0.5 + 0.5 * Math.sin(t * 6 + i)); }
+  if (m === "despair") {
+    const cyx = 2, cyy = -172;
+    for (let i = 0; i < 3; i++) { const f = ((t * 1.1 + i / 3) % 1); ctx.save(); ctx.globalAlpha = 1 - f; ctx.strokeStyle = "#8fb8ff"; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(cyx - 10 + i * 10, cyy + 8 + f * 26); ctx.lineTo(cyx - 11 + i * 10, cyy + 13 + f * 26); ctx.stroke(); ctx.restore(); }
+    puffs(ctx, [{ x: cyx - 12, y: cyy + 2, r: 7 }, { x: cyx - 3, y: cyy - 4, r: 9 }, { x: cyx + 9, y: cyy, r: 8 }, { x: cyx + 2, y: cyy + 4, r: 7 }], "#77718a", "#5f5a72");
+  }
+  ctx.restore(); LW = LW0;
+}
+
 // ---------- Looks rolled per character ----------
 function rollTeeth() {
   const all = [];
@@ -703,13 +1086,17 @@ const SKEL = setup("cvSkel", (ctx, cx, gy, s, t, st) => skeleton(st, cx, gy, s, 
 const ARCH = setup("cvArch", (ctx, cx, gy, s, t, st) => skeleton(st, cx, gy, s, t), 0.25, { archer: true });
 const WISP = setup("cvWisp", wisp, 0.6, { noShadowScale: true });
 const GOBS = setup("cvGob", goblin, 0.5), KOBS = setup("cvKob", kobold, 0.15), ORCS = setup("cvOrc", orc, 0.4);
-const STAGES = [SKEL, ARCH, WISP, GOBS, KOBS, ORCS];
+const GOLM = setup("cvGolem", golem, 0.7, { quarry: 0 });
+const WIZ = setup("cvWiz", wizard, 0, { wmode: "idle", beard: 2, gear: "starter" });
+const STAGES = [SKEL, ARCH, WISP, GOLM, GOBS, KOBS, ORCS];
 function reroll() {
   for (const st of [SKEL, ARCH]) {
     const r = rollTeeth(); st.upMiss = r.up; st.lowMiss = r.low;
     st.glow = Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1];   // both eyes, or just one
     st.cracks = rollCracks();
   }
+  GOLM.moss = ["tuft", "patch", "flower", "mushroom"][Math.floor(Math.random() * 4)];
+  GOLM.gcracks = rollGolemCracks();
   GOBS.jewels = JEWELS.filter(() => Math.random() < 0.4);          // none, some or all three
 
   KOBS.tongue = Math.random() < 0.5 ? -1 : 1;
@@ -724,17 +1111,30 @@ function frame(st, t, dt) {
   LW = Math.max(0.55, s);
   ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0); ctx.clearRect(0, 0, W, W);
   const moving = mode === "walk" || mode === "panic" || mode === "charm";
-  const fast = mode === "panic" && st !== SKEL && st !== ARCH;
-  if (moving) st.x = (st.x + dt * (fast ? 70 : 34) * s) % (tile * 2);
+  const fast = mode === "panic" && st !== SKEL && st !== ARCH && st !== GOLM;
+  if (moving) st.x = (st.x + dt * (fast ? 70 : st === GOLM ? 22 : 34) * s) % (tile * 2);
   for (let i = -2; i < W / tile + 2; i++) { ctx.fillStyle = i % 2 ? GROUND : GROUND2; ctx.fillRect(i * tile - st.x, gy - 4 * s, tile, W - gy + 4 * s); }
-  ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(W * 0.44, gy, (st === WISP ? 20 : 36) * s, (st === WISP ? 4 : 7) * s, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); const sh = st === WISP ? 20 : st === GOLM ? 50 * (1 + 0.1 * st.quarry) : 36; ctx.ellipse(W * 0.44, gy, sh * s, sh * s * 0.19, 0, 0, Math.PI * 2); ctx.fill();
   st.draw(ctx, W * 0.44, gy, s, t + st.phase, st);
+}
+
+// the wizard's hillside
+function wizFrame(st, t) {
+  const ctx = st.ctx, W = st.w, s = W / 235, gy = W * 0.9;
+  LW = Math.max(0.55, s);
+  ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0); ctx.clearRect(0, 0, W, W);
+  ctx.fillStyle = "#f1e8d4"; for (const [x, y, r] of [[0.12, 0.12, 1.2], [0.8, 0.08, 1], [0.9, 0.3, 1.4], [0.3, 0.22, 0.9], [0.62, 0.18, 1.1]]) { ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 1.5 + x * 9); ctx.beginPath(); ctx.arc(x * W, y * W, r * s * 1.5, 0, Math.PI * 2); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = GROUND; ctx.beginPath(); ctx.moveTo(0, gy + 14 * s); ctx.quadraticCurveTo(W / 2, gy - 22 * s, W, gy + 14 * s); ctx.lineTo(W, W); ctx.lineTo(0, W); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(W * 0.45, gy, 38 * s, 7 * s, 0, 0, Math.PI * 2); ctx.fill();
+  wizard(ctx, W * 0.45, gy, s, t, st);
 }
 
 let last = 0;
 function loop(ms) {
   const t = ms / 1000, dt = Math.min(0.05, t - last || 0); last = t;
   for (const st of STAGES) frame(st, t, dt);
+  wizFrame(WIZ, t);
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -744,4 +1144,10 @@ function setMode(m) { mode = m; for (const k of MODES) document.getElementById("
 for (const k of MODES) document.getElementById("m_" + k).addEventListener("click", () => setMode(k));
 document.getElementById("reroll").addEventListener("click", reroll);
 setMode(mode);
+function pick(prefix, keys, val) { for (const k of keys) document.getElementById(prefix + k).setAttribute("aria-pressed", String(k) === String(val) ? "true" : "false"); }
+const WMODES = ["idle", "cast", "flinch", "cheer", "despair"];
+for (const k of WMODES) document.getElementById("w_" + k).addEventListener("click", () => { WIZ.wmode = k; pick("w_", WMODES, k); });
+for (const k of [0, 1, 2, 3, 4]) document.getElementById("b_" + k).addEventListener("click", () => { WIZ.beard = k; pick("b_", [0, 1, 2, 3, 4], k); });
+for (const k of Object.keys(GEAR)) document.getElementById("g_" + k).addEventListener("click", () => { WIZ.gear = k; pick("g_", Object.keys(GEAR), k); });
+document.getElementById("quarry").addEventListener("click", e => { GOLM.quarry = (GOLM.quarry + 1) % 4; e.currentTarget.textContent = "Living Quarry: " + GOLM.quarry; });
 </script>
