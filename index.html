@@ -443,7 +443,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <h3>Spells</h3>
       <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward.</p>
       <h3>Enemies</h3>
-      <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. From wave 10, they arrive in tight packs.</p>
+      <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. From wave 10, they arrive in tight packs, and from wave 40 every wave makes them a little tougher and harder-hitting.</p>
       <h3>Terrain</h3>
       <p><b>Sand</b> and <b>puddles</b> slow everyone a little, <b>swamp</b> a lot. <b>Bushes</b> slow enemies only. <b>Boulders</b>, <b>trees</b>, <b>lakes</b> and <b>rivers</b> stop anyone on foot; cross rivers by the <b>bridges</b>.</p>
       <p>Bones and skulls you collect here go to the warehouse in town when the battle ends.</p>
@@ -583,12 +583,15 @@ const DATA = {
   },
   enemies: {
     kobold: { name: "Kobold", hp: 7, damage: 1, attackEvery: 0.9, speed: 1.15, range: 1.15, aggro: 2.4, move: "ground",
-              drops: [{ res: "bone", chance: 1, min: 1, max: 1 }, { res: "gold", chance: 0.25, min: 1, max: 1 }], skullChance: 0.01, panicOnKinDeath: 1 },
+              drops: [{ res: "bone", chance: 1, min: 1, max: 1 }, { res: "gold", chance: 0.25, min: 1, max: 1 },
+                      { res: "stone", chance: 0.08, min: 1, max: 1 }, { res: "wood", chance: 0.06, min: 1, max: 1 }, { res: "crystal", chance: 0.01, min: 1, max: 1 }], skullChance: 0.01, panicOnKinDeath: 1 },
     bog_goblin: { name: "Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.15, aggro: 2.6, move: "ground",
-                  drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.35, min: 1, max: 3 }], skullChance: 0.02,
+                  drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.35, min: 1, max: 3 },
+                          { res: "iron", chance: 0.10, min: 1, max: 1 }, { res: "wood", chance: 0.08, min: 1, max: 2 }, { res: "crystal", chance: 0.02, min: 1, max: 1 }], skullChance: 0.02,
                   panic: { deaths: 4, window: 5, min: 1, max: 5, steadiedBy: "orc", steadyRange: 3 } },
     orc: { name: "Orc", hp: 32, damage: 4, attackEvery: 1.3, speed: 0.65, range: 1.15, aggro: 2.8, move: "ground",
-           drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.5, min: 3, max: 6 }], skullChance: 0.03 }
+           drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.5, min: 3, max: 6 },
+                   { res: "iron", chance: 0.15, min: 1, max: 2 }, { res: "stone", chance: 0.10, min: 1, max: 2 }, { res: "crystal", chance: 0.03, min: 1, max: 1 }], skullChance: 0.03 }
   },
   // The Grand Grimoire of Everything: what each page reveals, and after how many defeats
   grimoire: {
@@ -667,8 +670,16 @@ const DATA = {
     bridge:    { name: "Bridge",  moveCost: 1 },
     structure: { name: "Ward",    blocks: ["ground", "incorporeal"], moveCost: 1 }
   },
+  // materials enemies drop; they pile up in the warehouse for things still to come
+  materials: {
+    stone:   { one: "smooth stone", many: "smooth stones", name: "Smooth stone" },
+    iron:    { one: "scrap iron",   many: "scrap iron",    name: "Scrap iron" },
+    wood:    { one: "piece of wood", many: "pieces of wood", name: "Wood" },
+    crystal: { one: "crystal shard", many: "crystal shards", name: "Crystal shards" }
+  },
   waves: {
     firstDelay: 6, gap: 12,
+    toughFrom: 40, toughPerWave: 0.03,     // from wave 40 every wave makes enemies 3 % tougher and harder-hitting
     sizes: [2, 3, 4], growthAfter: 2,
     goblinsFrom: 3, goblinShare: 0.4,
     orcsFrom: 5, orcEvery: 3,
@@ -701,7 +712,8 @@ const freshMeta = () => ({ gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, slo
 let META = freshMeta(), oldSave = false;
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const saved = JSON.parse(raw); oldSave = !saved.v2; META = Object.assign(META, saved); } } catch (e) {}
 // older saves kept bought bones separately; they now live in the warehouse
-META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {}; META.research = META.research || {};
+META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {};
+for (const k of ["stone", "iron", "wood", "crystal"]) META.warehouse[k] = META.warehouse[k] || 0; META.research = META.research || {};
 for (const k of ["lab", "well", "golematorium", "library", "stones"]) META.research[k] = META.research[k] || {};
 META.summoned = META.summoned || {}; META.kills = META.kills || {};
 if (META.bones) { META.warehouse.bones += META.bones; META.bones = 0; }
@@ -985,7 +997,7 @@ function startBattle(key) {
   const carried = 0;
   S = {
     mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(), slots: wizSlots(),
-    bones: 0, carried, skulls: 0, gold: 0, ward: DATA.wizard.ward + rlv("stones", "ward"), wardMax: DATA.wizard.ward + rlv("stones", "ward"),
+    bones: 0, carried, skulls: 0, gold: 0, loot: { stone: 0, iron: 0, wood: 0, crystal: 0 }, foeDefs: {}, ward: DATA.wizard.ward + rlv("stones", "ward"), wardMax: DATA.wizard.ward + rlv("stones", "ward"),
     sp: spellsNow(), shoveLv: rlv("stones", "shove"), shoveCd: 0, mendLv: rlv("stones", "mend"), mendT: 0, shoveFx: 0,
     tutorial: META.stage === "intro", hinted: {}, cheered: true, overShown: false,
     wiz: { st: wizLook(), seq: { kind: "appear", e: 0 }, until: 0 },
@@ -1183,6 +1195,14 @@ function waveRoster(w) {
   return list.sort(() => Math.random() - 0.5);
 }
 
+// enemies grow tougher and hit harder from wave 40 on
+function foeDef(kind) {
+  const W = DATA.waves, m = 1 + Math.max(0, S.wave - W.toughFrom + 1) * W.toughPerWave;
+  if (m === 1) return DATA.enemies[kind];
+  const key = kind + "@" + S.wave;
+  if (!S.foeDefs[key]) { const d = Object.assign({}, DATA.enemies[kind]); d.hp = Math.round(d.hp * m); d.damage = d.damage * m; S.foeDefs[key] = d; }
+  return S.foeDefs[key];
+}
 function spawnWave() {
   S.wave++; S.cheered = false;
   const roster = waveRoster(S.wave), packs = S.wave >= DATA.waves.packsFrom;
@@ -1195,6 +1215,7 @@ function spawnWave() {
     const n = Math.floor(i / L.d.spawn.length), [ox, oy] = out[side];
     const off = packs ? 1 + n * 0.3 : 1 + n * 0.8, jitter = packs ? (Math.random() - 0.5) * 0.6 : 0;
     const e = makeActor("foe", kind, spot.x + ox * off + oy * jitter, spot.y + oy * off + ox * jitter);
+    e.d = foeDef(kind); e.hp = e.d.hp;
     e.enter = spot;
     S.enemies.push(e);
   });
@@ -1460,6 +1481,7 @@ function update(dt) {
         S.bones += n; float(e.x, e.y - lift, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf");
         if (S.tutorial && !S.hinted.bones) { S.hinted.bones = true; say("Bones! Wisps can't use them, but hold on to them. They go to the warehouse in town."); }
       }
+      else if (DATA.materials[dr.res]) { const M = DATA.materials[dr.res]; S.loot[dr.res] += n; float(e.x, e.y - lift, "+" + n + " " + (n > 1 ? M.many : M.one), "#9fd0ff"); }
       else { S.gold += n; float(e.x, e.y - lift, "+" + n + " gold", "#e8c45a"); }
       lift += 0.35;
     }
@@ -1508,10 +1530,12 @@ function endBattle(retreated) {
   rows.push("<tr><td>Gold found</td><td></td><td class='g'>+" + S.gold + "</td></tr>");
   rows.push("<tr><td>Bones to the warehouse</td><td></td><td>+" + S.bones + "</td></tr>");
   if (S.skulls) rows.push("<tr><td>Skulls to the warehouse</td><td></td><td>+" + S.skulls + "</td></tr>");
+  for (const k in DATA.materials) if (S.loot[k]) rows.push("<tr><td>" + DATA.materials[k].name + " to the warehouse</td><td></td><td>+" + S.loot[k] + "</td></tr>");
   $("tally").innerHTML = rows.join("");
 
   META.exp += total; META.gold += S.gold;
   META.warehouse.bones += S.bones; META.warehouse.skulls += S.skulls;
+  for (const k in DATA.materials) META.warehouse[k] = (META.warehouse[k] || 0) + S.loot[k];
   META.kills = META.kills || {};
   for (const k in S.slain) META.kills[k] = (META.kills[k] || 0) + S.slain[k];
   META.best[levelKey] = Math.max(META.best[levelKey] || 0, S.wave);
@@ -1916,7 +1940,7 @@ function goBattle(k) {
 function renderTown() {
   $("tGold").textContent = META.gold; $("tExp").textContent = META.exp;
   const W = META.warehouse;
-  $("goods").innerHTML = [["Gold", META.gold], ["Bones", W.bones], ["Skulls", W.skulls]].map(([n, v]) => "<div class='good'><b>" + v + "</b><span>" + n + "</span></div>").join("");
+  $("goods").innerHTML = [["Gold", META.gold], ["Bones", W.bones], ["Skulls", W.skulls]].concat(Object.keys(DATA.materials).map(k => [DATA.materials[k].name, W[k] || 0])).map(([n, v]) => "<div class='good'><b>" + v + "</b><span>" + n + "</span></div>").join("");
   for (const k in DATA.builder) $("b_" + k).hidden = !META.built[k];
   const alive = META.builder === "alive";
   $("builderAlive").toggleAttribute("hidden", !alive); $("builderSkel").toggleAttribute("hidden", alive);   // svg elements have no .hidden
@@ -3315,7 +3339,8 @@ function renderGrimoire() {
       "<tr><th>Speed</th><td>" + d.speed + " tiles per second</td></tr><tr><th>Attacks</th><td>" + pg.attacks + "</td></tr></table>") +
     sec("loot", "Drops and rewards", "<table class='facts'><tr><th>Bones</th><td>" + pct(bone.chance) + " chance of " + range(bone.min, bone.max) + "</td></tr>" +
       "<tr><th>Skull</th><td>" + pct(d.skullChance || 0) + " of bone drops are a whole skull instead</td></tr>" +
-      "<tr><th>Gold</th><td>" + pct(gold.chance) + " chance of " + range(gold.min, gold.max) + "</td></tr><tr><th>Experience</th><td>" + DATA.exp.perKill[k] + " per defeat, before the wave multiplier</td></tr></table>") +
+      "<tr><th>Gold</th><td>" + pct(gold.chance) + " chance of " + range(gold.min, gold.max) + "</td></tr>" +
+      d.drops.filter(x => DATA.materials[x.res]).map(x => "<tr><th>" + DATA.materials[x.res].name + "</th><td>" + pct(x.chance) + " chance of " + range(x.min, x.max) + "</td></tr>").join("") + "<tr><th>Experience</th><td>" + DATA.exp.perKill[k] + " per defeat, before the wave multiplier</td></tr></table>") +
     sec("behaviour", "Behaviour", "<p>" + pg.behaviour + "</p>") +
     sec("notes", "Field notes", "<p>" + pg.notes + "</p>") +
     (next ? "<div class='sec'><h4>Next page</h4><p>" + next.label + " at " + next.at + " defeated</p><div class='prog'><div style='width:" + Math.round(n / next.at * 100) + "%'></div></div></div>"

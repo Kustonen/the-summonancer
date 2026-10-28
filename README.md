@@ -43,7 +43,8 @@ Current prototype:
   - Kobold: weak and fast; always 1 bone, 25 % chance of 1 gold; all kobolds flee for 1 s when one dies
   - Goblin: 50 % chance of 1-2 bones, 35 % chance of 1-3 gold; panics when four fall within 5 s unless an orc is within 3 tiles
   - Orc: strong and slow; 50 % chance of 1-3 bones, 50 % chance of 3-6 gold
-- Waves: kobolds only in waves 1-2, goblins from wave 3, orcs from wave 5, tight packs from wave 10
+- Waves: kobolds only in waves 1-2, goblins from wave 3, orcs from wave 5, tight packs from wave 10; from wave 40 every wave adds 3 % to enemy health and damage (wave 50: +33 %)
+- Materials for things still to come, kept in the warehouse: smooth stone (kobolds 8 %, orcs 10 %), scrap iron (goblins 10 %, orcs 15 %), wood (kobolds 6 %, goblins 8 %) and crystal shards (kobolds 1 %, goblins 2 %, orcs 3 %)
 - End-of-battle tally: 0.5 / 1 / 2 exp per kobold / goblin / orc, multiplied by the wave reached (0.5x for waves 1-3, 0.75x 4-6, 0.9x 7-9, 1.0x 10-19, 1.1x 20-39, 1.2x 40-59, then +0.2x per 20 waves), rounded up
 - Progress (gold, exp, warehouse, buildings, research, upgrades, grimoire) is saved in the browser's local storage
 - Background music (two tracks in turn) with a mute toggle
