@@ -9,7 +9,7 @@ Open `index.html` in a browser. No build step, no install.
 Current prototype:
 - Town view with three buildings:
   - Town Gate: pick a battlefield
-  - Spelltower: spend experience on max mana, mana regeneration and summon slots (5 at start, then 50 / 100 / 150 ... exp each)
+  - Spelltower: spend experience on max mana, mana regeneration and summon slots (5 at start, then 25 / 50 / 75 / 100 / 150 exp, +50 per slot after that)
   - Market: buy bones with gold (10 gold each); bought bones go to the next battle and come back if unused
   - The Grand Grimoire of Everything (also opens from the book button in the top bar, which pauses a battle while it's open): a bestiary that fills in as enemies are defeated (1 / 5 / 15 / 30 / 60 defeats unlock appearance and walk, combat stats with stand and attack animations, drops and rewards, behaviour with the panic animation, and field notes with the charmed and confused animations)
 - Three maps: Hillside (ward along one edge), Crossroads (wizard in the middle, enemies from every side), Outpost (outpost on one edge, enemies from three sides)

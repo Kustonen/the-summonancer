@@ -356,7 +356,7 @@ const DATA = {
   tower: {
     mana:  { per: 5,    cost: lv => 3 + 4 * lv + lv * lv },                 // 3, 8, 15, 24 ... level 16: 323
     regen: { per: 0.15, cost: lv => Math.round(4 + 5 * lv + 1.5 * lv * lv) },// 4, 11, 20, 32 ... level 24: 988
-    slots: { per: 1,    cost: lv => 50 * (lv + 1) }                        // 50, 100, 150 ...
+    slots: { per: 1,    cost: lv => lv < 4 ? 25 * (lv + 1) : 150 + (lv - 4) * 50 }   // 25, 50, 75, 100, 150, then +50 per slot
   },
   market: { bonePrice: 10 },
   spells: {
