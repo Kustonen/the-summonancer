@@ -298,6 +298,10 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V28h48v30z" fill="#6b4f33"/><path d="M4 30 32 10l28 20z" fill="#8a3329"/><path d="M8 40h48M8 50h48" stroke="#4a3523" stroke-width="1.5"/><rect x="26" y="40" width="12" height="18" fill="#15131c"/><rect x="12" y="34" width="9" height="8" fill="#ffcf6a"/><rect x="43" y="34" width="9" height="8" fill="#ffcf6a"/><path d="M50 14v8" stroke="#2a1f2e" stroke-width="2"/><rect x="42" y="22" width="16" height="12" rx="2" fill="#e8dcbf" stroke="#2a1f2e" stroke-width="2"/><path d="M47 25h5v6h-5z" fill="#e8c45a" stroke="#2a1f2e" stroke-width="1.2"/><path d="M52 26.5c2 0 2 3 0 3" stroke="#2a1f2e" stroke-width="1.2" fill="none"/><path d="M47 25c1-1.5 4-1.5 5 0" stroke="#fff" stroke-width="1.5"/></svg>
       <b>Tavern</b>
     </button>
+    <button class="bld" id="b_market" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 58V30h44v28z" fill="#6b4f33"/><path d="M6 30l6-14h40l6 14z" fill="#e8dcbf"/><path d="M12 16l-6 14h8l4-14zM28 16l-2 14h8l-2-14zM44 16l2 14h8l-6-14z" fill="#b0473f"/><path d="M6 30c2 4 6 4 8 0 2 4 6 4 8 0 2 4 6 4 8 0 2 4 6 4 8 0 2 4 6 4 8 0 2 4 6 4 8 0" fill="none" stroke="#2a1f2e" stroke-width="1.5"/><rect x="16" y="40" width="32" height="8" rx="2" fill="#4a3523"/><circle cx="22" cy="40" r="3.5" fill="#e8c45a" stroke="#2a1f2e" stroke-width="1.2"/><circle cx="30" cy="39" r="3.5" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="1.2"/><path d="M38 41l3-5 3 5z" fill="#b79cf0" stroke="#2a1f2e" stroke-width="1.2"/></svg>
+      <b>Marketplace</b>
+    </button>
     <button class="bld" id="b_lab" type="button" aria-pressed="false" hidden>
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V26L32 10l24 16v32z" fill="#3a3547"/><path d="M8 26L32 10l24 16" fill="none" stroke="#2a1f2e" stroke-width="2"/><rect x="26" y="40" width="12" height="18" fill="#15131c"/><path d="M28 18h8M30 18v8l-6 10h16l-6-10v-8" fill="none" stroke="#ece3cf" stroke-width="2" stroke-linejoin="round"/><path d="M26 34h12l2 2H24z" fill="#8fbf6a"/><circle cx="31" cy="30" r="1.5" fill="#8fbf6a"/><circle cx="34" cy="27" r="1" fill="#8fbf6a"/></svg>
       <b>Cryptic Laboratory</b>
@@ -389,10 +393,18 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
     <div id="golematoriumList"></div>
   </section>
 
+  <section class="panel" id="p_market" hidden>
+    <h2>Marketplace</h2>
+    <p class="quote">“Everything has a price. Mostly a bad one.”</p>
+    <p>The merchant buys in bulk and sells by the piece, and somehow comes out ahead either way.</p>
+    <div id="marketList"></div>
+  </section>
+
   <section class="panel" id="p_library" hidden>
     <h2>The Overdue Library</h2>
     <p class="quote">“Please return all spells by the due date. Fines are payable in souls.”</p>
     <p>Every spell the wizard knows, plus a few nobody has returned in centuries. Study here makes Command and Nemesis last longer, cost less and hurt more.</p>
+    <div id="libSpells"></div>
     <div id="libraryList"></div>
   </section>
 
@@ -488,6 +500,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
   <div class="spells">
     <button class="spell" id="spell_command" type="button" aria-pressed="false"><b>Command</b><span>10 mana</span></button>
     <button class="spell" id="spell_nemesis" type="button" aria-pressed="false"><b>Nemesis</b><span>20 mana</span></button>
+    <button class="spell" id="spell_firebolt" type="button" aria-pressed="false" hidden><b>Firebolt</b><span>2 mana</span></button>
     <button class="spell" id="spell_shove" type="button" aria-pressed="false" hidden><b>Shove</b><span>ready</span></button>
   </div>
   <div class="bar">
@@ -550,7 +563,8 @@ const DATA = {
     septagram:    { name: "The Summoning Septagram", cost: 0,   about: "Where new kinds of summons are bound. The first building is on the house." },
     lab:          { name: "Cryptic Laboratory",      cost: 40,  needs: "skeleton_warrior", about: "Research that makes skeletons hit harder, move faster and last longer." },
     well:         { name: "Wisping Well",            cost: 40,  about: "Offerings that make wisps brighter, steadier and less easily charmed." },
-    golematorium: { name: "The Golematorium",        cost: 100, needs: "golem", about: "Research that makes golems bigger, tougher and harder to ignore." },
+    golematorium: { name: "The Golematorium",        cost: { gold: 100, stone: 10, wood: 10, iron: 10 }, needs: "golem", about: "Research that makes golems bigger, tougher and harder to ignore." },
+    market:       { name: "Marketplace",             cost: 30,  about: "Trade bones, skulls and materials for gold and back again. The merchant always wins." },
     library:      { name: "The Overdue Library",     cost: 60,  about: "Research for Command and Nemesis: longer, cheaper and nastier." },
     stones:       { name: "Protective Stone Circle", cost: 50,  about: "A sturdier ward, a Shove that pushes enemies away and stones that mend themselves." },
     archivus:     { name: "Archivus Arcanus",        cost: 150, about: "Forbidden tomes on modifying summons. Allegedly." }
@@ -605,8 +619,23 @@ const DATA = {
       : ({ gold: Math.round(r.gold * (lv + 1) * (1 + lv * 0.25)), bones: lv >= 2 ? lv * 2 : 0, skulls: lv >= 6 ? lv - 5 : 0 })
   },
   spells: {
-    command: { name: "Command", mana: 10, duration: 1 },
-    nemesis: { name: "Nemesis", mana: 20, duration: 5 }
+    command:  { name: "Command",  mana: 10, duration: 1 },
+    nemesis:  { name: "Nemesis",  mana: 20, duration: 5 },
+    // hits one tile for 1 damage and sets flammable ground alight: anyone walking on it burns for 5 s (1 damage a second) and panics
+    firebolt: { name: "Firebolt", mana: 2, damage: 1, tileBurn: 8, burn: 5, burnDps: 1 }
+  },
+  // spells the Overdue Library can teach
+  spellBook: {
+    firebolt: { cost: { gold: 80 }, about: "2 mana. Hits one tile for 1 damage and sets grass, bushes and trees on fire. Anything walking through the flames burns for 5 seconds, takes 1 damage a second and panics (if it can)." }
+  },
+  // the Marketplace: sell in lots, buy one at a time, always in the merchant's favour
+  market: {
+    bones:   { name: "Bones",          lot: 10, sellFor: 1, buyFor: 1 },
+    skulls:  { name: "Skulls",         lot: 1,  sellFor: 5, buyFor: 50 },
+    crystal: { name: "Crystal shards", lot: 1,  sellFor: 5, buyFor: 50 },
+    stone:   { name: "Smooth stone",   lot: 5,  sellFor: 1, buyFor: 10 },
+    iron:    { name: "Scrap iron",     lot: 5,  sellFor: 1, buyFor: 10 },
+    wood:    { name: "Wood",           lot: 5,  sellFor: 1, buyFor: 10 }
   },
   exp: {
     perKill: { kobold: 0.5, bog_goblin: 1, orc: 2 },
@@ -690,7 +719,7 @@ const DATA = {
       orc: {
         lore: "Orcs believe every problem can be solved by hitting it, and are mostly disappointed by how quickly it works. Big, slow and very hard to move.",
         attacks: "Double-fist smash, kick or headbutt",
-        behaviour: "Goblins within three tiles of an orc don't panic, out of fear of the orc rather than courage. Nothing has made an orc panic yet.",
+        behaviour: "Goblins within three tiles of an orc don't panic, out of fear of the orc rather than courage. Nothing has made an orc panic yet, except being set on fire, which doesn't count.",
         notes: "Orcs collect scars the way goblins collect rings. The plasters are for the ones they are less proud of."
       }
     }
@@ -766,7 +795,7 @@ try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const saved = JSON.
 // older saves kept bought bones separately; they now live in the warehouse
 META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {};
 for (const k of ["stone", "iron", "wood", "crystal"]) META.warehouse[k] = META.warehouse[k] || 0;
-META.quests = META.quests || {}; META.research = META.research || {};
+META.quests = META.quests || {}; META.spells = META.spells || {}; META.research = META.research || {};
 for (const k of ["lab", "well", "golematorium", "library", "stones"]) META.research[k] = META.research[k] || {};
 META.summoned = META.summoned || {}; META.kills = META.kills || {};
 if (META.bones) { META.warehouse.bones += META.bones; META.bones = 0; }
@@ -788,7 +817,8 @@ const shoveCooldown = lv => Math.max(30, 60 - 6 * (lv - 1));
 function spellsNow() {
   return {
     command: { name: "Command", mana: 10 - rlv("library", "cmdCost"), duration: 1 + 0.25 * rlv("library", "cmdDur") },
-    nemesis: { name: "Nemesis", mana: 20 - 2 * rlv("library", "nemCost"), duration: 5 + rlv("library", "nemDur"), exposed: 0.1 * rlv("library", "exposed") }
+    nemesis: { name: "Nemesis", mana: 20 - 2 * rlv("library", "nemCost"), duration: 5 + rlv("library", "nemDur"), exposed: 0.1 * rlv("library", "exposed") },
+    firebolt: Object.assign({}, DATA.spells.firebolt)
   };
 }
 // how the wizard looks: beard and levitation will follow the prestige abilities once those exist
@@ -901,6 +931,11 @@ const SFX = (() => {
     thunder(t) { noise(t, 0.01, 0.12, 0.5, "highpass", 2000); noise(t + 0.05, 0.08, 1.8, 0.7, "lowpass", 500, 0.7, 120); tone("sine", 50, 30, t + 0.05, 0.1, 1.2, 0.4); },
     puff(t) { noise(t, 0.01, 0.35, 0.45, "bandpass", 3500, 1.5, 500); for (let i = 0; i < 5; i++) tone("sine", 2000 + Math.random() * 3000, null, t + 0.05 + i * 0.04, 0.002, 0.15, 0.05); },
     appear(t) { noise(t, 0.12, 0.2, 0.3, "bandpass", 600, 1.5, 3500); for (let i = 0; i < 4; i++) tone("sine", 1800 + i * 600, null, t + 0.12 + i * 0.04, 0.002, 0.14, 0.05); },
+    whoosh(t) { noise(t, 0.02, 0.25, 0.3, "bandpass", 700, 1.2, 2200); },
+    fire(t) {
+      noise(t, 0.005, 0.35, 0.5, "bandpass", 900, 0.8, 300); tone("sine", 140, 60, t, 0.005, 0.25, 0.3);
+      for (let i = 0; i < 6; i++) noise(t + 0.05 + Math.random() * 0.4, 0.001, 0.02, 0.18, "highpass", 3000 + Math.random() * 2000);
+    },
     shove(t) { noise(t, 0.03, 0.4, 0.5, "bandpass", 400, 1, 1800); tone("sine", 120, 60, t, 0.01, 0.35, 0.35); },
     coins(t) {
       for (let i = 0; i < 3; i++) {
@@ -1052,7 +1087,7 @@ function startBattle(key) {
     mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(), slots: wizSlots(),
     bones: 0, carried, skulls: 0, gold: 0, loot: { stone: 0, iron: 0, wood: 0, crystal: 0 }, foeDefs: {}, ward: DATA.wizard.ward + rlv("stones", "ward"), wardMax: DATA.wizard.ward + rlv("stones", "ward"),
     sp: spellsNow(), shoveLv: rlv("stones", "shove"), shoveCd: 0, mendLv: rlv("stones", "mend"), mendT: 0, shoveFx: 0,
-    tutorial: META.stage === "intro", hinted: {}, cheered: true, overShown: false,
+    tutorial: META.stage === "intro", fire: {}, bolts: [], hinted: {}, cheered: true, overShown: false,
     wiz: { st: wizLook(), seq: { kind: "appear", e: 0 }, until: 0 },
     wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
     slain: { kobold: 0, bog_goblin: 0, orc: 0 },
@@ -1069,9 +1104,10 @@ function startBattle(key) {
   for (const k of UNIT_KEYS) $("card_" + k).hidden = !META.unlocked[k];
   document.querySelector(".bar").style.setProperty("--n", open.length);
   select("wisp");
-  for (const k of ["command", "nemesis"]) $("spell_" + k).querySelector("span").textContent = S.sp[k].mana + " mana";
+  for (const k of ["command", "nemesis", "firebolt"]) $("spell_" + k).querySelector("span").textContent = S.sp[k].mana + " mana";
+  $("spell_firebolt").hidden = !META.spells.firebolt;
   $("spell_shove").hidden = !S.shoveLv;
-  document.querySelector(".spells").style.setProperty("--n", S.shoveLv ? 3 : 2);
+  document.querySelector(".spells").style.setProperty("--n", 2 + (S.shoveLv ? 1 : 0) + (META.spells.firebolt ? 1 : 0));
   say(S.tutorial ? "You wake up mid-battle on a strange hillside. Tap a lit tile near the bottom to summon a wisp!" : L.d.note + " Start with a wisp.");
   showView("battle");
   showBest();
@@ -1174,6 +1210,13 @@ const slotsUsed = () => S.units.reduce((n, u) => n + (u.d.slots || 1), 0);   // 
 function castAt(fx, fy) {
   const sp = S.sp[spellMode];
   if (S.mana < sp.mana) { say("Not enough mana for " + sp.name + "."); return; }
+  if (spellMode === "firebolt") {
+    const x = Math.max(0, Math.min(C - 1, Math.floor(fx))), y = Math.max(0, Math.min(R - 1, Math.floor(fy))), w = wizSpot();
+    S.mana -= sp.mana; S.bolts.push({ x: w.x / tile - 0.5, y: (w.gy - 100 * w.s) / tile - 0.5, tx: x, ty: y });
+    wizDo("cast", 1.6); SFX.play("whoosh");
+    setSpell("firebolt");             // stays selected, so several can be thrown in a row
+    return;
+  }
   if (spellMode === "command") {
     const x = Math.max(0, Math.min(C - 1, Math.floor(fx))), y = Math.max(0, Math.min(R - 1, Math.floor(fy)));
     S.mana -= sp.mana; S.command = { x, y, t: sp.duration };
@@ -1218,7 +1261,7 @@ function knock(e, fromX, fromY, d) {
 for (const s in DATA.spells) $("spell_" + s).addEventListener("click", () => {
   if (spellMode === s) { setSpell(null); say("Spell cancelled."); return; }
   setSpell(s);
-  say(s === "command" ? "Command: tap any tile to call your summons there." : "Nemesis: tap the enemy you want hunted down.");
+  say(s === "command" ? "Command: tap any tile to call your summons there." : s === "firebolt" ? "Firebolt: tap a tile. Grass, bushes and trees catch fire. Tap the button again to stop." : "Nemesis: tap the enemy you want hunted down.");
 });
 
 // ---------- Waves ----------
@@ -1442,6 +1485,14 @@ function updateFoe(e, dt) {
 
 // step to whichever neighbouring tile is farthest from the nearest summon
 function flee(e, dt) {
+  if (e.burn > 0) {                 // on fire: run about wildly, away from the flames
+    if (!e.fleeTo) {
+      const c = cellOf(e), opts = DIRS8.map(([dx, dy]) => ({ x: c.x + dx, y: c.y + dy })).filter(p => passable(p.x, p.y, e.d.move) && !(S.fire[p.y * C + p.x] > 0));
+      e.fleeTo = opts.length ? opts[rnd(opts.length)] : null;
+    }
+    if (e.fleeTo && moveDirect(e, e.fleeTo.x, e.fleeTo.y, dt, false, 0.15)) e.fleeTo = null;
+    return;
+  }
   const threat = nearest(e, S.units, 8);
   if (!threat) return;
   if (!e.fleeTo) {
@@ -1496,6 +1547,7 @@ function update(dt) {
     if (!a.moved) a.spd = Math.max(0, a.spd - speedAt(a) / DATA.movement.brakeTime * dt);   // holding still: brake, keep heading
   }
   separate(S.units); separate(S.enemies);
+  updateFire(dt);
 
   // arrows in flight
   for (const s of S.shots) {
@@ -1555,6 +1607,52 @@ function update(dt) {
   S.floaters = S.floaters.filter(f => f.t < 1);
 
   if (S.ward <= 0) endBattle();
+}
+
+// ---------- Fire: firebolts in flight, burning ground and burning creatures ----------
+function updateFire(dt) {
+  const F = DATA.spells.firebolt;
+  for (const b of S.bolts) {
+    const dx = b.tx - b.x, dy = b.ty - b.y, d = Math.hypot(dx, dy), step = 14 * dt;
+    if (d > step) { b.x += dx / d * step; b.y += dy / d * step; continue; }
+    b.done = true; SFX.play("fire");
+    const hit = nearest({ x: b.tx, y: b.ty }, S.enemies, 0.75);
+    if (hit) hurt(hit, F.damage, "#ff9a3c");
+    if (terr(b.tx, b.ty).flammable) S.fire[b.ty * C + b.tx] = F.tileBurn;
+    S.flash = { x: b.tx, y: b.ty, t: 0.3 };
+  }
+  S.bolts = S.bolts.filter(b => !b.done);
+  if (S.flash && (S.flash.t -= dt) <= 0) S.flash = null;
+  for (const k in S.fire) {
+    if ((S.fire[k] -= dt) > 0) continue;
+    delete S.fire[k];
+    const x = k % C, y = Math.floor(k / C);
+    L.terrain[y][x] = "dirt";                 // burnt down to bare earth (a burnt tree opens the way)
+    for (const a of S.units.concat(S.enemies)) a.repath = 0;
+  }
+  for (const a of S.units.concat(S.enemies)) {
+    if (a.hp <= 0) continue;
+    const c = cellOf(a);
+    if (!a.d.ignoresTerrain && !a.enter && inGrid(c.x, c.y) && S.fire[c.y * C + c.x] > 0) {
+      const fresh = !(a.burn > 0);
+      if (fresh) float(a.x, a.y - 0.3, "on fire!", "#ff9a3c");
+      a.burn = F.burn;
+      if (a.side === "foe") { a.panic = Math.max(a.panic, F.burn); if (fresh) { a.path = []; a.fleeTo = null; } }   // summons don't panic
+    }
+    if (a.burn > 0) {
+      a.burn -= dt; a.burnT = (a.burnT || 0) + dt;
+      if (a.burnT >= 1) { a.burnT -= 1; hurt(a, F.burnDps, "#ff9a3c"); }
+      if (a.burn <= 0) { a.burn = 0; a.burnT = 0; }
+    }
+  }
+}
+function drawFlame(px, py, r, t) {
+  for (let i = 0; i < 3; i++) {
+    const f = Math.sin(t * 13 + i * 2.1), x = px + (i - 1) * r * 0.55, h = r * (1.3 + 0.35 * f) * (i === 1 ? 1.3 : 1);
+    ctx.fillStyle = i === 1 ? "rgba(255,150,60,.9)" : "rgba(255,90,40,.85)";
+    ctx.beginPath(); ctx.moveTo(x - r * 0.4, py); ctx.quadraticCurveTo(x - r * 0.45, py - h * 0.6, x, py - h); ctx.quadraticCurveTo(x + r * 0.45, py - h * 0.6, x + r * 0.4, py); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(255,230,120,.9)"; ctx.beginPath(); ctx.ellipse(x, py - r * 0.25, r * 0.16, r * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+  }
 }
 
 // ---------- End of battle: tally and rewards ----------
@@ -1798,6 +1896,7 @@ function drawActorArt(a) {
   }
   if (a.moved && a.heading !== null && Math.abs(Math.cos(a.heading)) > 0.35) a.flip = Math.cos(a.heading) < 0;
   ART.drawAt(a.kind, ctx, px, gy, s, t, a.look, m, a.flip);
+  if (a.burn > 0) drawFlame(px, gy - 60 * s * (ART_SCALE[a.kind] || 1), T * 0.22, S.time * 1.3 + a.phase);
   // health bar and nemesis mark on top
   const top = a.kind === "wisp" ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1), mid = a.kind === "wisp" ? gy - 62 * s : (top + gy) / 2;
   if (S.nemesis && S.nemesis.target === a) {
@@ -1822,6 +1921,7 @@ function draw() {
     drawTile(x, y, t);
     if (t !== "structure" && L.summon(x, y)) { ctx.fillStyle = "rgba(111,168,255,0.10)"; ctx.fillRect(x * T, y * T, T, T); }
     if (t !== "structure" && L.reach(x, y)) { ctx.fillStyle = "rgba(224,144,74,0.14)"; ctx.fillRect(x * T, y * T, T, T); }
+    if (S.fire[y * C + x] > 0) { ctx.fillStyle = "rgba(60,20,10,.45)"; ctx.fillRect(x * T, y * T, T, T); drawFlame(x * T + T / 2, y * T + T * 0.85, T * 0.32, S.time + x * 0.7 + y); }
   }
   ctx.strokeStyle = "#e0904a"; ctx.lineWidth = 2;
   if (L.structs.length) {
@@ -1861,6 +1961,12 @@ function draw() {
     ctx.globalAlpha = 1 - f.t; ctx.fillStyle = f.color;
     ctx.fillText(f.text, f.x * T + T / 2, f.y * T + T * .2 - f.t * T * .6);
   }
+  for (const b of S.bolts) {
+    const px = b.x * T + T / 2, py = b.y * T + T / 2, g = ctx.createRadialGradient(px, py, 0, px, py, T * 0.4);
+    g.addColorStop(0, "#fff3c0"); g.addColorStop(0.4, "rgba(255,140,50,.9)"); g.addColorStop(1, "rgba(255,80,30,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, T * 0.4, 0, Math.PI * 2); ctx.fill();
+  }
+  if (S.flash) { ctx.fillStyle = "rgba(255,170,80," + S.flash.t * 2 + ")"; ctx.beginPath(); ctx.arc(S.flash.x * T + T / 2, S.flash.y * T + T / 2, T * (0.9 - S.flash.t), 0, Math.PI * 2); ctx.fill(); }
   if (S.shoveFx > 0) {
     const k = 1 - S.shoveFx / 0.6, sp = wizSpot();
     ctx.strokeStyle = "rgba(224,144,74," + (1 - k) + ")"; ctx.lineWidth = 3;
@@ -1902,7 +2008,7 @@ function showBest() {
 }
 
 // ---------- Town ----------
-const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "lab", "well", "septagram", "golematorium", "library", "stones", "archivus"];
+const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "market", "lab", "well", "septagram", "golematorium", "library", "stones", "archivus"];
 function openBuilding(k) {
   for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
   if (k === "grimoire") renderGrimoire();
@@ -1928,6 +2034,7 @@ const WIZ_SAYS = {
   library: "A library! Half the spellbooks are overdue. Not mine. Mostly not mine.",
   stones: "Standing stones around the ward. The sheep seem unimpressed. So do the druids.",
   archivus: "Forbidden tomes! ...Which I'm apparently forbidden to read. Fine. For now.",
+  market: "A marketplace. I have a feeling I'm about to be robbed, very politely.",
   skeleton_archer: "Archers! Skeletons that hit things from further away. That's what I call progress.",
   golem: "A golem! Heavy, slow and very, very hard to argue with."
 };
@@ -2075,6 +2182,7 @@ function renderTown() {
   $("b_septagram").classList.toggle("glow", META.stage === "septagram");
   renderBuilder(); renderSeptagram();
   for (const w of ["lab", "well", "golematorium", "library", "stones"]) renderResearch(w);
+  renderMarket(); renderSpellBook();
   renderUnits(); renderQuests(); if (!TALK) showTalk();
   $("b_tavern").classList.toggle("glow", META.stage === "done" && !META.quests.hero || anyQuestReady());
   const T = DATA.tower;
@@ -2103,17 +2211,49 @@ function renderBuilder() {
     const needs = b.needs && !META.unlocked[b.needs], glow = k === "septagram" && META.stage === "builder" ? " glow" : "";
     const btn = META.built[k] ? "<span class='done'>Built</span>"
       : needs ? "<span class='req'>Needs " + DATA.units[b.needs].name.toLowerCase() + "s from the Septagram</span>"
-      : "<button class='btn" + glow + "' type='button' data-build='" + k + "'" + (META.gold < b.cost ? " disabled" : "") + ">" + (b.cost ? "Build · " + b.cost + " gold" : "Build · free") + "</button>";
+      : "<button class='btn" + glow + "' type='button' data-build='" + k + "'" + (canPay(asCost(b.cost)) ? "" : " disabled") + ">Build · " + costText(asCost(b.cost)) + "</button>";
     return "<div class='opt'><div class='what'><b>" + b.name + "</b><span>" + b.about + "</span></div>" + btn + "</div>";
   }).join("");
   for (const btn of $("buildList").querySelectorAll("[data-build]")) btn.addEventListener("click", () => {
-    const k = btn.dataset.build, b = DATA.builder[k];
-    if (META.gold < b.cost || META.built[k]) return;
-    META.gold -= b.cost; META.built[k] = true;
-    if (b.cost) SFX.play("coins"); else SFX.play("appear");
+    const k = btn.dataset.build, b = DATA.builder[k], c = asCost(b.cost);
+    if (!canPay(c) || META.built[k]) return;
+    pay(c); META.built[k] = true;
+    if (c.gold) SFX.play("coins"); else SFX.play("appear");
     if (k === "septagram" && META.stage === "builder") META.stage = "septagram";
     saveMeta(); renderTown();
     if (WIZ_SAYS[k]) talk(wizSays(WIZ_SAYS[k]));
+  });
+}
+// the Marketplace
+function renderMarket() {
+  $("marketList").innerHTML = Object.entries(DATA.market).map(([k, m]) => {
+    const n = have(k), lots = Math.floor(n / m.lot);
+    const b = (act, label, ok) => "<button class='btn' type='button' data-mk='" + k + "' data-act='" + act + "'" + (ok ? "" : " disabled") + ">" + label + "</button>";
+    return "<div class='opt'><div class='what'><b>" + m.name + "</b><span>You have " + n + " · sell " + m.lot + " for " + m.sellFor + " gold · buy 1 for " + m.buyFor + " gold</span></div>" +
+      b("sell", "Sell " + m.lot, lots >= 1) + b("sellAll", "Sell all · +" + lots * m.sellFor + " gold", lots >= 1) + b("buy", "Buy 1", META.gold >= m.buyFor) + b("buy10", "Buy 10", META.gold >= m.buyFor * 10) + "</div>";
+  }).join("");
+  for (const btn of $("marketList").querySelectorAll("[data-mk]")) btn.addEventListener("click", () => {
+    const k = btn.dataset.mk, m = DATA.market[k], act = btn.dataset.act, add = (n) => { if (k === "gold") return; META.warehouse[k] = (META.warehouse[k] || 0) + n; };
+    if (act === "sell" || act === "sellAll") {
+      const lots = act === "sell" ? Math.min(1, Math.floor(have(k) / m.lot)) : Math.floor(have(k) / m.lot);
+      if (!lots) return; add(-lots * m.lot); META.gold += lots * m.sellFor;
+    } else {
+      const n = act === "buy" ? 1 : 10; if (META.gold < n * m.buyFor) return;
+      META.gold -= n * m.buyFor; add(n);
+    }
+    SFX.play("coins"); saveMeta(); renderTown();
+  });
+}
+// the Overdue Library's spell book
+function renderSpellBook() {
+  $("libSpells").innerHTML = Object.entries(DATA.spellBook).map(([k, b]) =>
+    "<div class='opt'><div class='what'><b>" + DATA.spells[k].name + "</b><span>" + b.about + "</span></div>" +
+    (META.spells[k] ? "<span class='done'>Learned</span>" : "<button class='btn' type='button' data-learn='" + k + "'" + (canPay(b.cost) ? "" : " disabled") + ">Learn · " + costText(b.cost) + "</button>") + "</div>").join("");
+  for (const btn of $("libSpells").querySelectorAll("[data-learn]")) btn.addEventListener("click", () => {
+    const k = btn.dataset.learn, b = DATA.spellBook[k];
+    if (META.spells[k] || !canPay(b.cost)) return;
+    pay(b.cost); META.spells[k] = true; SFX.play("coins"); saveMeta(); renderTown();
+    talk(wizSays(k === "firebolt" ? "Firebolt! Small, cheap and wonderfully irresponsible around dry grass." : "A new spell. Lovely."));
   });
 }
 // the Septagram: bind each kind of summon once
@@ -2128,7 +2268,7 @@ function renderSeptagram() {
   for (const btn of $("septList").querySelectorAll("[data-unlock]")) btn.addEventListener("click", () => {
     const k = btn.dataset.unlock, c = DATA.unlocks[k];
     if (META.unlocked[k] || !canPay(c)) return;
-    META.gold -= c.gold; META.warehouse.bones -= c.bones; META.warehouse.skulls -= c.skulls; META.unlocked[k] = true;
+    pay(c); META.unlocked[k] = true;
     SFX.play(c.gold ? "coins" : "summon", k); if (c.gold) SFX.play("summon", k);
     if (k === "skeleton_warrior") {
       if (META.builder === "alive") META.builder = "dead_pending";
@@ -2166,8 +2306,13 @@ function drawPlates(t, dt) {
     ART.render(k, cv, st, t, dt, Math.floor(t / 3) % 2 ? "attack" : "walk");
   }
 }
-const costText = c => [c.gold ? c.gold + " gold" : "", c.bones ? c.bones + " bones" : "", c.skulls ? c.skulls + (c.skulls > 1 ? " skulls" : " skull") : ""].filter(Boolean).join(" · ") || "free";
-const canPay = c => META.gold >= c.gold && META.warehouse.bones >= c.bones && META.warehouse.skulls >= c.skulls;
+// prices can include any warehouse goods: gold, bones, skulls, stone, iron, wood, crystal
+const COST_NAMES = { gold: ["gold", "gold"], bones: ["bone", "bones"], skulls: ["skull", "skulls"], stone: ["smooth stone", "smooth stones"], iron: ["scrap iron", "scrap iron"], wood: ["wood", "wood"], crystal: ["crystal shard", "crystal shards"] };
+const asCost = c => typeof c === "number" ? { gold: c } : c;
+const have = k => k === "gold" ? META.gold : (META.warehouse[k] || 0);
+const costText = c => Object.keys(COST_NAMES).filter(k => c[k]).map(k => c[k] + " " + COST_NAMES[k][c[k] > 1 ? 1 : 0]).join(" · ") || "free";
+const canPay = c => Object.keys(COST_NAMES).every(k => have(k) >= (c[k] || 0));
+function pay(c) { for (const k in COST_NAMES) if (c[k]) { if (k === "gold") META.gold -= c[k]; else META.warehouse[k] -= c[k]; } }
 function renderResearch(where) {
   const list = DATA.research[where], lvs = META.research[where];
   $(where + "List").innerHTML = list.map(r => {
@@ -3733,6 +3878,7 @@ document.addEventListener("keydown", e => {
   if (k === "p") togglePause();
   if (k === "q") $("spell_command").click();
   if (k === "w") $("spell_nemesis").click();
+  if (k === "r" && META.spells.firebolt) $("spell_firebolt").click();
   if (k === "escape") setSpell(null);
   if (k === "e") shove();
   const i = "1234".indexOf(e.key), open = UNIT_KEYS.filter(u => META.unlocked[u]); if (i >= 0 && open[i]) select(open[i]);

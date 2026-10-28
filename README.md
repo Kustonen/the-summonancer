@@ -12,10 +12,11 @@ Current prototype:
 - Town view with the wizard standing in town (he blinks out when you head for battle and reappears when you come back) and these buildings:
   - Town Gate: pick a battlefield
   - Spelltower: spend experience on max mana, mana regeneration and summon slots (5 at start, then 25 / 50 / 75 / 100 / 150 exp, +50 per slot after that)
-  - Builder: spend gold to put up new buildings: Summoning Septagram (free), Cryptic Laboratory and Wisping Well (40 gold), Golematorium (100), Overdue Library (60), Protective Stone Circle (50), Archivus Arcanus (150)
+  - Builder: spend gold to put up new buildings: Summoning Septagram (free), Cryptic Laboratory and Wisping Well (40 gold), Golematorium (100 gold + 10 each of smooth stone, scrap iron and wood), Marketplace (30), Overdue Library (60), Protective Stone Circle (50), Archivus Arcanus (150)
   - The Summoning Septagram ("Pentagrams are for amateurs, Hexagrams are for nerds!"): binds each kind of summon once. Wisp is free, Skeleton Warrior 5 bones, Skeleton Archer 15 bones + 15 gold, Golem 60 gold + 1 skull
   - The Golematorium: golem research (Living Quarry for health and size, Granite Skin, Ground Slam, Seismic Tempo for a slam every 3rd and then every 2nd attack, Rumbling Presence, Pebble Legs)
-  - The Overdue Library ("Please return all spells by the due date. Fines are payable in souls."): longer and cheaper Command and Nemesis, and Exposed (the marked enemy takes more damage)
+  - The Overdue Library ("Please return all spells by the due date. Fines are payable in souls."): learn new spells (Firebolt, 80 gold), longer and cheaper Command and Nemesis, and Exposed (the marked enemy takes more damage)
+  - Marketplace ("Everything has a price. Mostly a bad one."): sell 10 bones for 1 gold, a skull or crystal shard for 5, 5 stone/iron/wood for 1; buy bones for 1 gold each, skulls and crystal shards for 50, stone/iron/wood for 10
   - Protective Stone Circle ("Stonehenge? We just keep our sheep penned here..."): a sturdier ward, the Shove spell (pushes nearby enemies back, every 60 s down to 30 s) and Mending Stones
   - Archivus Arcanus: "You are not prepared!"
   - The upgrade buildings show each summon's animation and current numbers
@@ -31,7 +32,7 @@ Current prototype:
   - Boulders, trees, lakes and rivers block walkers; wisps float over everything
   - Grass, bushes and trees are flagged flammable and dirt diggable for future spells
 - Retreat button (tap twice to confirm): leave a battle early and keep everything gathered so far; the wizard goes through his defeat animation and blinks back to town
-- Spells: Command (10 mana, every summon heads to a tile for 1 s), Nemesis (20 mana, every summon attacks one marked enemy for 5 s) and Shove once the Stone Circle teaches it
+- Spells: Command (10 mana, every summon heads to a tile for 1 s), Nemesis (20 mana, every summon attacks one marked enemy for 5 s) Shove once the Stone Circle teaches it, and Firebolt once learned at the Library (2 mana, 1 damage on one tile; grass, bushes and trees catch fire for 8 s and burn down to dirt, and anything walking through the flames burns for 5 s, takes 1 damage a second and panics unless it's a summon)
 - The wizard is on the battlefield: at the bottom of the Hillside, inside the ward elsewhere. He casts when you summon or cast, flinches when the ward is hit and cheers when a wave is cleared. When the ward falls a raincloud forms over him, lightning strikes beside him, it rains on his hat and he blinks back to town.
 - Steering movement: units keep their momentum between targets, turn at a limited rate (about 90° in a quarter second), slow down in sharp turns, reach full speed in 0.8 s and brake in 0.3 s when they hold still
 - Summons:
