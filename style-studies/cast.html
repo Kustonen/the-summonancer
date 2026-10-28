@@ -118,7 +118,7 @@ button:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
     <section class="card"><div class="side us">Summon</div><h2>Skeleton</h2><canvas id="cvSkel" aria-label="Animated skeleton warrior"></canvas><p>Punches, kicks or headbutts, picked at random each swing.</p></section>
     <section class="card"><div class="side us">Summon</div><h2>Archer</h2><canvas id="cvArch" aria-label="Animated skeleton archer"></canvas><p>Bow in one hand, arrow in the other. On release the arrow is gone.</p></section>
     <section class="card"><div class="side us">Summon</div><h2>Wisp</h2><canvas id="cvWisp" aria-label="Animated wisp"></canvas><p>A shimmering orb. Pulses as it moves, flashes red when it strikes, shimmers yellow in a panic and turns pink over a swamp.</p></section>
-    <section class="card"><div class="side us">Summon</div><h2>Golem</h2><canvas id="cvGolem" aria-label="Animated golem"></canvas><p>A boulder with a Septagram glowing in its chest. Slow and heavy; raises both fists and slams the ground. Moss may grow on its head and either flank, each on its own, sometimes with a flower or a mushroom. Immune to panic, but it can still look alarmed.</p><button id="quarry" class="mini" type="button">Living Quarry: 0</button></section>
+    <section class="card"><div class="side us">Summon</div><h2>Golem</h2><canvas id="cvGolem" aria-label="Animated golem"></canvas><p>A boulder with a Septagram glowing in its chest. Slow and heavy; punches three times with one fist, then raises both and slams the ground. Moss may grow on its head and either flank, each on its own, sometimes with a flower or a mushroom. Immune to panic, but it can still look alarmed.</p><button id="quarry" class="mini" type="button">Living Quarry: 0</button></section>
   </div>
   <h2 class="group">Enemies</h2>
   <div class="cards">
@@ -759,7 +759,10 @@ function golem(ctx, cx, gy, s0, t, st) {
   const q = st.quarry || 0, s = s0 * 1.3 * (1 + q * 0.1);
   const saved = mode, panicky = mode === "panic"; if (panicky) mode = "walk";   // immune to panic in battle, but it can still look alarmed
   const M = motion(t, 4.2, null, []); mode = saved;
-  const atk = M.attacking, ph = (t / 1.4) % 1;
+  const ph = (t / 1.4) % 1;
+  // three single-fist punches, then a ground slam (the battlefield tells it which one; previews follow the basic rhythm)
+  const punch = M.attacking && (st.gmove ? st.gmove === "punch" : Math.floor(t / 1.4) % 4 !== 3);
+  const atk = M.attacking && !punch;
   ctx.save(); ctx.translate(cx + (panicky ? Math.sin(t * 47) * 1.2 * s : 0), gy); ctx.scale(s, s);
   const LW0 = LW; LW = LW0 / s;
   // ground slam: fists rise over the head, smash down in front, rest a moment, come back
@@ -770,9 +773,17 @@ function golem(ctx, cx, gy, s0, t, st) {
     else if (ph < 0.75) { lean = 0.12; jolt = ph < 0.6 ? Math.sin((ph - 0.52) / 0.08 * Math.PI) * 3 : 0; }
     else lean = lerp(0.12, 0, ease((ph - 0.75) / 0.25));
   }
+  if (punch) lean = ph < 0.4 ? -0.05 * ease(ph / 0.4) : ph < 0.52 ? lerp(-0.05, 0.09, (ph - 0.4) / 0.12) : ph < 0.65 ? 0.09 : lerp(0.09, 0, ease((ph - 0.65) / 0.35));
   const bob = M.bob * 0.7;
   const fistAt = side => {
     const rest = [side * 40 - side * M.swing * 9, -44 + bob + (M.walking ? 0 : Math.sin(t * 2 + side) * 1.5)];
+    if (punch && side === 1) {          // one fist: pull back, then a straight jab forward
+      const back = [rest[0] - 12, rest[1] - 6], hit = [62, -54];
+      if (ph < 0.4) { const u = ease(ph / 0.4); return [lerp(rest[0], back[0], u), lerp(rest[1], back[1], u)]; }
+      if (ph < 0.52) { const u = Math.pow((ph - 0.4) / 0.12, 2); return [lerp(back[0], hit[0], u), lerp(back[1], hit[1], u)]; }
+      if (ph < 0.65) return hit;
+      const u = ease((ph - 0.65) / 0.35); return [lerp(hit[0], rest[0], u), lerp(hit[1], rest[1], u)];
+    }
     if (!atk) return rest;
     const up = [10 + side * 13, -122], down = [38 + side * 15, -13];
     if (ph < 0.4) { const u = ease(ph / 0.4); return [lerp(rest[0], up[0], u), lerp(rest[1], up[1], u)]; }
@@ -863,6 +874,7 @@ function golem(ctx, cx, gy, s0, t, st) {
   }
   ctx.restore();
   if (!atk) drawFist(1); else { drawFist(-1); drawFist(1); }
+  if (punch && ph >= 0.52 && ph < 0.62) burst(ctx, 74, -54, 1, 1 - (ph - 0.52) / 0.1);
   // shockwave, dust and a few flying chips where the fists land
   if (atk && ph >= 0.52 && ph < 0.95) {
     const pr = (ph - 0.52) / 0.43, a = 1 - pr, gx = 38, R = 12 + pr * 80;

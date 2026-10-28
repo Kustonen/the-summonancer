@@ -438,7 +438,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <p>Pick a summon below and tap a lit tile near the ward. The ward holds as long as nothing reaches it.</p>
       <h3>Summons</h3>
       <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
-      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow and very tough: nearby enemies can't help attacking it, and its ground slam shoves them back. New summons are bound at the Summoning Septagram in town.</p>
+      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow, very tough and takes two summon slots: nearby enemies can't help attacking it, and every fourth blow is a ground slam that shoves them back. New summons are bound at the Summoning Septagram in town.</p>
       <h3>Spells</h3>
       <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward.</p>
       <h3>Enemies</h3>
@@ -471,7 +471,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
       <span class="cost"><span class="m">10</span> · <span class="b">2 bones</span></span>
     </button>
     <button class="card" id="card_golem" type="button" aria-pressed="false" hidden>
-      <b>Golem</b><span class="d">Heavy, stubborn.</span>
+      <b>Golem</b><span class="d">Heavy, takes 2 slots.</span>
       <span class="cost"><span class="m">20</span> · <span class="b">3 bones</span></span>
     </button>
   </div>
@@ -517,7 +517,7 @@ const DATA = {
     wisp:             { gold: 0,  bones: 0,  skulls: 0, about: "Floats over anything, pokes enemies, mends other summons." },
     skeleton_warrior: { gold: 0,  bones: 5,  skulls: 0, about: "Walks around obstacles and hits hard. Cheap and cheerful." },
     skeleton_archer:  { gold: 15, bones: 15, skulls: 0, about: "Shoots from two tiles away. Slow and fragile." },
-    golem:            { gold: 60, bones: 0,  skulls: 1, about: "A slow, very tough defender. Enemies close by can't resist attacking it." }
+    golem:            { gold: 60, bones: 0,  skulls: 1, about: "A slow, very tough defender that takes two summon slots. Enemies close by can't resist attacking it." }
   },
   research: {
     lab: [
@@ -539,7 +539,8 @@ const DATA = {
     golematorium: [
       { key: "quarry",   name: "Living Quarry",     max: 8, gold: 15, fx: lv => "+" + lv * 15 + " % health, " + lv * 4 + " % bigger" },
       { key: "granite",  name: "Granite Skin",      max: 8, gold: 15, fx: lv => "blocks " + fmt(lv * 0.4) + " damage per hit" },
-      { key: "slam",     name: "Ground Slam",       max: 8, gold: 12, fx: lv => "+" + lv * 15 + " % slam damage, shoves " + fmt(0.5 + lv * 0.08) + " tiles" },
+      { key: "slam",     name: "Ground Slam",       max: 8, gold: 12, fx: lv => "+" + lv * 15 + " % damage, the slam shoves " + fmt(0.5 + lv * 0.08) + " tiles" },
+      { key: "tempo",    name: "Seismic Tempo",     max: 2, gold: 40, fx: lv => "ground slam on every " + ["4th", "3rd", "2nd"][lv] + " attack" },
       { key: "presence", name: "Rumbling Presence", max: 6, gold: 12, fx: lv => "draws in enemies within " + fmt(2.2 + lv * 0.3) + " tiles" },
       { key: "pebble",   name: "Pebble Legs",       max: 8, gold: 10, fx: lv => "+" + lv * 6 + " % move speed" }
     ],
@@ -575,7 +576,7 @@ const DATA = {
     skeleton_warrior: { name: "Skeleton Warrior", cost: { mana: 5, bone: 1 }, hp: 20, damage: 3, attackEvery: 0.8, speed: 1.6, range: 1.15, move: "ground" },
     skeleton_archer: { name: "Skeleton Archer", cost: { mana: 10, bone: 2 }, hp: 13, damage: 3, attackEvery: 1.0, speed: 1.1, range: 2.1, move: "ground", ranged: true },
     golem: { name: "Golem", cost: { mana: 20, bone: 3 }, hp: 110, damage: 4, attackEvery: 1.5, speed: 0.7, range: 1.2, move: "ground",
-             taunt: 2.2, slam: { radius: 1.3, knock: 0.5 } }
+             taunt: 2.2, slam: { radius: 1.3, knock: 0.5, every: 4 }, slots: 2 }
   },
   enemies: {
     kobold: { name: "Kobold", hp: 7, damage: 1, attackEvery: 0.9, speed: 1.15, range: 1.15, aggro: 2.4, move: "ground",
@@ -620,7 +621,7 @@ const DATA = {
       },
       golem: {
         lore: "A boulder with ambitions, held together by the Septagram glowing in its chest. Moss grows on it wherever moss likes.",
-        attacks: "Double-fist ground slam that shoves enemies back",
+        attacks: "Three single-fist punches, then a double-fist ground slam that shoves enemies back",
         behaviour: "Slow and enormously tough. Enemies near a golem can't resist attacking it, which is exactly the point. Immune to panic, though it can look alarmed.",
         notes: "Golems don't sleep; they just stop moving for a while. Pigeons have noticed."
       }
@@ -778,6 +779,7 @@ const SFX = (() => {
       tone("triangle", vary(900), 600, t, 0.001, 0.04, 0.12);
     },
     orcPunch(t) { tone("sine", vary(110), 40, t, 0.003, 0.2, 0.75); noise(t, 0.002, 0.09, 0.45, "lowpass", 600); },
+    golemPunch(t) { tone("sine", vary(95), 35, t, 0.003, 0.24, 0.8); noise(t, 0.002, 0.11, 0.5, "lowpass", 450); },
     slam(t) { tone("sine", vary(75), 28, t, 0.005, 0.45, 0.9); noise(t, 0.004, 0.35, 0.6, "lowpass", 350, 1, 120); tone("triangle", vary(55), 30, t, 0.01, 0.5, 0.3); },
     zap(t) {
       tone("sawtooth", vary(1100), 180, t, 0.002, 0.14, 0.16, ["bandpass", 1800, 2]); tone("square", vary(90), 60, t, 0.002, 0.12, 0.07);
@@ -839,7 +841,7 @@ const SFX = (() => {
       }
     }
   };
-  const ATTACK = { kobold: "slap", wisp: "zap", skeleton_archer: "bow", orc: "orcPunch", golem: "slam" };
+  const ATTACK = { kobold: "slap", wisp: "zap", skeleton_archer: "bow", orc: "orcPunch", golem: "slam", golemPunch: "golemPunch" };
   const DEATH = { wisp: "choir", skeleton_warrior: "bones", skeleton_archer: "bones", golem: "krak", kobold: "squeak", bog_goblin: "screech", orc: "grunt" };
   function play(name, arg) {
     if (!on || !ac) return;
@@ -1060,7 +1062,7 @@ function unitDef(kind) {
     const g = k => lv("golematorium", k);
     d.hp = Math.round(b.hp * (1 + 0.15 * g("quarry"))); d.size = 1 + 0.04 * g("quarry");
     d.armor = 0.4 * g("granite");
-    d.damage = b.damage * (1 + 0.15 * g("slam")); d.slam = { radius: b.slam.radius, knock: b.slam.knock + 0.08 * g("slam") };
+    d.damage = b.damage * (1 + 0.15 * g("slam")); d.slam = { radius: b.slam.radius, knock: b.slam.knock + 0.08 * g("slam"), every: b.slam.every - g("tempo") };
     d.taunt = b.taunt + 0.3 * g("presence");
     d.speed = b.speed * (1 + 0.06 * g("pebble"));
   } else {
@@ -1084,7 +1086,8 @@ function summonAt(cx, cy) {
   if (!META.unlocked[selected]) return say("That summon hasn't been bound at the Septagram yet.");
   if (!L.summon(cx, cy)) return say("You can only summon on the lit tiles near your ward.");
   if (!passable(cx, cy, d.move)) return say("Something's in the way there. Skeletons respect obstacles. Wisps don't.");
-  if (S.units.length >= S.slots) return say("All " + S.slots + " summon slots are in use. The Spelltower can add more.");
+  const need = d.slots || 1;
+  if (slotsUsed() + need > S.slots) return say(need > 1 ? "A " + d.name.toLowerCase() + " needs " + need + " free summon slots. The Spelltower can add more." : "All " + S.slots + " summon slots are in use. The Spelltower can add more.");
   if (S.mana < d.cost.mana) return say("Not enough mana. Wizards also need a moment.");
   if (S.bones + S.carried < d.cost.bone) return say("Not enough bones. Send a wisp to fetch some.");
   S.mana -= d.cost.mana;
@@ -1098,6 +1101,7 @@ function summonAt(cx, cy) {
   const q = QUIPS[selected]; say(q[rnd(q.length)]);
 }
 
+const slotsUsed = () => S.units.reduce((n, u) => n + (u.d.slots || 1), 0);   // a golem takes two slots
 // ---------- Spells ----------
 function castAt(fx, fy) {
   const sp = S.sp[spellMode];
@@ -1275,9 +1279,14 @@ function goToTile(a, tx, ty, dt) {
 
 function strike(a, target) {
   a.cd = a.d.attackEvery; a.lastStrike = S.time; a.flip = target.x < a.x - 0.05;
-  SFX.play("attack", a.kind);
+  if (a.d.slam) {           // golems: single-fist punches, and every few attacks a ground slam
+    a.atkN = (a.atkN || 0) + 1;
+    a.lastMove = a.atkN % a.d.slam.every === 0 ? "slam" : "punch";
+    SFX.play("attack", a.lastMove === "slam" ? "golem" : "golemPunch");
+    if (a.lastMove === "punch") { hurt(target, a.d.damage, "#ece3cf"); return; }
+  } else SFX.play("attack", a.kind);
   if (a.d.ranged) { S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage }); return; }
-  if (a.d.slam) {           // the golem's ground slam: everything close in front takes the blow and gets shoved back
+  if (a.d.slam) {           // the ground slam: everything close in front takes the blow and gets shoved back
     const fx = (a.x + target.x) / 2, fy = (a.y + target.y) / 2;
     for (const e of S.enemies) {
       if (e.hp <= 0 || e.enter || (e !== target && Math.hypot(e.x - fx, e.y - fy) > a.d.slam.radius)) continue;
@@ -1688,7 +1697,7 @@ const ART_SCALE = { kobold: 0.86, orc: 1.3, golem: 1.3 };
 function drawActorArt(a) {
   const T = tile, s = T / 112, px = a.x * T + T / 2, gy = a.y * T + T * 0.8;
   if (!a.look) a.look = ART.looks(a.kind);
-  if (a.kind === "golem") a.look.quarry = ((a.d.size || 1) - 1) / 0.1;
+  if (a.kind === "golem") { a.look.quarry = ((a.d.size || 1) - 1) / 0.1; a.look.gmove = a.lastMove || "punch"; }
   // which animation to play
   const fighting = a.lastStrike !== null && S.time - a.lastStrike < a.d.attackEvery * 1.15;
   let m = "idle";
@@ -1790,13 +1799,13 @@ function hud() {
   $("bones").textContent = S.bones;
   $("skulls").textContent = S.skulls; $("skullStat").hidden = !S.skulls;
   $("gold").textContent = S.gold;
-  $("slots").textContent = S.units.length + "/" + S.slots;
+  $("slots").textContent = slotsUsed() + "/" + S.slots;
   $("ward").textContent = Math.max(0, S.ward);
   $("wave").textContent = Math.max(1, S.wave);
-  const full = S.units.length >= S.slots;
+  const free = S.slots - slotsUsed();
   for (const k in DATA.units) {
     const c = DATA.units[k].cost;
-    $("card_" + k).style.opacity = !full && S.mana >= c.mana && S.bones + S.carried >= c.bone ? 1 : .55;
+    $("card_" + k).style.opacity = free >= (DATA.units[k].slots || 1) && S.mana >= c.mana && S.bones + S.carried >= c.bone ? 1 : .55;
   }
   for (const s in DATA.spells) $("spell_" + s).style.opacity = S.mana >= S.sp[s].mana ? 1 : .55;
   if (S.shoveLv) { const sh = $("spell_shove"); sh.querySelector("span").textContent = S.shoveCd > 0 ? Math.ceil(S.shoveCd) + " s" : "ready"; sh.style.opacity = S.shoveCd > 0 ? .55 : 1; }
@@ -1982,7 +1991,8 @@ function unitPlate(k) {
   if (d.heal) rows.push(["Mending", d.heal.amount + " HP every " + fmt(d.heal.every) + " s"]);
   if (d.selfHeal) rows.push(["Self-mending", "1 HP every " + fmt(d.selfHeal) + " s"]);
   if (d.taunt) rows.push(["Draws enemies", "within " + fmt(d.taunt) + " tiles"]);
-  if (d.slam) rows.push(["Slam shove", fmt(d.slam.knock) + " tiles"]);
+  if (d.slam) rows.push(["Ground slam", "every " + ["", "", "2nd", "3rd", "4th"][d.slam.every] + " attack, shoves " + fmt(d.slam.knock) + " tiles"]);
+  if (d.slots > 1) rows.push(["Summon slots", d.slots]);
   rows.push(["Summon", d.cost.mana + " mana" + (d.cost.bone ? " · " + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : "") : "")]);
   return "<div class='uplate'><canvas data-plate='" + k + "' aria-label='" + d.name + " animation'></canvas><div><b>" + d.name + "</b><table class='facts'>" +
     rows.map(r => "<tr><th>" + r[0] + "</th><td>" + r[1] + "</td></tr>").join("") + "</table></div></div>";
@@ -2671,7 +2681,10 @@ function golem(ctx, cx, gy, s0, t, st) {
   const q = st.quarry || 0, s = s0 * 1.3 * (1 + q * 0.1);
   const saved = mode, panicky = mode === "panic"; if (panicky) mode = "walk";   // immune to panic in battle, but it can still look alarmed
   const M = motion(t, 4.2, null, []); mode = saved;
-  const atk = M.attacking, ph = (t / 1.4) % 1;
+  const ph = (t / 1.4) % 1;
+  // three single-fist punches, then a ground slam (the battlefield tells it which one; previews follow the basic rhythm)
+  const punch = M.attacking && (st.gmove ? st.gmove === "punch" : Math.floor(t / 1.4) % 4 !== 3);
+  const atk = M.attacking && !punch;
   ctx.save(); ctx.translate(cx + (panicky ? Math.sin(t * 47) * 1.2 * s : 0), gy); ctx.scale(s, s);
   const LW0 = LW; LW = LW0 / s;
   // ground slam: fists rise over the head, smash down in front, rest a moment, come back
@@ -2682,9 +2695,17 @@ function golem(ctx, cx, gy, s0, t, st) {
     else if (ph < 0.75) { lean = 0.12; jolt = ph < 0.6 ? Math.sin((ph - 0.52) / 0.08 * Math.PI) * 3 : 0; }
     else lean = lerp(0.12, 0, ease((ph - 0.75) / 0.25));
   }
+  if (punch) lean = ph < 0.4 ? -0.05 * ease(ph / 0.4) : ph < 0.52 ? lerp(-0.05, 0.09, (ph - 0.4) / 0.12) : ph < 0.65 ? 0.09 : lerp(0.09, 0, ease((ph - 0.65) / 0.35));
   const bob = M.bob * 0.7;
   const fistAt = side => {
     const rest = [side * 40 - side * M.swing * 9, -44 + bob + (M.walking ? 0 : Math.sin(t * 2 + side) * 1.5)];
+    if (punch && side === 1) {          // one fist: pull back, then a straight jab forward
+      const back = [rest[0] - 12, rest[1] - 6], hit = [62, -54];
+      if (ph < 0.4) { const u = ease(ph / 0.4); return [lerp(rest[0], back[0], u), lerp(rest[1], back[1], u)]; }
+      if (ph < 0.52) { const u = Math.pow((ph - 0.4) / 0.12, 2); return [lerp(back[0], hit[0], u), lerp(back[1], hit[1], u)]; }
+      if (ph < 0.65) return hit;
+      const u = ease((ph - 0.65) / 0.35); return [lerp(hit[0], rest[0], u), lerp(hit[1], rest[1], u)];
+    }
     if (!atk) return rest;
     const up = [10 + side * 13, -122], down = [38 + side * 15, -13];
     if (ph < 0.4) { const u = ease(ph / 0.4); return [lerp(rest[0], up[0], u), lerp(rest[1], up[1], u)]; }
@@ -2775,6 +2796,7 @@ function golem(ctx, cx, gy, s0, t, st) {
   }
   ctx.restore();
   if (!atk) drawFist(1); else { drawFist(-1); drawFist(1); }
+  if (punch && ph >= 0.52 && ph < 0.62) burst(ctx, 74, -54, 1, 1 - (ph - 0.52) / 0.1);
   // shockwave, dust and a few flying chips where the fists land
   if (atk && ph >= 0.52 && ph < 0.95) {
     const pr = (ph - 0.52) / 0.43, a = 1 - pr, gx = 38, R = 12 + pr * 80;

@@ -14,7 +14,7 @@ Current prototype:
   - Spelltower: spend experience on max mana, mana regeneration and summon slots (5 at start, then 25 / 50 / 75 / 100 / 150 exp, +50 per slot after that)
   - Builder: spend gold to put up new buildings: Summoning Septagram (free), Cryptic Laboratory and Wisping Well (40 gold), Golematorium (100), Overdue Library (60), Protective Stone Circle (50), Archivus Arcanus (150)
   - The Summoning Septagram ("Pentagrams are for amateurs, Hexagrams are for nerds!"): binds each kind of summon once. Wisp is free, Skeleton Warrior 5 bones, Skeleton Archer 15 bones + 15 gold, Golem 60 gold + 1 skull
-  - The Golematorium: golem research (Living Quarry for health and size, Granite Skin, Ground Slam, Rumbling Presence, Pebble Legs)
+  - The Golematorium: golem research (Living Quarry for health and size, Granite Skin, Ground Slam, Seismic Tempo for a slam every 3rd and then every 2nd attack, Rumbling Presence, Pebble Legs)
   - The Overdue Library ("Please return all spells by the due date. Fines are payable in souls."): longer and cheaper Command and Nemesis, and Exposed (the marked enemy takes more damage)
   - Protective Stone Circle ("Stonehenge? We just keep our sheep penned here..."): a sturdier ward, the Shove spell (pushes nearby enemies back, every 60 s down to 30 s) and Mending Stones
   - Archivus Arcanus: "You are not prepared!"
@@ -36,7 +36,7 @@ Current prototype:
   - Wisp (10 mana): floats through terrain and moves diagonally; fights alone, but heals other summons when they are around; 2 % chance per second to wander off for 10 s when a swamp is within 3 tiles
   - Skeleton Warrior (5 mana + 1 bone): sturdy melee
   - Skeleton Archer (10 mana + 2 bones): shoots from two tiles, slow and fragile
-  - Golem (20 mana + 3 bones): slow and very tough; nearby enemies attack it instead, and its ground slam hits everything in front of it and shoves it back
+  - Golem (20 mana + 3 bones, takes two summon slots): slow and very tough; nearby enemies attack it instead; punches three times with one fist, then a ground slam hits everything in front of it and shoves it back
 - Enemies and drops:
   - Every bone drop has a small chance (kobold 1 %, goblin 2 %, orc 3 %) to be a whole skull instead
   - Kobold: weak and fast; always 1 bone, 25 % chance of 1 gold; all kobolds flee for 1 s when one dies
