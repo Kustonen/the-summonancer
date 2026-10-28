@@ -541,7 +541,7 @@ const DATA = {
       { key: "quarry",   name: "Living Quarry",     max: 8, gold: 15, fx: lv => "+" + lv * 15 + " % health, " + lv * 4 + " % bigger" },
       { key: "granite",  name: "Granite Skin",      max: 8, gold: 15, fx: lv => "blocks " + fmt(lv * 0.4) + " damage per hit" },
       { key: "slam",     name: "Ground Slam",       max: 8, gold: 12, fx: lv => "+" + lv * 15 + " % damage, the slam shoves " + fmt(0.5 + lv * 0.08) + " tiles" },
-      { key: "tempo",    name: "Seismic Tempo",     max: 2, gold: 40, fx: lv => "ground slam on every " + ["4th", "3rd", "2nd"][lv] + " attack" },
+      { key: "tempo",    name: "Seismic Tempo",     max: 2, costs: [{ gold: 500 }, { gold: 2000 }], fx: lv => "ground slam on every " + ["4th", "3rd", "2nd"][lv] + " attack" },
       { key: "presence", name: "Rumbling Presence", max: 6, gold: 12, fx: lv => "draws in enemies within " + fmt(2.2 + lv * 0.3) + " tiles" },
       { key: "pebble",   name: "Pebble Legs",       max: 8, gold: 10, fx: lv => "+" + lv * 6 + " % move speed" }
     ],
@@ -558,7 +558,9 @@ const DATA = {
       { key: "mend",  name: "Mending Stones",  max: 4, gold: 25, fx: lv => lv ? "the ward mends 1 hit every " + (90 - 15 * lv) + " s" : "no mending" }
     ],
     // price of the next level: gold grows, bones from level 2, skulls from level 6
-    cost: (r, lv) => ({ gold: Math.round(r.gold * (lv + 1) * (1 + lv * 0.25)), bones: lv >= 2 ? lv * 2 : 0, skulls: lv >= 6 ? lv - 5 : 0 })
+    // ("costs" lists fixed prices per level instead)
+    cost: (r, lv) => r.costs ? Object.assign({ gold: 0, bones: 0, skulls: 0 }, r.costs[lv])
+      : ({ gold: Math.round(r.gold * (lv + 1) * (1 + lv * 0.25)), bones: lv >= 2 ? lv * 2 : 0, skulls: lv >= 6 ? lv - 5 : 0 })
   },
   spells: {
     command: { name: "Command", mana: 10, duration: 1 },
