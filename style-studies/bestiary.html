@@ -42,7 +42,7 @@ h3 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 4px
 </style>
 <div class="wrap">
   <header>
-    <h1>Bestiary <small>The Summonancer · enemies · v0.8.7-alpha</small></h1>
+    <h1>Bestiary <small>The Summonancer · enemies · v0.8.8-alpha</small></h1>
     <p class="note-motion">Every enemy currently in the game, drawn by the same code the battlefield and the Grimoire use: each animation, each attack move, and a few randomly rolled looks. Graphics for the newest creatures are first versions.</p>
     <div class="bar"><button type="button" id="play" aria-pressed="true">Pause</button><button type="button" id="reroll">Roll new looks</button><button type="button" id="flip" aria-pressed="false">Face left</button></div>
   </header>
@@ -708,11 +708,15 @@ function troll(ctx, cx, gy, s0, t, st) {
   // the nose: big, knobbly and in front of everything
   ctx.beginPath(); ctx.ellipse(R * 0.62, R * 0.2, R * 0.42, R * 0.3, 0.3, 0, Math.PI * 2); shape(ctx, SK[0], 3.5);
   ell(ctx, R * 0.88, R * 0.05, R * 0.12, R * 0.1, 0, SK[1], 2); ell(ctx, R * 0.5, R * 0.36, R * 0.09, R * 0.08, 0, SK[1], 2);
-  // a wide mouth with one tooth poking up
+  // a big, jutting lower jaw that drops open when it attacks or panics
   const open = M.attacking ? M.hit * 0.6 : M.panicking ? 0.8 : M.walking ? Math.abs(Math.sin(M.p)) * 0.15 : 0.05;
-  ctx.beginPath(); ctx.moveTo(-R * 0.25, R * 0.55); ctx.quadraticCurveTo(R * 0.3, R * (0.62 + open * 0.3), R * 0.7, R * 0.52); ctx.strokeStyle = INK; ctx.lineWidth = 3.5 * LW; ctx.stroke();
+  const jy = R * 0.5 + open * R * 0.16;
+  ctx.fillStyle = "#3a1f2a"; ctx.beginPath(); ctx.moveTo(-R * 0.3, R * 0.5); ctx.quadraticCurveTo(R * 0.3, R * 0.56, R * 0.85, R * 0.48); ctx.lineTo(R * 0.85, jy + R * 0.08); ctx.lineTo(-R * 0.3, jy + R * 0.08); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(-R * 0.45, jy, R * 1.45, R * 0.48, [R * 0.12, R * 0.12, R * 0.3, R * 0.24]); ctx.fillStyle = SK[0]; ctx.fill();
+  ctx.save(); ctx.clip(); ctx.fillStyle = SK[1]; ctx.fillRect(-R * 0.45, jy + R * 0.32, R * 1.45, R * 0.2); ctx.restore();
+  ctx.beginPath(); ctx.roundRect(-R * 0.45, jy, R * 1.45, R * 0.48, [R * 0.12, R * 0.12, R * 0.3, R * 0.24]); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
   // fangs jutting up from the lower jaw: one at each corner of the mouth, or just one
-  const fang = (x, lean) => { const y0 = R * 0.66 + open * R * 0.08;
+  const fang = (x, lean) => { const y0 = jy + R * 0.12;
     ctx.beginPath(); ctx.moveTo(x - R * 0.14, y0); ctx.quadraticCurveTo(x - R * 0.12 + lean * R * 0.06, y0 - R * 0.4, x + lean * R * 0.18, y0 - R * 0.66);
     ctx.quadraticCurveTo(x + R * 0.08 + lean * R * 0.05, y0 - R * 0.3, x + R * 0.14, y0); ctx.closePath(); shape(ctx, TUSK, 3); };
   const fs = st.fangs || "both";
