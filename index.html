@@ -701,7 +701,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.2-alpha";
+const VERSION = "0.9.3-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -3371,7 +3371,9 @@ const SAINA = {
     "Sing of your deeds? Gladly. Do you have any? ...Oh. Right. Those. Yes.",
     "Every great hero needs a bard. Every great bard needs a hero. We'll have to make do with each other.",
     "I asked the villagers for a rhyme for 'Summonancer'. They suggested 'necromancer'. I'm working on it.",
-    "A ledger is just a ballad with fewer verses and more arithmetic."
+    "A ledger is just a ballad with fewer verses and more arithmetic.",
+    "I once sang for a captain who ended every order with 'make it so'. Bald as a skull, voice like a cathedral. The heart of an explorer and the soul of a poet. I still hum his tune on quiet nights.",
+    "There are four lights on my wagon. Whatever anyone tells you. Four."
   ],
   stat: [
     () => kills("kobold") > 20 && kills("kobold") + " kobolds. I've written a ballad for each one. Most of them are very short.",
@@ -3636,6 +3638,10 @@ function takeQuest(id) {
 function tavernTalk() {
   if (TALK) return;
   if (!META.quests.hero) talk(DATA.quests.hero.offer, () => { takeQuest("hero"); renderTown(); });
+  else if (Math.random() < 0.2) talk(pick([                // now and then the wizard orders like a certain captain
+    [{ who: "The Summonancer", text: "Tea. Earl Grey. Hot." }, { who: "Villagers", text: "We've got ale. Lukewarm. Possibly ale." }, { who: "The Summonancer", text: "...Make it so." }],
+    [{ who: "The Summonancer", text: "Tea. Earl Grey. Hot." }, { who: "Villagers", text: "He says that every time. Does he think the barrel is going to change its mind?" }]
+  ]));
 }
 const rewardText = r => [r.exp ? r.exp + " exp" : "", costText(Object.assign({}, r.items || {}, r.gold ? { gold: (r.items && r.items.gold || 0) + r.gold } : {}))].filter(x => x && x !== "free").join(" · ");
 const activeCommon = () => Object.keys(META.quests).filter(id => META.quests[id].gen && META.quests[id].state === "active");
