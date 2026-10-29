@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.12-alpha – 2026-10-29
+- Ghost drawings: always two eyes, in a random colour; always some smoke, in a random amount. Wraith drawings: bull horns instead of goat horns, a darker shroud hanging open over a ribcage and spine, and an ominous pulse
+
 ## 0.8.11-alpha – 2026-10-29
 - Drawings for two future summons, not yet in play: the Ghost (a dark, shifting, violet-rimmed blob) and the Wraith (goat skull, tattered shroud, clawed arms, a whirlwind for legs). See style-studies/ghostwraith.html
 

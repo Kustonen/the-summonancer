@@ -675,7 +675,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.8.11-alpha";
+const VERSION = "0.8.12-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -4794,7 +4794,7 @@ function ghost(ctx, cx, gy, s, t, st) {
   const R = 40 * s * (M.charmed ? charmBeat(t) : 1) * (M.main ? 1 + M.hit * 0.2 : 1);
   const C = st.tint || ["rgba(150,90,220", "rgba(90,40,140"];
   // smoke trailing off behind and below
-  for (let i = 0; i < (st.trails || 4); i++) {
+  for (let i = 0; i < Math.max(2, st.trails || 4); i++) {
     const a = Math.PI * 0.55 + i * 0.35 + Math.sin(t * 1.5 + i) * 0.2, d = R * (0.9 + ((t * 0.6 + i * 0.27) % 1) * 0.9), f = 1 - ((t * 0.6 + i * 0.27) % 1);
     ctx.fillStyle = "rgba(40,30,55," + (0.35 * f) + ")"; ctx.beginPath(); ctx.arc(x + Math.cos(a) * d - (moving ? 10 * s : 0), y + Math.sin(a) * d * 0.7, R * 0.28 * (0.6 + f * 0.6), 0, Math.PI * 2); ctx.fill();
   }
@@ -4826,11 +4826,11 @@ function ghost(ctx, cx, gy, s, t, st) {
   for (let i = 0; i < 5; i++) { const a = t * 0.9 + i * 1.256, rr = R * (0.35 + 0.3 * Math.sin(t * 1.7 + i)); sparkle(ctx, x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.8, (2 + Math.sin(t * 4 + i)) * s, 0.35 + 0.35 * Math.sin(t * 3 + i * 2)); }
   // sometimes one dim eye, sometimes two, sometimes none at all
   if (M.charmed) { heart(ctx, x - R * 0.25, y - R * 0.1, R * 0.16 * charmBeat(t), "#c79bff"); heart(ctx, x + R * 0.25, y - R * 0.1, R * 0.16 * charmBeat(t), "#c79bff"); }
-  else for (const ex of st.eyes || []) {
-    const blink = (t + ex) % 4.3 < 0.15, r = R * (M.panicking ? 0.16 : 0.11);
-    const g = ctx.createRadialGradient(x + ex * R, y - R * 0.15, 0, x + ex * R, y - R * 0.15, r * 3); g.addColorStop(0, "rgba(220,170,255,.8)"); g.addColorStop(1, "rgba(220,170,255,0)");
+  else for (const ex of st.eyes || [-0.22, 0.22]) {
+    const blink = (t + ex) % 4.3 < 0.15, r = R * (M.panicking ? 0.16 : 0.11), ec = (st.eyeCol || [220, 170, 255]).join(",");
+    const g = ctx.createRadialGradient(x + ex * R, y - R * 0.15, 0, x + ex * R, y - R * 0.15, r * 3); g.addColorStop(0, "rgba(" + ec + ",.8)"); g.addColorStop(1, "rgba(" + ec + ",0)");
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x + ex * R, y - R * 0.15, r * 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#e9d6ff"; ctx.beginPath(); ctx.ellipse(x + ex * R, y - R * 0.15, r, blink ? r * 0.15 : r * 1.2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgb(" + (st.eyeCol || [220, 170, 255]).map(v => Math.min(255, v + 40)).join(",") + ")"; ctx.beginPath(); ctx.ellipse(x + ex * R, y - R * 0.15, r, blink ? r * 0.15 : r * 1.2, 0, 0, Math.PI * 2); ctx.fill();
   }
   if (M.main && M.hit > 0.85) { ctx.strokeStyle = "rgba(160,100,230," + (1 - (M.hit - 0.85) * 4) + ")"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.arc(x + R * 0.9, y, R * 0.6 * (1 + (M.hit - 0.85) * 3), 0, Math.PI * 2); ctx.stroke(); }
   qMarks(ctx, st, x, y - R * 1.2, s, M.confused);
@@ -4843,7 +4843,12 @@ function ghost(ctx, cx, gy, s, t, st) {
 function wraith(ctx, cx, gy, s, t, st) {
   const M = motion(t, 4, st, ["main"]);
   const moving = M.walking || M.panicking, sway = Math.sin(t * 1.6) * 0.05 + (moving ? 0.1 : 0), bob = Math.sin(t * 1.8) * 4 * s;
-  const x = cx + M.shake * s + (M.main ? M.k * 8 * s : 0), waist = gy - 58 * s + bob, CL = st.cloak || ["#433c50", "#2c2737"], EY = st.glow || "#8dff9a";
+  const x = cx + M.shake * s + (M.main ? M.k * 8 * s : 0), waist = gy - 58 * s + bob, CL = st.cloak || ["#2e2a37", "#1c1923"], EY = st.glow || "#8dff9a";
+  // it pulses: a dark aura breathes around it and the whole figure fades in and out a little
+  const pulse = 0.5 + 0.5 * Math.sin(t * 2.3), aura = ctx.createRadialGradient(x, waist - 40 * s, 0, x, waist - 40 * s, (70 + pulse * 14) * s);
+  aura.addColorStop(0, "rgba(60,30,80," + (0.25 + pulse * 0.2) + ")"); aura.addColorStop(1, "rgba(60,30,80,0)");
+  ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(x, waist - 40 * s, (70 + pulse * 14) * s, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.globalAlpha = 0.72 + 0.28 * Math.pow(Math.sin(t * 2.3 + 1.2), 2);
   // the twister: bands of smoke spiralling down to a point just above the ground
   const spin = t * (M.panicking ? 14 : moving ? 9 : 6);
   for (let i = 0; i < 11; i++) {
@@ -4866,6 +4871,11 @@ function wraith(ctx, cx, gy, s, t, st) {
   ctx.save(); shroud(); ctx.clip(); ctx.fillStyle = CL[1]; ctx.beginPath(); ctx.ellipse(16 * s, -20 * s, 16 * s, 40 * s, 0.1, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 2 * LW; for (const fx of [-12, 4]) { ctx.beginPath(); ctx.moveTo(fx * s, -44 * s); ctx.quadraticCurveTo((fx - 3) * s, -20 * s, fx * s, 6 * s); ctx.stroke(); } ctx.restore();
   shroud(); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  // the shroud hangs open at the chest: inside, a ribcage and spine, nothing else
+  ctx.fillStyle = "#07050a"; ctx.beginPath(); ctx.moveTo(-9 * s, -50 * s); ctx.quadraticCurveTo(-17 * s, -28 * s, -7 * s, -6 * s); ctx.lineTo(7 * s, -6 * s); ctx.quadraticCurveTo(17 * s, -28 * s, 9 * s, -50 * s); ctx.closePath(); ctx.fill();
+  ctx.lineCap = "round"; ctx.strokeStyle = BONE; ctx.lineWidth = 2.6 * LW; ctx.beginPath(); ctx.moveTo(0, -48 * s); ctx.lineTo(0, -8 * s); ctx.stroke();
+  for (let i = 0; i < 5; i++) { const ry = -44 * s + i * 7.5 * s, rw = (11 - Math.abs(i - 1.5) * 1.6) * s;
+    for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, ry); ctx.quadraticCurveTo(sd * rw, ry - 1 * s, sd * (rw - 1.5 * s), ry + 4.5 * s); ctx.strokeStyle = INK; ctx.lineWidth = 4 * LW; ctx.stroke(); ctx.strokeStyle = BONE; ctx.lineWidth = 2.2 * LW; ctx.stroke(); } }
   ctx.save(); shroud(); ctx.clip(); ctx.strokeStyle = "rgba(200,190,230,.28)"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.moveTo(-28 * s, -50 * s); ctx.quadraticCurveTo(-34 * s, -30 * s, -24 * s, -4 * s); ctx.stroke(); ctx.restore();   // a rim of cold light
   // long thin arms ending in claws; one reaches out and rakes on a strike
   const arm = (side) => {
@@ -4887,15 +4897,17 @@ function wraith(ctx, cx, gy, s, t, st) {
   ctx.beginPath(); ctx.moveTo(-24 * s, -46 * s); ctx.quadraticCurveTo(-28 * s, hy0 - 30 * s, hx0, hy0 - 34 * s); ctx.quadraticCurveTo(28 * s, hy0 - 30 * s, 24 * s, -46 * s); ctx.closePath(); shape(ctx, CL[1], 3.5);
   ctx.fillStyle = "#08060c"; ctx.beginPath(); ctx.ellipse(hx0, hy0 - 6 * s, 17 * s, 20 * s, 0, 0, Math.PI * 2); ctx.fill();
   ctx.save(); ctx.translate(hx0, hy0); ctx.rotate(M.tilt * 0.5); ctx.scale(1.18, 1.18);
-  // horns sweep back and curl
+  // a pair of bull horns: thick at the root, sweeping out sideways, then up to a dark point
   const horn = (side) => {
-    const curl = st.hornCurl || 1;
-    ctx.beginPath(); ctx.moveTo(side * 6 * s, -12 * s);
-    ctx.bezierCurveTo(side * 16 * s, -30 * s, side * (30 + 4 * curl) * s, -26 * s, side * (30 + 2 * curl) * s, (-12 + 8 * curl) * s);
-    ctx.bezierCurveTo(side * (26 + 2 * curl) * s, (-14 + 6 * curl) * s, side * 18 * s, -20 * s, side * 12 * s, -6 * s); ctx.closePath(); shape(ctx, "#d9cdb0", 3);
-    ctx.strokeStyle = "#a89a7a"; ctx.lineWidth = 1.4 * LW; for (let i = 1; i < 5; i++) { const u = i / 5; ctx.beginPath(); ctx.moveTo(side * (8 + 20 * u) * s, (-14 - 10 * Math.sin(u * 3)) * s); ctx.lineTo(side * (12 + 18 * u) * s, (-8 - 8 * Math.sin(u * 3)) * s); ctx.stroke(); }
+    const L2 = st.hornLift || 1;
+    ctx.beginPath(); ctx.moveTo(side * 8 * s, -16 * s);
+    ctx.bezierCurveTo(side * 20 * s, -22 * s, side * 30 * s, -18 * s, side * 34 * s, -(20 + 14 * L2) * s);
+    ctx.bezierCurveTo(side * 31 * s, -(14 + 4 * L2) * s, side * 22 * s, -10 * s, side * 10 * s, -8 * s); ctx.closePath(); shape(ctx, "#ddd2b6", 3);
+    ctx.save(); ctx.clip(); ctx.fillStyle = "#3a3134"; ctx.beginPath(); ctx.arc(side * 34 * s, -(20 + 14 * L2) * s, 8 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#a89a7a"; ctx.beginPath(); ctx.ellipse(side * 13 * s, -12 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1.4 * LW; ctx.beginPath(); ctx.moveTo(side * 14 * s, -18 * s); ctx.quadraticCurveTo(side * 26 * s, -20 * s, side * 31 * s, -(22 + 10 * L2) * s); ctx.stroke();
   };
-  ctx.save(); ctx.translate(0, -6 * s); ctx.scale(1.35, 1.35); horn(-1); horn(1); ctx.restore();
+  horn(-1); horn(1);
   // the skull: a broad brow narrowing to a long snout
   ctx.beginPath(); ctx.moveTo(-13 * s, -14 * s); ctx.quadraticCurveTo(0, -20 * s, 13 * s, -14 * s); ctx.quadraticCurveTo(14 * s, 2 * s, 7 * s, 10 * s); ctx.lineTo(5 * s, 24 * s); ctx.quadraticCurveTo(0, 28 * s, -5 * s, 24 * s); ctx.lineTo(-7 * s, 10 * s); ctx.quadraticCurveTo(-14 * s, 2 * s, -13 * s, -14 * s); ctx.closePath(); shape(ctx, BONE, 3);
   if (st.crack) { ctx.strokeStyle = INK; ctx.lineWidth = 1.5 * LW; ctx.beginPath(); ctx.moveTo(4 * s, -17 * s); ctx.lineTo(2 * s, -11 * s); ctx.lineTo(5 * s, -7 * s); ctx.lineTo(3 * s, -2 * s); ctx.stroke(); }
@@ -4915,6 +4927,7 @@ function wraith(ctx, cx, gy, s, t, st) {
   ctx.restore();
   arm(1);
   ctx.restore();
+  ctx.restore();          // end of the pulsing fade
   if (M.main && M.hit > 0.85) { ctx.strokeStyle = "rgba(220,255,225,.8)"; ctx.lineWidth = 2.5 * LW; for (let c = -1; c <= 1; c++) { ctx.beginPath(); ctx.moveTo(x + 50 * s, waist - 30 * s + c * 7 * s); ctx.lineTo(x + 70 * s, waist - 8 * s + c * 7 * s); ctx.stroke(); } }
   qMarks(ctx, st, x, waist - 120 * s, s, M.confused);
   if (M.panicking) exclaim(ctx, x, waist - 128 * s, s, t);
@@ -5671,13 +5684,14 @@ function rollCracks() {
     }
     if (kind === "ghost") {
       st.tint = Math.random() < 0.5 ? ["rgba(150,90,220", "rgba(90,40,140"] : ["rgba(190,110,230", "rgba(110,50,150"];
-      st.eyes = [[], [0], [-0.22, 0.22], [-0.25, 0.18]][Math.floor(Math.random() * 4)];
-      st.lumps = 7 + Math.floor(Math.random() * 4); st.trails = 3 + Math.floor(Math.random() * 3); st.seed = Math.random() * 10;
+      const w = 0.18 + Math.random() * 0.08; st.eyes = [-w, w];
+      st.eyeCol = [[220, 170, 255], [170, 255, 190], [255, 205, 110], [150, 215, 255], [255, 120, 130]][Math.floor(Math.random() * 5)];
+      st.lumps = 7 + Math.floor(Math.random() * 4); st.trails = 2 + Math.floor(Math.random() * 5); st.seed = Math.random() * 10;   // 2-6 puffs of smoke: never none
     }
     if (kind === "wraith") {
       st.glow = ["#8dff9a", "#ff6a5a", "#7fd0ff", "#c79bff"][Math.floor(Math.random() * 4)];
-      st.hornCurl = Math.random() < 0.5 ? 1 : 0.2; st.crack = Math.random() < 0.4; st.rags = 5 + Math.floor(Math.random() * 3);
-      st.cloak = Math.random() < 0.5 ? ["#433c50", "#2c2737"] : ["#4a3a40", "#30252a"];
+      st.hornLift = 0.8 + Math.random() * 0.5; st.crack = Math.random() < 0.4; st.rags = 5 + Math.floor(Math.random() * 3);
+      st.cloak = Math.random() < 0.5 ? ["#2e2a37", "#1c1923"] : ["#33282d", "#1f181b"];
     }
     if (kind === "spirit") {
       const c = ["#6fa8ff", "#b8f07a", "#ffd75a", "#ff8fc0", "#c79bff"].sort(() => Math.random() - 0.5);
