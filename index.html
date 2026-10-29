@@ -701,7 +701,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.5-alpha";
+const VERSION = "0.9.6-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -1094,9 +1094,9 @@ const DATA = {
     assault: { name: "Assault", spawn: ["foeward"], summonRange: 3, structs: [], foeWard: [2, 6],
       river: { chance: 0.5, rows: [5, 8] },
       note: "A red enemy ward up the hill. Enemies pour out of it; break it with your summons before they break yours. Spells that hit a tile can't touch it." },
-    gauntlet: { name: "Gauntlet", arena: "gauntlet", spawn: ["gates"], summonRange: 2, structs: [[3, 11], [4, 11], [5, 11], [3, 12], [4, 12], [5, 12], [3, 13], [4, 13], [5, 13]], river: { chance: 0 },
+    gauntlet: { name: "Gauntlet", arena: "gauntlet", spawn: ["gates"], summonRange: 3, structs: [[4, 12]], river: { chance: 0 },
       note: "Caves, gates and more caves. Defeat enough enemies and the great gate opens to the next, harder cave. Rewards for every cave cleared are paid when the run ends." },
-    raid: { name: "Raid", arena: "raid", spawn: ["gates"], summonRange: 2, structs: [[3, 11], [4, 11], [5, 11], [3, 12], [4, 12], [5, 12], [3, 13], [4, 13], [5, 13]], river: { chance: 0 },
+    raid: { name: "Raid", arena: "raid", spawn: ["gates"], summonRange: 3, structs: [[4, 12]], river: { chance: 0 },
       note: "A chief's hall. Beat its guards and the chief walks down the carpet to meet you. Chiefs carry wearable things." }
   },
   // the Gauntlet: kills needed, seconds between groups, enemy strength and the mix of enemies ("vw" picks it like a wave would) for the first cave;
@@ -1510,10 +1510,11 @@ function wardDistFn(structs) {
     : (x, y) => R - 1 - y;
 }
 
-// the Gauntlet and the Raid: walls on three sides, the great gate at the top, four side gates and a 3 x 3 ward at the bottom
+// the Gauntlet and the Raid: walls on three sides, the great gate at the top, four side gates and the ward at the bottom.
+// On the attack the wizard keeps his ward tight: it is just his own tile, and the 8 tiles around it are the danger ring
 const SIDE_GATES = [[0, 2], [C - 1, 2], [0, 7], [C - 1, 7]];
 // strict (the generator's 3-wide way): every tile of the 3 x 3 must be clear;
-// lenient (Move): the ward may cover walls, rocks and stalagmites, only the wizard's tile must be clear and no gate may be under it
+// lenient (Move): the danger ring may cover walls, rocks and stalagmites, only the wizard's tile must be clear and no gate may be in the 3 x 3
 const GATES = { gate: true, gateopen: true, sidegate: true };
 function footOkIn(g, cx, cy, under, lenient) {
   for (let y = cy - 1; y <= cy + 1; y++) for (let x = cx - 1; x <= cx + 1; x++) {
@@ -1810,8 +1811,7 @@ function moveWardTo(fx, fy) {
   say("The ward shuffles off. No summoning until it stops.");
 }
 function stepWard(n) {
-  const m = wardMid(), old = new Set(L.structs.map(p => p.y * C + p.x)), cells = [];
-  for (let y = n.y - 1; y <= n.y + 1; y++) for (let x = n.x - 1; x <= n.x + 1; x++) cells.push({ x, y });
+  const m = wardMid(), old = new Set(L.structs.map(p => p.y * C + p.x)), cells = [{ x: n.x, y: n.y }];      // the ward is the wizard's own tile
   const now = new Set(cells.map(p => p.y * C + p.x));
   for (const k of old) if (!now.has(k)) { L.terrain[Math.floor(k / C)][k % C] = L.under[k]; delete L.under[k]; }
   for (const p of cells) { const k = p.y * C + p.x; if (!old.has(k)) { L.under[k] = L.terrain[p.y][p.x]; L.terrain[p.y][p.x] = "structure"; delete S.fire[k]; } }
@@ -2935,13 +2935,12 @@ function drawArena() {
     const g = ctx.createRadialGradient(gx * T + T / 2, gy * T + T / 2, 0, gx * T + T / 2, gy * T + T / 2, T * 1.1);
     g.addColorStop(0, "rgba(255,120,80," + a + ")"); g.addColorStop(1, "rgba(255,120,80,0)"); ctx.fillStyle = g; ctx.fillRect((gx - 1) * T, (gy - 1) * T, T * 3, T * 3);
   }
-  // the ward: a 3 x 3 stone platform that slides when it moves
-  const m = wardMid(), o = wardOffset(), x0 = (m.x - 1 + o.x) * T, y0 = (m.y - 1 + o.y) * T;      // the 3 x 3 tiles around the middle one, lined up with the grid
-  ctx.fillStyle = "rgba(74,69,83,.92)"; ctx.fillRect(x0 + 2, y0 + 2, 3 * T - 4, 3 * T - 4);
-  ctx.strokeStyle = "#2c2934"; ctx.lineWidth = 1; for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(x0 + i * T, y0 + 2); ctx.lineTo(x0 + i * T, y0 + 3 * T - 2); ctx.moveTo(x0 + 2, y0 + i * T); ctx.lineTo(x0 + 3 * T - 2, y0 + i * T); ctx.stroke(); }
-  ctx.strokeStyle = "rgba(111,168,255,.35)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x0 + 1.5 * T, y0 + 1.5 * T, T * 1.1, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = "#e0904a"; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.strokeRect(x0, y0, 3 * T, 3 * T); ctx.setLineDash([]);
-  if (S.move) { const gx = S.move.goal.x * T + T / 2, gy = S.move.goal.y * T + T / 2; ctx.strokeStyle = "rgba(111,168,255,.7)"; ctx.setLineDash([3, 3]); ctx.strokeRect(gx - 1.5 * T, gy - 1.5 * T, 3 * T, 3 * T); ctx.setLineDash([]); }
+  // the ward: one stone tile under the wizard, kept tight on the attack; it slides when it moves
+  const m = wardMid(), o = wardOffset(), x0 = (m.x + o.x) * T, y0 = (m.y + o.y) * T;
+  ctx.fillStyle = "rgba(74,69,83,.92)"; ctx.fillRect(x0 + 2, y0 + 2, T - 4, T - 4);
+  ctx.strokeStyle = "rgba(111,168,255,.4)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x0 + T / 2, y0 + T / 2, T * 0.46, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = "#e0904a"; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.strokeRect(x0, y0, T, T); ctx.setLineDash([]);
+  if (S.move) { const gx = S.move.goal.x * T, gy = S.move.goal.y * T; ctx.strokeStyle = "rgba(111,168,255,.7)"; ctx.setLineDash([3, 3]); ctx.strokeRect(gx, gy, T, T); ctx.setLineDash([]); }
   if (S.boss && S.boss.hp > 0) {
     ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(T * 1.2, 4, T * 6.6, 8); ctx.fillStyle = "#e2566a"; ctx.fillRect(T * 1.2, 4, T * 6.6 * Math.max(0, S.boss.hp / S.boss.d.hp), 8);
     ctx.fillStyle = "#ece3cf"; ctx.textAlign = "center"; ctx.font = "700 " + Math.max(10, Math.round(T * .3)) + "px 'Alegreya Sans', Arial, sans-serif"; ctx.fillText(S.boss.d.name, C * T / 2, 24);

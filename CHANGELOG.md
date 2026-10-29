@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.9.6-alpha
+- Gauntlet and Raid: on the attack the wizard keeps his ward tight. The ward is now just his own tile, and the danger ring (where enemies hurt the ward) is the 3 x 3 around him. Summoning still reaches as far as before (3 tiles from the wizard). Moving the ward only needs the wizard's tile to be clear and no gate in the 3 x 3.
+
 ## 0.9.5-alpha
 - Gauntlet and Raid: the ward is drawn exactly on its 3 x 3 tiles (it was half a tile off), so the wizard stands in its middle tile.
 
