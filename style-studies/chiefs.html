@@ -45,7 +45,7 @@ h3 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 4px
 </style>
 <div class="wrap">
   <header>
-    <h1>Raid Chiefs <small>The Summonancer · v0.8.18-alpha</small></h1>
+    <h1>Raid Chiefs <small>The Summonancer · v0.8.19-alpha</small></h1>
     <p class="note-motion">The five bosses at the end of the Raid's red carpet, as they look in the game now: each with its own crown and kit, shown at the same sizes relative to each other as on the battlefield. Pick an animation to compare them side by side.</p>
     <div class="bar" id="modes"><button type="button" data-m="cycle" aria-pressed="true">Stand and attack</button><button type="button" data-m="idle" aria-pressed="false">Stand</button><button type="button" data-m="walk" aria-pressed="false">Walk</button><button type="button" data-m="attack" aria-pressed="false">Attack</button></div>
     <div class="bar"><button type="button" id="play" aria-pressed="true">Pause</button><button type="button" id="reroll">Roll new looks</button><button type="button" id="flip" aria-pressed="false">Face left</button></div>
@@ -346,6 +346,19 @@ function crownAt(ctx, y, w) {
   ctx.fillStyle = "#e2566a"; ctx.beginPath(); ctx.arc(0, y - w * 0.35, w * 0.17, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#fff3c4"; for (const px of [-w, 0, w]) { ctx.beginPath(); ctx.arc(px, y - (px ? w * 0.8 : w * 1.05), w * 0.09, 0, Math.PI * 2); ctx.fill(); }
 }
+// a trophy skull dangling on a short string from (x, y)
+function hangSkull(ctx, x, y, s, sw) {
+  const L2 = 3.5 * s, kx = x + Math.sin(sw) * L2, ky = y + Math.cos(sw) * L2;
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(kx, ky); ctx.stroke();
+  ctx.strokeStyle = "#d1b277"; ctx.lineWidth = 1.2 * LW; ctx.stroke();
+  ctx.save(); ctx.translate(kx, ky + 6 * s); ctx.rotate(sw); ctx.scale(0.85, 0.85);
+  ctx.beginPath(); ctx.ellipse(0, 0, 7.5 * s, 7 * s, 0, 0, Math.PI * 2); shape(ctx, BONE, 2.5);
+  ctx.beginPath(); ctx.rect(-4.5 * s, 4.5 * s, 9 * s, 4.5 * s); shape(ctx, BONE, 2.2);
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(-2.8 * s, 0.5 * s, 2.1 * s, 0, Math.PI * 2); ctx.arc(2.8 * s, 0.5 * s, 2.1 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0, 3 * s); ctx.lineTo(-1 * s, 4.6 * s); ctx.lineTo(1 * s, 4.6 * s); ctx.closePath(); ctx.fill();
+  ctx.lineWidth = 1.2 * LW; ctx.strokeStyle = INK; for (const tx of [-1.5, 1.5]) { ctx.beginPath(); ctx.moveTo(tx * s, 5 * s); ctx.lineTo(tx * s, 9 * s); ctx.stroke(); }
+  ctx.restore();
+}
 // a half-circle eye with its flat top tilted down toward the nose: a glare
 function meanEye(ctx, x, y, r, side, fill, pupil) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(-side * 0.38);
@@ -389,7 +402,7 @@ function goblin(ctx, cx, gy, s, t, st) {
   const wide = M.panicking ? 1.25 : 1;
   for (const e of eyes) {
     if (M.charmed) { heart(ctx, e.x, e.y, e.r * 1.05 * charmBeat(t)); continue; }
-    if (st.boss) { meanEye(ctx, e.x, e.y + e.r * 0.15, e.r * 1.1, e.x < 0 ? -1 : 1, "#e05a4a", false); continue; }
+    if (st.boss) { meanEye(ctx, e.x, e.y + e.r * 0.15, e.r * 1.3, e.x < 0 ? -1 : 1, "#e05a4a", false); continue; }
     ell(ctx, e.x, e.y, e.r * wide, e.r * wide, 0, "#e05a4a", 3.5);
     ctx.fillStyle = "rgba(255,255,255,.75)"; ctx.beginPath(); ctx.arc(e.x - e.r * 0.35, e.y - e.r * 0.35, e.r * 0.22, 0, Math.PI * 2); ctx.fill();
     if (M.panicking) {
@@ -462,8 +475,10 @@ function kobold(ctx, cx, gy, s0, t, st) {
   ctx.save(); ctx.translate(hx, hy); ctx.rotate(headRot);
   // stubby horns; some kobolds have lost one
   for (const side of [-1, 1]) {
-    if (st.hornMissing === side) continue;
+    if (st.hornMissing === side && !st.boss) continue;           // the king never loses a horn, and his are bigger
+    ctx.save(); if (st.boss) { ctx.translate(side * R * 0.48, -R * 0.56); ctx.scale(1.3, 1.3); ctx.translate(-side * R * 0.48, R * 0.56); }
     ctx.beginPath(); ctx.moveTo(side * R * 0.35, -R * 0.62); ctx.quadraticCurveTo(side * R * 0.55, -R * 1.15, side * R * 0.75, -R * 1.05); ctx.quadraticCurveTo(side * R * 0.68, -R * 0.75, side * R * 0.62, -R * 0.5); ctx.closePath(); shape(ctx, HORN, 3.5);
+    ctx.restore();
   }
   kobHead(ctx, R); ctx.fillStyle = KOB_D; ctx.fill();
   ctx.save(); kobHead(ctx, R); ctx.clip(); ctx.fillStyle = KOB; ctx.beginPath(); ctx.ellipse(-R * 0.1, -R * 0.2, R * 0.9, R * 0.8, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
@@ -473,7 +488,7 @@ function kobold(ctx, cx, gy, s0, t, st) {
   for (const [i, e] of kEyes.entries()) {
     const r = e.r * (M.panicking ? 1.2 : 1);
     if (M.charmed) { heart(ctx, e.x, e.y, r * 1.05 * charmBeat(t)); continue; }
-    if (st.boss) { meanEye(ctx, e.x, e.y + r * 0.1, r * 1.05, i ? 1 : -1, EYE, true); continue; }
+    if (st.boss) { meanEye(ctx, e.x, e.y + r * 0.1, r * 1.25, i ? 1 : -1, EYE, true); continue; }
     ell(ctx, e.x, e.y, r, r, 0, EYE, 3.5);
     ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(e.x + (i ? -1 : 1) * r * 0.12, e.y, r * (M.panicking ? 0.12 : 0.2), r * (M.panicking ? 0.4 : 0.75), 0, 0, Math.PI * 2); ctx.fill();
   }
@@ -525,7 +540,8 @@ function kobold(ctx, cx, gy, s0, t, st) {
 // ---------- Orc ----------
 const ORC = "#5f7d45", ORC_D = "#4b6536", TUSK = "#f2e8cf", BELT = "#4a3523";
 function orc(ctx, cx, gy, s0, t, st) {
-  const s = s0 * 1.3, M = motion(t, 5, st, ["main", "kick", "headbutt"]);
+  const s = s0 * 1.3, M = motion(t, 5, st, st.boss ? ["main", "shield", "kick", "headbutt"] : ["main", "kick", "headbutt"]);
+  const bash = st.boss && M.attacking && st.move === "shield";          // the warlord: "main" is a one-handed sword swing
   const R = 37 * s;
   const bx = cx + M.bx * 0.7 * s + M.shake * s, bob = M.bob * s * 0.8 + (M.main ? M.hit * 4 * s : 0);
   feet(ctx, M, bx, gy, s, ORC, 13, kickFoot(M, s, st));
@@ -593,11 +609,23 @@ function orc(ctx, cx, gy, s0, t, st) {
   }
   if (st.boss) crownAt(ctx, -R * 0.78, R * 0.55);
   ctx.restore();
+  if (st.boss) {      // a necklace of small skulls across the chest
+    const ny = bodyY - 12 * s;
+    ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW; ctx.beginPath(); ctx.moveTo(bx - 15 * s, ny - 2 * s); ctx.quadraticCurveTo(bx, ny + 12 * s, bx + 15 * s, ny - 2 * s); ctx.stroke();
+    ctx.strokeStyle = "#8a5a34"; ctx.lineWidth = 1.2 * LW; ctx.stroke();
+    for (const u of [0.2, 0.5, 0.8]) {
+      const x = bx - 15 * s + 30 * s * u, y = ny - 2 * s + 14 * s * u * (1 - u) * 2 + 2 * s, r = (u === 0.5 ? 4.6 : 3.6) * s;
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.95, 0, 0, Math.PI * 2); shape(ctx, BONE, 2);
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x - r * 0.38, y, r * 0.26, 0, Math.PI * 2); ctx.arc(x + r * 0.38, y, r * 0.26, 0, Math.PI * 2); ctx.fill();
+    }
+  }
   // fists: big; both rise during the wind-up and slam down on the hit
   for (const side of [-1, 1]) {
     let x = bx + side * 28 * s - (M.walking ? side * M.swing * 6 * s : 0), y = bodyY + 2 * s;
     if (M.panicking) { x = bx + side * (30 + Math.sin(t * 22 + side) * 4) * s; y = hy - R * 1.0 + Math.cos(t * 20 + side) * 4 * s; }
-    if (M.main) { x = bx + side * (16 - M.hit * 6) * s + M.hit * 18 * s; y = bodyY - M.wind * 108 * s + M.hit * 22 * s; }
+    if (M.main && !st.boss) { x = bx + side * (16 - M.hit * 6) * s + M.hit * 18 * s; y = bodyY - M.wind * 108 * s + M.hit * 22 * s; }
+    if (M.main && st.boss && side === 1) { x = bx + (24 + M.hit * 14) * s; y = bodyY - M.wind * 50 * s + M.hit * 8 * s; }
+    if (bash && side === -1) { x = bx + (-20 + M.wind * -6 + M.hit * 46) * s; y = bodyY - 6 * s; }
     [x, y] = sharedHands(M, side, x, y, s);
     if (st.boss && side === 1) {        // a broad sword: raised behind on the wind-up, brought down on the hit
       const ang = M.main ? 0.35 - M.wind * 1.1 + M.hit * 1.5 : 0.5 + Math.sin(t * 1.6) * 0.05;     // held point-forward, away from the face
@@ -619,7 +647,8 @@ function orc(ctx, cx, gy, s0, t, st) {
     }
     ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW; ctx.beginPath(); ctx.moveTo(x - 3 * s, y - 4 * s); ctx.lineTo(x - 3 * s, y + 2 * s); ctx.moveTo(x + 2 * s, y - 4 * s); ctx.lineTo(x + 2 * s, y + 2 * s); ctx.stroke();
   }
-  if (M.main && M.hit > 0.85) burst(ctx, bx + 18 * s, gy - 6 * s, s * 1.3, M.hit);
+  if (M.main && M.hit > 0.85) burst(ctx, st.boss ? bx + 52 * s : bx + 18 * s, st.boss ? bodyY - 6 * s : gy - 6 * s, s * 1.3, M.hit);
+  if (bash && M.hit > 0.85) burst(ctx, bx + 46 * s, bodyY - 6 * s, s * 1.3, M.hit);
   sharedBurst(ctx, M, s, st);
   qMarks(ctx, st, hx, hy - R * 0.95, s, M.confused);
   if (M.panicking) { exclaim(ctx, hx, hy - R * 1.25, s, t); sweat(ctx, hx + R * 1.05, hy - R * 0.4, s, t); }
@@ -682,8 +711,8 @@ function ogre(ctx, cx, gy, s0, t, st) {
   ctx.fillStyle = "#3a1f2a"; ctx.fillRect(-R * 0.45, R * 0.36, R * 0.9, jy - R * 0.34);
   ctx.beginPath(); ctx.roundRect(-R * 0.72, jy, R * 1.44, R * 0.42, R * 0.18); shape(ctx, OGRE, 3.5);
   const ts = st.tuskSide || 1;
-  const tk = st.boss ? 1.45 : 1;        // the chieftain's tusk is bigger
-  ctx.beginPath(); ctx.moveTo(ts * R * 0.42, jy + R * 0.1); ctx.quadraticCurveTo(ts * R * (0.3 + 0.26 * tk), jy - R * 0.55 * tk, ts * R * 0.3, jy - R * 0.62 * tk); ctx.quadraticCurveTo(ts * R * 0.3, jy - R * 0.2, ts * R * 0.2, jy + R * 0.1); ctx.closePath(); shape(ctx, TUSK, 3);
+  const tk = st.boss ? 1.08 : 1, tt = st.boss ? 0.24 : 0;        // the chieftain's tusk is bigger and leans out, clear of the eye
+  ctx.beginPath(); ctx.moveTo(ts * R * 0.42, jy + R * 0.1); ctx.quadraticCurveTo(ts * R * (0.3 + 0.26 * tk + tt), jy - R * 0.55 * tk, ts * R * (0.3 + tt * 1.6), jy - R * 0.62 * tk); ctx.quadraticCurveTo(ts * R * 0.3, jy - R * 0.2, ts * R * 0.2, jy + R * 0.1); ctx.closePath(); shape(ctx, TUSK, 3);
   if (!st.gap) { ctx.beginPath(); ctx.rect(-ts * R * 0.32, jy - R * 0.16, R * 0.14, R * 0.18); shape(ctx, TUSK, 2); }
   if (st.boss) crownAt(ctx, -R * 0.8, R * 0.62);
   ctx.restore();
@@ -735,6 +764,7 @@ function troll(ctx, cx, gy, s0, t, st) {
   ctx.beginPath(); ctx.ellipse(0, 0, 21 * s, 26 * s, 0, 0, Math.PI * 2); shape(ctx, SK[0], 4.5);
   ctx.beginPath(); ctx.ellipse(0, 6 * s, 15 * s, 15 * s, 0, 0, Math.PI); ctx.lineTo(-15 * s, 6 * s); ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.fill();
   ctx.beginPath(); ctx.moveTo(-18 * s, 8 * s); ctx.lineTo(18 * s, 8 * s); ctx.lineTo(14 * s, 24 * s); ctx.lineTo(-14 * s, 24 * s); ctx.closePath(); shape(ctx, "#5a4a3a", 3);   // ragged shorts
+  if (st.boss) hangSkull(ctx, 13 * s, 9 * s, s, Math.sin(M.p) * (M.walking ? 0.35 : 0.08) - 0.32);
   if (st.moss && st.moss.back) { ell(ctx, -14 * s, -14 * s, 8 * s, 5 * s, -0.6, MOSS, 2.5); ell(ctx, -8 * s, -20 * s, 4 * s, 3 * s, -0.4, "#86b05a", 2); }
   ctx.restore();
   arm(1);              // the front arm hangs below the head, so the face stays clear
@@ -757,7 +787,10 @@ function troll(ctx, cx, gy, s0, t, st) {
   else for (const ex of [R * 0.05, R * 0.55]) { const r = R * (M.panicking ? 0.15 : 0.09);
     if (st.boss) { const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, r * 4); g.addColorStop(0, "rgba(255,70,50," + (0.65 + 0.25 * Math.sin(t * 4)) + ")"); g.addColorStop(1, "rgba(255,70,50,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ex, ey, r * 4, 0, Math.PI * 2); ctx.fill(); }
     ell(ctx, ex, ey, r, r, 0, M.panicking ? "#ffffff" : st.boss ? "#ff5a40" : "#f5e05a", 2.5); if (M.panicking) { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ex, ey, r * 0.4, 0, Math.PI * 2); ctx.fill(); } }
-  if (!M.panicking && !M.charmed) { ctx.strokeStyle = INK; ctx.lineWidth = 4 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-R * 0.15, -R * 0.36); ctx.quadraticCurveTo(R * 0.3, M.confused ? -R * 0.6 : -R * 0.42, R * 0.78, -R * 0.36); ctx.stroke(); }
+  if (!M.panicking && !M.charmed) { ctx.strokeStyle = INK; ctx.lineWidth = 4 * LW; ctx.lineCap = "round"; ctx.beginPath();
+    if (st.boss && !M.confused) { ctx.moveTo(-R * 0.18, -R * 0.5); ctx.lineTo(R * 0.3, -R * 0.26); ctx.lineTo(R * 0.8, -R * 0.5); ctx.lineWidth = 4.5 * LW; }    // a scowling V
+    else { ctx.moveTo(-R * 0.15, -R * 0.36); ctx.quadraticCurveTo(R * 0.3, M.confused ? -R * 0.6 : -R * 0.42, R * 0.78, -R * 0.36); }
+    ctx.stroke(); }
   // the nose: big, knobbly and in front of everything
   ctx.beginPath(); ctx.ellipse(R * 0.62, R * 0.2, R * 0.42, R * 0.3, 0.3, 0, Math.PI * 2); shape(ctx, SK[0], 3.5);
   ell(ctx, R * 0.88, R * 0.05, R * 0.12, R * 0.1, 0, SK[1], 2); ell(ctx, R * 0.5, R * 0.36, R * 0.09, R * 0.08, 0, SK[1], 2);
