@@ -675,7 +675,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.8.9-alpha";
+const VERSION = "0.8.10-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -4776,7 +4776,8 @@ function spirit(ctx, cx, gy, s, t, st) {
   ell(ctx, 0, R * 0.3, R * 0.1 * mo, R * 0.14 * mo, 0, "#2a2a44", 2);
   if (st.bow) { const bx = R * 0.55, by = -R * 0.78; ell(ctx, bx - R * 0.17, by, R * 0.2, R * 0.12, 0.3, "#e2566a", 2.5); ell(ctx, bx + R * 0.17, by, R * 0.2, R * 0.12, -0.3, "#e2566a", 2.5); ell(ctx, bx, by, R * 0.08, R * 0.08, 0, "#b83a4f", 2); }
   if (st.chains) {     // a few loose links dangling from the hem
-    for (let i = 0; i < 4; i++) { const cx2 = -R * 0.5 + i * R * 0.12, cy2 = hemY + R * 0.05 + i * R * 0.13 + Math.sin(t * 3 + i) * 2 * s;
+    const rattle = M.panicking ? 2.2 : M.walking || M.main ? 1.5 : 1;          // they jangle more when it moves
+    for (let i = 0; i < 4; i++) { const cx2 = -R * 0.5 + i * R * 0.12 + Math.sin(t * 7 * rattle + i * 0.9) * (1 + i * 1.2) * rattle * s, cy2 = hemY + R * 0.05 + i * R * 0.13 + Math.abs(Math.sin(t * 9 * rattle + i * 1.3)) * 2.2 * rattle * s;
       ctx.beginPath(); ctx.ellipse(cx2, cy2, R * 0.07, R * 0.1, i % 2 ? 0.9 : 0, 0, Math.PI * 2); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.stroke(); ctx.lineWidth = 2 * LW; ctx.strokeStyle = "#9a98a8"; ctx.stroke(); }
   }
   ctx.restore();
