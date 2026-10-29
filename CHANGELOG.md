@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.9-alpha – 2026-10-29
+- Trolls: the front arm hangs from below the head instead of crossing the face, so the jaw and fangs stay visible
+
 ## 0.8.8-alpha – 2026-10-29
 - Trolls: a bigger lower jaw that juts out under the nose and drops open when they attack or panic; the fangs grow out of it
 

@@ -46,7 +46,7 @@ h3 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 4px
 </style>
 <div class="wrap">
   <header>
-    <h1>New Cast <small>The Summonancer · v0.8.8-alpha</small></h1>
+    <h1>New Cast <small>The Summonancer · v0.8.9-alpha</small></h1>
     <p class="note-motion">The four newest characters, drawn by the game's own code: two enemies, one summon and the town's bookkeeper. First versions, here to be picked apart.</p>
     <div class="bar"><button type="button" id="play" aria-pressed="true">Pause</button><button type="button" id="reroll">Roll new looks</button><button type="button" id="flip" aria-pressed="false">Face left</button></div>
   </header>
@@ -671,7 +671,7 @@ function troll(ctx, cx, gy, s0, t, st) {
     return sharedHands(M, side, x, y, s);
   };
   const arm = (side) => {
-    const [x, y] = hand(side), sx = bx + side * 15 * s + 6 * s, sy = gy - 50 * s + bob;
+    const [x, y] = hand(side), sx = bx + side * (side > 0 ? 9 : 15) * s + 6 * s, sy = gy - (side > 0 ? 44 : 50) * s + bob;
     ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 12 * s; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo((sx + x) / 2 + side * 6 * s, (sy + y) / 2, x, y); ctx.stroke();
     ctx.strokeStyle = side < 0 ? SK[1] : SK[0]; ctx.lineWidth = 12 * s - 4.5 * LW; ctx.stroke();
     ell(ctx, x, y, 8.5 * s, 7.5 * s, 0, side < 0 ? SK[1] : SK[0], 3);
@@ -686,6 +686,7 @@ function troll(ctx, cx, gy, s0, t, st) {
   ctx.beginPath(); ctx.moveTo(-18 * s, 8 * s); ctx.lineTo(18 * s, 8 * s); ctx.lineTo(14 * s, 24 * s); ctx.lineTo(-14 * s, 24 * s); ctx.closePath(); shape(ctx, "#5a4a3a", 3);   // ragged shorts
   if (st.moss && st.moss.back) { ell(ctx, -14 * s, -14 * s, 8 * s, 5 * s, -0.6, MOSS, 2.5); ell(ctx, -8 * s, -20 * s, 4 * s, 3 * s, -0.4, "#86b05a", 2); }
   ctx.restore();
+  arm(1);              // the front arm hangs below the head, so the face stays clear
   // head pushed forward, low between the shoulders
   const R = 22 * s, hx = bx + 16 * s + Math.sin(M.tilt) * 6 * s + M.hdx * s, hy = bodyY - 26 * s + M.hdy * s;
   if (M.butt && M.hit > 0.85) st.impact = { x: hx + R * 1.3, y: hy + R * 0.2 };
@@ -722,7 +723,6 @@ function troll(ctx, cx, gy, s0, t, st) {
   if (fs !== "right") fang(-R * 0.1, -1);
   if (fs !== "left") fang(R * 0.58, 1);
   ctx.restore();
-  arm(1);
   if (M.main && M.hit > 0.85) burst(ctx, bx + 46 * s, gy - 14 * s, s * 1.2, M.hit);
   sharedBurst(ctx, M, s, st);
   qMarks(ctx, st, hx, hy - R * 1.2, s, M.confused);
