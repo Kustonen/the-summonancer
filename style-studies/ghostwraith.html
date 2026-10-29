@@ -924,7 +924,7 @@ function wraith(ctx, cx, gy, s, t, st) {
   // the twister: bands of smoke spiralling down to a point just above the ground
   const spin = t * (M.panicking ? 14 : moving ? 9 : 6);
   for (let i = 0; i < 11; i++) {
-    const u = i / 10, yy = waist - 14 * s + u * 64 * s, w = (30 - 25 * u) * s, ph = spin + i * 0.8, off = Math.sin(t * 2.4 + u * 3) * 7 * s * u;
+    const u = i / 10, yy = waist - 8 * s + u * 58 * s, w = (22 - 17 * u) * s, ph = spin + i * 0.8, off = Math.sin(t * 2.4 + u * 3) * 7 * s * u;
     ctx.save(); ctx.globalAlpha = 0.95 - u * 0.4;
     ctx.beginPath(); ctx.ellipse(x + off, yy, w, 6 * s * (1 - u * 0.5), 0, 0, Math.PI * 2); ctx.fillStyle = i % 2 ? "#5a5468" : "#3a3546"; ctx.fill();
     ctx.strokeStyle = "rgba(190,180,215,.7)"; ctx.lineWidth = 1.8 * LW; ctx.beginPath(); ctx.ellipse(x + off, yy, w, 5 * s * (1 - u * 0.5), 0, (ph % (Math.PI * 2)), (ph % (Math.PI * 2)) + 2.2); ctx.stroke();
