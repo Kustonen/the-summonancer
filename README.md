@@ -1,6 +1,6 @@
 # The Summonancer
 
-Version 0.8.1-alpha · see [CHANGELOG.md](CHANGELOG.md)
+Version 0.8.2-alpha · see [CHANGELOG.md](CHANGELOG.md)
 
 An incremental browser game about a wizard who summons skeletons (summons, not raises) to hold back goblins, gathers resources and builds up a city.
 
@@ -79,7 +79,7 @@ Design decisions are kept in the design document; code lives here.
 
 ## Developer console
 
-The DEV button in the town view sets exp, gold, bones and skulls, resets upgrades, fills the Grimoire, unlocks everything or starts a new game. It is for testing and will be removed before release.
+The DEV button in the town view sets exp and every resource (as a grid of icons), resets upgrades, fills the Grimoire, unlocks everything or starts a new game. It is for testing and will be removed before release.
 
 ## Character art
 

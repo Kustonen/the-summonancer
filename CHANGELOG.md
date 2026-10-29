@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.2-alpha – 2026-10-29
+- DEV console: every resource that can be dropped or forged can be set, as a compact grid of pixel icons (name on hover)
+
 ## 0.8.1-alpha – 2026-10-29
 - Rapid Slash costs 750 gold + 20 iron ingots
 

@@ -233,6 +233,10 @@ div.mapbtn { cursor: default; }
 .smithjob .acts .btn { padding: 4px 9px; font-size: 13px; }
 .num.small { width: 80px; }
 .ver { color: var(--dim); font-size: 12px; }
+.devgoods { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; margin: 6px 0; }
+.devgood { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,.2); border-radius: 8px; padding: 4px 6px; }
+.devgood svg { width: 22px; height: 22px; flex: none; }
+.devgood .num { width: 100%; min-width: 0; }
 .goodsgrp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
 .goodsgrp > small { width: 100%; color: var(--dim); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
 .gearslots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
@@ -275,18 +279,7 @@ div.mapbtn { cursor: default; }
       <label class="what" for="devExp"><b>Experience</b><span>Set the amount available in town</span></label>
       <input class="num" id="devExp" type="number" min="0" step="1" inputmode="numeric">
     </div>
-    <div class="opt">
-      <label class="what" for="devGold"><b>Gold</b><span>Set the amount available in town</span></label>
-      <input class="num" id="devGold" type="number" min="0" step="1" inputmode="numeric">
-    </div>
-    <div class="opt">
-      <label class="what" for="devBones"><b>Bones</b><span>Set the amount in the warehouse</span></label>
-      <input class="num" id="devBones" type="number" min="0" step="1" inputmode="numeric">
-    </div>
-    <div class="opt">
-      <label class="what" for="devSkulls"><b>Skulls</b><span>Set the amount in the warehouse</span></label>
-      <input class="num" id="devSkulls" type="number" min="0" step="1" inputmode="numeric">
-    </div>
+    <div class="devgoods" id="devGoods"></div>
     <div class="opt">
       <div class="what"><b>Apply</b><span id="devMsg">Saves the values above.</span></div>
       <button class="btn primary" id="devApply" type="button">Set values</button>
@@ -682,7 +675,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.8.1-alpha";
+const VERSION = "0.8.2-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -3962,7 +3955,12 @@ function renderResearch(where) {
 $("toTown").addEventListener("click", () => { refreshBoard(); TOWN.st = wizLook(); TOWN.seq = { kind: "appear", e: 0 }; showView("town"); });
 
 // ---------- DEV console (remove before release) ----------
-function fillDev() { $("devExp").value = META.exp; $("devGold").value = META.gold; $("devBones").value = META.warehouse.bones; $("devSkulls").value = META.warehouse.skulls; }
+// every resource that can be dropped or forged, each as an icon with its amount
+const DEV_RES = () => ["gold", "bones", "skulls"].concat(Object.keys(DATA.materials), Object.keys(DATA.smith.recipes));
+function fillDev() {
+  $("devExp").value = META.exp;
+  $("devGoods").innerHTML = DEV_RES().map(k => "<label class='devgood' title='" + RES_LABEL[k] + "'>" + ICONS[k] + "<input class='num' type='number' min='0' step='1' inputmode='numeric' id='devR_" + k + "' aria-label='" + RES_LABEL[k] + "' value='" + (k === "gold" ? META.gold : META.warehouse[k] || 0) + "'></label>").join("");
+}
 $("devBtn").addEventListener("click", () => {
   const open = $("devPanel").hidden; $("devPanel").hidden = !open;
   $("devBtn").setAttribute("aria-expanded", open ? "true" : "false");
@@ -3970,9 +3968,10 @@ $("devBtn").addEventListener("click", () => {
 });
 $("devApply").addEventListener("click", () => {
   const num = id => Math.max(0, Math.floor(+$(id).value || 0));
-  META.exp = num("devExp"); META.gold = num("devGold"); META.warehouse.bones = num("devBones"); META.warehouse.skulls = num("devSkulls");
+  META.exp = num("devExp");
+  for (const k of DEV_RES()) { const v = num("devR_" + k); if (k === "gold") META.gold = v; else META.warehouse[k] = v; }
   saveMeta(); renderTown(); fillDev();
-  $("devMsg").textContent = "Saved: " + META.exp + " exp, " + META.gold + " gold, " + META.warehouse.bones + " bones, " + META.warehouse.skulls + " skulls.";
+  $("devMsg").textContent = "Saved: " + META.exp + " exp and every resource above.";
 });
 $("devResetTower").addEventListener("click", () => {
   META.manaLv = 0; META.regenLv = 0; META.slotLv = 0; META.research = { lab: {}, well: {}, golematorium: {}, library: {}, stones: {} };
