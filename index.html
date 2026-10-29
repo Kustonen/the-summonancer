@@ -682,7 +682,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.8.0-alpha";
+const VERSION = "0.8.1-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -1047,7 +1047,7 @@ const DATA = {
   },
   // skills summons learn at the Invisible Academy; their upgrades live in each summon's own building
   skills: {
-    rapid: { name: "Rapid Slash",    unit: "skeleton_warrior", cost: { gold: 1200, crystal: 30, ingot: 20 }, about: "Every 5th hit the skeleton attacks 75 % faster for the next 3 hits. The count starts again once the frenzy is over." },
+    rapid: { name: "Rapid Slash",    unit: "skeleton_warrior", cost: { gold: 750, ingot: 20 }, about: "Every 5th hit the skeleton attacks 75 % faster for the next 3 hits. The count starts again once the frenzy is over." },
     flame: { name: "Flaming Arrows", unit: "skeleton_archer",  cost: { gold: 600, crystal: 15 },             about: "Every 5th arrow is on fire and may set its target ablaze." },
     frost: { name: "Frost Arrows",   unit: "skeleton_archer",  cost: { gold: 1200, crystal: 30, ingot: 20 }, about: "Every 5th arrow is ice-cold and slows its target 60 % for 6 seconds." },
     pseudoW: { name: "Pseudo Reality", unit: "wisp",   cost: { gold: 1500, crystal: 40, skulls: 10 }, about: "The wisp is only mostly there: 10 % of physical attacks aimed at it miss." },
