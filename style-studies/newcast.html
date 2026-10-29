@@ -1,0 +1,1684 @@
+<title>Summonancer New Cast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* layout: one ledger page per creature, a strip of animation tiles under each, the chiefs at the end */
+:root {
+  --bg: #15131c; --panel: #1e1b27; --line: #2f2a3b; --ink: #ece3cf; --dim: #a39cb0; --gold: #e8c45a; --ember: #e0904a;
+  --display: "Grenze Gotisch", Georgia, serif; --body: "Alegreya Sans", "Trebuchet MS", Arial, sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 6vw, 54px); line-height: 1; margin: 0; text-wrap: balance; }
+h1 small { font-family: var(--body); font-size: 15px; font-weight: 500; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; margin-left: 10px; }
+header p { margin: 0; color: var(--dim); max-width: 66ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: 600 14px var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+button:hover { border-color: var(--gold); }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+button[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
+section.foe { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.top { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; justify-content: space-between; }
+h2 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0; line-height: 1; }
+.lore { margin: 0; color: var(--dim); max-width: 70ch; flex: 1 1 320px; min-width: 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 13px; color: var(--dim); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; }
+.stats b { color: var(--ink); font-weight: 700; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+figure { margin: 0; display: grid; gap: 4px; }
+figure canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: 10px; background: #1a1722; }
+figcaption { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--dim); text-align: center; }
+figcaption.hit { color: var(--ember); }
+h3 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 4px 0 0; color: var(--gold); }
+.looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+.chiefs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.chiefs figure canvas { background: radial-gradient(circle at 50% 70%, #2a2433, #1a1722 70%); }
+.chiefs figcaption { font-family: var(--display); font-size: 20px; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.foot { color: var(--dim); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .note-motion::after { content: " Animations are paused because your system prefers reduced motion; use Play to run them."; } }
+.portrait figure canvas { background: none; }
+@media (min-width: 900px) { section.foe .tiles { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); } }
+.saina { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tag { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--gold); }
+</style>
+<div class="wrap">
+  <header>
+    <h1>New Cast <small>The Summonancer · v0.8.5-alpha</small></h1>
+    <p class="note-motion">The four newest characters, drawn by the game's own code: two enemies, one summon and the town's bookkeeper. First versions, here to be picked apart.</p>
+    <div class="bar"><button type="button" id="play" aria-pressed="true">Pause</button><button type="button" id="reroll">Roll new looks</button><button type="button" id="flip" aria-pressed="false">Face left</button></div>
+  </header>
+  <div id="cast"></div>
+</div>
+<script>
+const ART = (() => {
+const INK = "#2a1f2e", BONE = "#f1e8d4", SHADE = "#d6c9ad", SOCKET = "#2a1f2e", GLOW = "#ffd75a", GROUND = "#26301f", GROUND2 = "#232b22";
+const MOVES = ["punch", "kick", "headbutt"];
+let mode = "walk", LW = 1;   // LW scales outlines with the drawing
+function heart(ctx, x, y, r, fill) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + r * 0.9);
+  ctx.bezierCurveTo(x - r * 1.5, y - r * 0.1, x - r * 0.9, y - r * 1.3, x, y - r * 0.45);
+  ctx.bezierCurveTo(x + r * 0.9, y - r * 1.3, x + r * 1.5, y - r * 0.1, x, y + r * 0.9);
+  ctx.closePath(); shape(ctx, fill || "#ff6f9c", 2.5);
+  ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.arc(x - r * 0.45, y - r * 0.45, r * 0.18, 0, Math.PI * 2); ctx.fill();
+}
+const charmBeat = t => 1 + Math.max(0, Math.sin(t * 7)) * 0.18;
+// big magenta question marks: one at a time; when a new one pops out, the previous one fades away
+function qMarks(ctx, st, x, y, s, active) {
+  st.qs = st.qs || []; st.qtick = (st.qtick || 0) + 1;
+  const SPAWN = 55, FADE = 0.7;
+  if (active && st.qtick % SPAWN === 1) {
+    for (const q of st.qs) if (q.fadeAt === null) q.fadeAt = q.life;
+    st.qs.push({ a: -Math.PI / 2 + (Math.random() - 0.5) * 1.3, d: 0, life: 0, fadeAt: null, spin: (Math.random() - 0.5) * 0.9, size: 0.9 + Math.random() * 0.3 });
+  }
+  if (!active) for (const q of st.qs) if (q.fadeAt === null) q.fadeAt = q.life;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (const q of st.qs) {
+    q.life += 1 / 60; q.d += 0.55 * s;
+    const pop = Math.min(1, q.life * 6), alpha = q.fadeAt === null ? 1 : Math.max(0, 1 - (q.life - q.fadeAt) / FADE);
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.translate(x + Math.cos(q.a) * q.d, y - 6 * s + Math.sin(q.a) * q.d); ctx.rotate(q.spin * Math.min(q.life, 1.5));
+    ctx.font = "800 " + Math.round(42 * s * q.size * (0.6 + 0.4 * pop)) + "px 'Alegreya Sans', Arial, sans-serif";
+    ctx.lineJoin = "round"; ctx.lineWidth = 6 * LW; ctx.strokeStyle = INK; ctx.strokeText("?", 0, 0); ctx.fillStyle = "#e040c8"; ctx.fillText("?", 0, 0);
+    ctx.restore();
+  }
+  st.qs = st.qs.filter(q => q.fadeAt === null || q.life - q.fadeAt < FADE);
+  ctx.textBaseline = "alphabetic";
+}
+// one brow flat, the other arched way up
+function brows(ctx, eyes, w) {
+  ctx.strokeStyle = INK; ctx.lineWidth = w * LW; ctx.lineCap = "round";
+  const [a, b] = eyes;
+  ctx.beginPath(); ctx.moveTo(a.x - a.r * 1.0, a.y - a.r * 1.45); ctx.lineTo(a.x + a.r * 1.0, a.y - a.r * 1.35); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(b.x - b.r * 1.15, b.y - b.r * 1.7); ctx.quadraticCurveTo(b.x - b.r * 0.1, b.y - b.r * 3.1, b.x + b.r * 1.2, b.y - b.r * 2.0); ctx.stroke();
+}
+function shape(ctx, fill, w) { ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = (w || 4) * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke(); }
+function skullPath(ctx, R) {
+  ctx.beginPath();
+  ctx.ellipse(0, -0.05 * R, R, 0.9 * R, 0, Math.PI, 0);                 // cranium dome
+  ctx.quadraticCurveTo(R * 1.02, R * 0.36, R * 0.62, R * 0.5);           // right cheekbone
+  ctx.lineTo(R * 0.5, R * 0.62);                                          // down to the upper jaw
+  ctx.lineTo(-R * 0.5, R * 0.62);
+  ctx.lineTo(-R * 0.62, R * 0.5);
+  ctx.quadraticCurveTo(-R * 1.02, R * 0.36, -R, -0.05 * R);              // left cheekbone
+  ctx.closePath();
+}
+function teeth(ctx, R, y, h, missing) {
+  const n = 4, w = R * 0.2, gap = R * 0.04, x0 = -(n * w + (n - 1) * gap) / 2;
+  for (let i = 0; i < n; i++) {
+    if (missing && missing.includes(i)) continue;   // a gap, purely cosmetic
+    const x = x0 + i * (w + gap);
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, 3) : ctx.rect(x, y, w, h);
+    ctx.fillStyle = BONE; ctx.fill(); ctx.lineWidth = 2.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  }
+}
+
+function skeleton(st, cx, gy, s, t) {
+  const ctx = st.ctx;
+  const charmed = mode === "charm", confused = mode === "confused";
+  const m = st.forceMode || (mode === "panic" || charmed ? "walk" : confused ? "idle" : mode), walking = m === "walk", attacking = m === "attack";   // summons never panic
+  // attacks: wind up, snap forward, recover. Each swing rolls punch, kick or headbutt (or uses the card's fixed move)
+  const PERIOD = 1.3, cyc = Math.floor(t / PERIOD), ph = (t / PERIOD) % 1;
+  if (attacking && st.cyc !== cyc) { st.cyc = cyc; st.move = st.fixedMove || MOVES[Math.floor(Math.random() * MOVES.length)]; }
+  const k = !attacking ? 0 : ph < 0.35 ? -0.35 * Math.sin(ph / 0.35 * Math.PI / 2)
+          : ph < 0.47 ? -0.35 + 1.35 * Math.sin((ph - 0.35) / 0.12 * Math.PI / 2)
+          : 1 - (1 - Math.cos((ph - 0.47) / 0.53 * Math.PI)) / 2;
+  const hit = Math.max(0, k), mv = attacking && !st.archer ? st.move : null;
+  const p = t * (walking ? 7 : 2.2);                       // step phase
+  const swing = walking ? Math.sin(p) : 0;
+  const bob = walking ? -Math.abs(Math.sin(p)) * 6 * s : Math.sin(p) * 1.5 * s;
+  // jaw: drops on every step when walking, chatters when attacking, rests otherwise
+  const jaw = st.talking ? Math.pow(Math.abs(Math.sin(t * 9)), 2) * 0.8 : walking ? Math.pow(Math.abs(Math.sin(p)), 3) : attacking ? Math.pow(hit, 2) * 0.9 + 0.05 : 0.06 + Math.sin(t * 1.3) * 0.04;
+  let tilt = walking ? Math.sin(p) * 0.09 : confused ? Math.sin(t * 1.4) * 0.2 : Math.sin(t * 1.1) * 0.04, bx = cx, headDx = 0, headDy = 0;
+  if (mv === "punch") { tilt += k * 0.12; bx += hit * 8 * s; }
+  if (mv === "kick") { tilt -= hit * 0.18; bx -= hit * 5 * s; }
+  if (mv === "headbutt") { tilt += k * 0.45; bx += hit * 5 * s; headDx = hit * 16 * s; headDy = hit * 8 * s; }
+
+  // feet: no legs, just two little bones stepping under the body
+  for (const side of [-1, 1]) {
+    const fwd = walking ? side * swing : 0;
+    let fx = bx + side * 11 * s + fwd * 13 * s, fy = gy - Math.max(0, fwd) * 7 * s, rot = 0;
+    if (mv === "kick" && side === 1) { fx += k * 30 * s; fy -= hit * 26 * s; rot = -hit * 0.7; }
+    ctx.beginPath(); ctx.ellipse(fx + 3 * s, fy - 4 * s, 9 * s, 5 * s, rot, 0, Math.PI * 2); shape(ctx, BONE);
+    if (mv === "kick" && side === 1 && hit > 0.85) st.impact = { x: fx + 14 * s, y: fy - 6 * s, a: hit };
+  }
+  // pelvis, spine, ribcage: small
+  const pelY = gy - 22 * s + bob, ribY = gy - 38 * s + bob;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = INK; ctx.lineWidth = 9 * s; ctx.beginPath(); ctx.moveTo(bx, pelY); ctx.lineTo(bx + Math.sin(tilt) * 4 * s, ribY); ctx.stroke();
+  ctx.strokeStyle = BONE; ctx.lineWidth = 4 * s; ctx.beginPath(); ctx.moveTo(bx, pelY); ctx.lineTo(bx + Math.sin(tilt) * 4 * s, ribY); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(bx, pelY, 10 * s, 5 * s, 0, 0, Math.PI * 2); shape(ctx, BONE);
+  ctx.save(); ctx.translate(bx + Math.sin(tilt) * 4 * s, ribY); ctx.rotate(tilt * 0.6);
+  ctx.beginPath(); ctx.ellipse(0, 0, 12 * s, 9.5 * s, 0, 0, Math.PI * 2); shape(ctx, BONE);
+  ctx.lineWidth = 2.5 * LW; ctx.strokeStyle = INK;
+  for (const ry of [-3, 2.5]) { ctx.beginPath(); ctx.moveTo(-8 * s, ry * s); ctx.quadraticCurveTo(0, (ry + 3) * s, 8 * s, ry * s); ctx.stroke(); }
+  ctx.restore();
+  // head
+  const R = 40 * s;
+  const headX = bx + Math.sin(tilt) * 10 * s + headDx, headY = ribY - 25 * s - R * 1.3 + headDy;
+  if (mv === "headbutt" && hit > 0.85) st.impact = { x: headX + R * 1.05, y: headY - R * 0.1, a: hit };
+  ctx.save(); ctx.translate(headX, headY); ctx.rotate(tilt);
+  // lower jaw: always below the skull, it drops rather than hides
+  const jy = R * 0.86 + jaw * 17 * s;
+  const opening = walking ? Math.floor(p / Math.PI) : cyc;
+  const sway = (opening % 2 === 0 ? 1 : -1) * (walking || attacking ? 1 : 0);
+  ctx.save(); ctx.translate(sway * jaw * 3 * s, jy); ctx.rotate(sway * jaw * 0.16);
+  teeth(ctx, R, -R * 0.04, R * 0.17, st.lowMiss);
+  ctx.beginPath(); ctx.moveTo(-R * 0.55, R * 0.1); ctx.quadraticCurveTo(-R * 0.58, R * 0.52, 0, R * 0.55); ctx.quadraticCurveTo(R * 0.58, R * 0.52, R * 0.55, R * 0.1); ctx.closePath();
+  shape(ctx, BONE, 4.5);
+  ctx.restore();
+  // skull with the upper teeth attached
+  teeth(ctx, R, R * 0.58, R * 0.22, st.upMiss);
+  skullPath(ctx, R); ctx.fillStyle = SHADE; ctx.fill();
+  ctx.save(); skullPath(ctx, R); ctx.clip();
+  ctx.fillStyle = BONE; ctx.beginPath(); ctx.ellipse(-R * 0.12, -R * 0.14, R * 0.98, R * 0.86, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  skullPath(ctx, R); ctx.lineWidth = 4.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  // mismatched sockets: big one on the left, small one higher on the right
+  const eyes = [{ x: -R * 0.38, y: R * 0.06, rx: R * 0.27, ry: R * 0.3 }, { x: R * 0.38, y: -R * 0.02, rx: R * 0.15, ry: R * 0.16 }];
+  for (const e of eyes) { ctx.beginPath(); ctx.ellipse(e.x, e.y, e.rx, e.ry, 0, 0, Math.PI * 2); ctx.fillStyle = SOCKET; ctx.fill(); }
+  // charmed: a heart in each socket, glowing pupils or not
+  if (charmed) { for (const e of eyes) heart(ctx, e.x, e.y + e.ry * 0.05, Math.min(e.rx, e.ry) * 0.85 * charmBeat(t), "#ff6f9c"); }
+  // each skeleton rolls one or two glowing yellow eyes when it appears
+  else {
+    const look = Math.sin(t * 0.9) * 0.25;
+    const pts = [{ e: eyes[0], dx: 0.35 + look, dy: 0.1, r: 0.32 }, { e: eyes[1], dx: -0.25 + look * 0.5, dy: -0.2, r: 0.42 }].filter((q, i) => (st.glow || [0, 1]).includes(i));
+    for (const q of pts) {
+      const px = q.e.x + q.dx * q.e.rx, py = q.e.y + q.dy * q.e.ry, r = q.e.rx * q.r;
+      const g = ctx.createRadialGradient(px, py, 0, px, py, r * 2.4);
+      g.addColorStop(0, "rgba(255,215,90,.6)"); g.addColorStop(1, "rgba(255,215,90,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = GLOW; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(px - r * 0.3, py - r * 0.3, r * 0.3, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // nose: little upside-down heart
+  const ny = R * 0.38;
+  ctx.fillStyle = SOCKET; ctx.beginPath();
+  ctx.moveTo(0, ny + R * 0.1); ctx.quadraticCurveTo(-R * 0.13, ny - R * 0.04, -R * 0.06, ny - R * 0.08); ctx.quadraticCurveTo(0, ny - R * 0.06, 0, ny - R * 0.02);
+  ctx.quadraticCurveTo(0, ny - R * 0.06, R * 0.06, ny - R * 0.08); ctx.quadraticCurveTo(R * 0.13, ny - R * 0.04, 0, ny + R * 0.1); ctx.fill();
+  // a small crack, for character
+  // cracks, rolled per skeleton
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  for (const c of (st.cracks || [[[0.15, -0.93], [0.24, -0.73], [0.17, -0.61]]])) {
+    ctx.beginPath(); c.forEach(([x, y], i) => i ? ctx.lineTo(x * R, y * R) : ctx.moveTo(x * R, y * R)); ctx.stroke();
+  }
+  ctx.restore();
+  qMarks(ctx, st, headX, headY - R * 0.95, s, confused);
+
+  if (st.archer) { archerHands(st, ctx, bx, ribY, s, t, walking, attacking, swing, ph); return; }
+  // hands: floating fists drawn last so a raised one sits in front, beside the skull
+  for (const side of [-1, 1]) {
+    // on alternate steps each hand pumps up into the air
+    const pump = walking ? Math.pow(Math.max(0, -side * swing), 0.8) : 0;
+    let hx = bx + side * (22 + pump * 24) * s, hy = ribY + 6 * s - pump * 34 * s + (walking ? 0 : Math.sin(t * 2 + side) * 1.5 * s);
+    if (mv === "punch" && side === 1) { hx += k * 26 * s; hy -= hit * 12 * s; if (hit > 0.85) st.impact = { x: hx + 9 * s, y: hy, a: hit }; }
+    if (mv === "kick") { hx += side * hit * 6 * s; hy -= hit * 16 * s; }          // arms out for balance
+    if (mv === "headbutt") { hx -= hit * 6 * s; hy += hit * 4 * s; }              // fists pulled back
+    ctx.beginPath(); ctx.arc(hx, hy, 6.5 * s, 0, Math.PI * 2); shape(ctx, BONE);
+    ctx.lineWidth = 2 * LW; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(hx - side * 1 * s, hy - 3 * s); ctx.lineTo(hx + side * 3 * s, hy - 1 * s); ctx.stroke();
+  }
+  // a little burst where the blow lands
+  if (st.impact && attacking) {
+    const I = st.impact, r = 10 * s * (0.6 + (1 - I.a) * 4);
+    ctx.save(); ctx.globalAlpha = Math.min(1, I.a); ctx.strokeStyle = "#ffd36b"; ctx.lineWidth = 3 * LW; ctx.lineCap = "round";
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + 0.3; ctx.beginPath(); ctx.moveTo(I.x + Math.cos(a) * r * 0.5, I.y + Math.sin(a) * r * 0.5); ctx.lineTo(I.x + Math.cos(a) * r, I.y + Math.sin(a) * r); ctx.stroke(); }
+    ctx.restore();
+  }
+  if (!(hit > 0.6)) st.impact = null;
+}
+
+
+// the archer: bow in the right hand, an arrow in the left. Drawing back pulls the string; on release the arrow is gone.
+function archerHands(st, ctx, bx, ribY, s, t, walking, attacking, swing, ph) {
+  const draw = !attacking ? 0 : ph < 0.35 ? Math.sin(ph / 0.35 * Math.PI / 2) : ph < 0.37 ? 1 : 0;
+  const released = attacking && ph >= 0.37 && ph < 0.82;
+  const twang = attacking && ph >= 0.37 && ph < 0.55 ? Math.sin((ph - 0.37) * 120) * (0.55 - ph) * 30 * s : 0;
+  // bow hand
+  const bhx = bx + 30 * s + (walking ? -swing * 5 * s : 0), bhy = ribY - (attacking ? 6 : 0) * s + (walking ? Math.abs(swing) * -3 * s : Math.sin(t * 2) * 1.5 * s);
+  const bowR = 24 * s, bcx = bhx - 12 * s, tipA = 1.05;
+  const tipX = bcx + Math.cos(tipA) * bowR, tipY1 = bhy - Math.sin(tipA) * bowR, tipY2 = bhy + Math.sin(tipA) * bowR;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = INK; ctx.lineWidth = 8 * s; ctx.beginPath(); ctx.arc(bcx, bhy, bowR, -tipA, tipA); ctx.stroke();
+  ctx.strokeStyle = "#a67c4e"; ctx.lineWidth = 4.5 * s; ctx.beginPath(); ctx.arc(bcx, bhy, bowR, -tipA, tipA); ctx.stroke();
+  const pullX = tipX - draw * 22 * s + twang;
+  ctx.strokeStyle = "#f6efe0"; ctx.lineWidth = 1.6 * LW; ctx.beginPath(); ctx.moveTo(tipX, tipY1); ctx.lineTo(pullX, bhy); ctx.lineTo(tipX, tipY2); ctx.stroke();
+  // arrow hand: nocks and pulls when attacking, carries the arrow otherwise
+  let ahx, ahy, ang;
+  if (attacking) { ahx = pullX - 2 * s; ahy = bhy; ang = 0; }
+  else { ahx = bx - 22 * s + (walking ? swing * 7 * s : 0); ahy = ribY + 4 * s + (walking ? Math.abs(swing) * -3 * s : Math.sin(t * 2 + 1) * 1.5 * s); ang = -0.9; }
+  if (!released) {
+    const L = 34 * s, ex = ahx + Math.cos(ang) * L, ey = ahy + Math.sin(ang) * L, bx0 = ahx - Math.cos(ang) * 4 * s, by0 = ahy - Math.sin(ang) * 4 * s;
+    ctx.strokeStyle = INK; ctx.lineWidth = 5 * LW; ctx.beginPath(); ctx.moveTo(bx0, by0); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.strokeStyle = "#c9a36b"; ctx.lineWidth = 2.2 * LW; ctx.beginPath(); ctx.moveTo(bx0, by0); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.save(); ctx.translate(ex, ey); ctx.rotate(ang);
+    ctx.beginPath(); ctx.moveTo(7 * s, 0); ctx.lineTo(-2 * s, -4 * s); ctx.lineTo(-2 * s, 4 * s); ctx.closePath(); shape(ctx, "#b8b4bf", 2.5);
+    ctx.restore();
+    ctx.save(); ctx.translate(bx0, by0); ctx.rotate(ang);
+    ctx.fillStyle = "#e2566a"; ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW;
+    for (const sy of [-1, 1]) { ctx.beginPath(); ctx.moveTo(2 * s, 0); ctx.lineTo(-5 * s, sy * 4 * s); ctx.lineTo(-3 * s, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    ctx.restore();
+  } else if (ph < 0.5) {
+    // a quick streak where the arrow left
+    ctx.save(); ctx.globalAlpha = (0.5 - ph) * 7; ctx.strokeStyle = "#f6efe0"; ctx.lineWidth = 2 * LW;
+    for (const dy of [-4, 0, 4]) { ctx.beginPath(); ctx.moveTo(tipX + 6 * s, bhy + dy * s); ctx.lineTo(tipX + 26 * s, bhy + dy * s); ctx.stroke(); }
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(ahx, ahy, 6.5 * s, 0, Math.PI * 2); shape(ctx, BONE);
+  ctx.beginPath(); ctx.arc(bhx, bhy, 6.5 * s, 0, Math.PI * 2); shape(ctx, BONE);
+}
+
+function ell(ctx, x, y, rx, ry, rot, fill, w) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, rot || 0, 0, Math.PI * 2); shape(ctx, fill, w); }
+
+// shared motion: walk cycle, idle sway, an attack curve (wind up, snap, recover) and panic jitter
+// main = the creature's own attack (stab, swipe, smash); kick and headbutt are shared with the skeleton
+function motion(t, speed, st, moves) {
+  const charmed = mode === "charm", confused = mode === "confused", walking = mode === "walk" || charmed, attacking = mode === "attack", panicking = mode === "panic";
+  const p = t * (walking ? speed : panicking ? speed * 1.7 : 2.2);
+  const swing = walking || panicking ? Math.sin(p) : 0;
+  const bob = walking || panicking ? -Math.abs(Math.sin(p)) * 6 : Math.sin(p) * 1.5;
+  const PERIOD = 1.4, ph = (t / PERIOD) % 1;
+  const k = !attacking ? 0 : ph < 0.4 ? -0.4 * Math.sin(ph / 0.4 * Math.PI / 2)
+          : ph < 0.52 ? -0.4 + 1.4 * Math.sin((ph - 0.4) / 0.12 * Math.PI / 2)
+          : 1 - (1 - Math.cos((ph - 0.52) / 0.48 * Math.PI)) / 2;
+  const shake = panicking ? Math.sin(t * 47) * 1.6 : 0;
+  const cyc = Math.floor(t / PERIOD);
+  if (attacking && st && st.cyc !== cyc) { st.cyc = cyc; st.move = moves.includes(st.fixedMove) ? st.fixedMove : moves[Math.floor(Math.random() * moves.length)]; }   // fixedMove: a style study pinning one move
+  const mv = attacking && st ? st.move : null, hit = Math.max(0, k);
+  return { charmed, confused, walking, attacking, panicking, p, swing, bob, k, hit, wind: Math.max(0, -k) / 0.4, shake,
+           mv, main: mv === "main", kick: mv === "kick", butt: mv === "headbutt",
+           bx: mv === "main" ? hit * 7 : mv === "headbutt" ? hit * 5 : mv === "kick" ? -hit * 5 : 0,
+           tiltAdd: mv === "kick" ? -hit * 0.18 : mv === "headbutt" ? k * 0.45 : mv === "main" ? k * 0.08 : 0,
+           hdx: mv === "headbutt" ? hit * 16 : 0, hdy: mv === "headbutt" ? hit * 8 : 0,
+           tilt: (walking ? Math.sin(p) * 0.08 : panicking ? Math.sin(p) * 0.14 : confused ? Math.sin(t * 1.4) * 0.18 : Math.sin(t * 1.1) * 0.04) };
+}
+// the kicking foot swings forward and up
+function kickFoot(M, s, st) {
+  return (side, fx, fy) => {
+    if (M.kick && side === 1) { fx += M.k * 30 * s; fy -= M.hit * 24 * s; if (M.hit > 0.85) st.impact = { x: fx + 15 * s, y: fy - 6 * s }; }
+    return [fx, fy];
+  };
+}
+// shared hand poses for kick (arms out for balance) and headbutt (fists pulled back)
+function sharedHands(M, side, x, y, s) {
+  if (M.kick) { x += side * M.hit * 6 * s; y -= M.hit * 16 * s; }
+  if (M.butt) { x -= M.hit * 6 * s; y += M.hit * 4 * s; }
+  return [x, y];
+}
+function sharedBurst(ctx, M, s, st) { if ((M.kick || M.butt) && M.hit > 0.85 && st.impact) burst(ctx, st.impact.x, st.impact.y, s, M.hit); if (!(M.hit > 0.85)) st.impact = null; }
+
+function feet(ctx, M, bx, gy, s, color, spread, extra) {
+  for (const side of [-1, 1]) {
+    const fwd = M.walking || M.panicking ? side * M.swing : 0;
+    let fx = bx + side * spread * s + fwd * 13 * s, fy = gy - Math.max(0, fwd) * 7 * s;
+    if (extra) [fx, fy] = extra(side, fx, fy);
+    ell(ctx, fx + 3 * s, fy - 4 * s, 9 * s, 5 * s, 0, color);
+  }
+}
+function burst(ctx, x, y, s, a, color) {
+  const r = 10 * s * (0.6 + (1 - a) * 4);
+  ctx.save(); ctx.globalAlpha = Math.min(1, a); ctx.strokeStyle = color || "#ffd36b"; ctx.lineWidth = 3 * LW; ctx.lineCap = "round";
+  for (let i = 0; i < 6; i++) { const ang = i / 6 * Math.PI * 2 + 0.3; ctx.beginPath(); ctx.moveTo(x + Math.cos(ang) * r * 0.5, y + Math.sin(ang) * r * 0.5); ctx.lineTo(x + Math.cos(ang) * r, y + Math.sin(ang) * r); ctx.stroke(); }
+  ctx.restore();
+}
+function exclaim(ctx, x, y, s, t) {
+  ctx.save(); ctx.translate(x, y - Math.abs(Math.sin(t * 12)) * 4 * s);
+  ctx.font = "700 " + Math.round(30 * s) + "px 'Alegreya Sans', Arial, sans-serif"; ctx.textAlign = "center";
+  ctx.lineWidth = 5 * LW; ctx.strokeStyle = INK; ctx.strokeText("!", 0, 0); ctx.fillStyle = "#f5e05a"; ctx.fillText("!", 0, 0);
+  ctx.restore();
+}
+function sweat(ctx, x, y, s, t) {
+  const f = (t * 2.2) % 1;
+  ctx.save(); ctx.globalAlpha = 1 - f; ctx.translate(x, y + f * 10 * s);
+  ctx.beginPath(); ctx.moveTo(0, -6 * s); ctx.quadraticCurveTo(5 * s, 2 * s, 0, 4 * s); ctx.quadraticCurveTo(-5 * s, 2 * s, 0, -6 * s);
+  shape(ctx, "#9fd0ff", 2.5); ctx.restore();
+}
+
+// ---------- Goblin ----------
+function goldRing(ctx, x, y, r) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.lineWidth = 5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.lineWidth = 2.6 * LW; ctx.strokeStyle = "#e8c45a"; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y, r, -2.4, -1.6); ctx.lineWidth = 1.4 * LW; ctx.strokeStyle = "#fff3c4"; ctx.stroke();
+}
+const GOB = "#8fbf6a", GOB_D = "#6f9e4f", CLOTH = "#7a5a3a", EYE = "#f5e05a";
+function goblin(ctx, cx, gy, s, t, st) {
+  const M = motion(t, 7, st, ["main", "kick"]), R = 38 * s;
+  const bx = cx + M.bx * s + M.shake * s, bob = M.bob * s;
+  feet(ctx, M, bx, gy, s, GOB, 11, kickFoot(M, s, st));
+  const pelY = gy - 21 * s + bob, bodyY = gy - 33 * s + bob;
+  // pot belly with a loincloth
+  ell(ctx, bx, bodyY, 14 * s, 13 * s, M.tilt * 0.5, GOB);
+  ctx.beginPath(); ctx.moveTo(bx - 12 * s, pelY - 4 * s); ctx.lineTo(bx + 12 * s, pelY - 4 * s); ctx.lineTo(bx + 7 * s, pelY + 7 * s); ctx.lineTo(bx - 7 * s, pelY + 7 * s); ctx.closePath(); shape(ctx, CLOTH);
+  // head
+  const hx = bx + Math.sin(M.tilt) * 10 * s + (M.main ? M.hit * 4 : 0) * s + M.hdx * s, hy = bodyY - 14 * s - R * 0.8 + M.hdy * s;
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(M.tilt + M.tiltAdd);
+  // ears: long, pointing out and up, flopping with each step
+  for (const side of [-1, 1]) {
+    const flop = (M.walking || M.panicking ? Math.sin(M.p + side) * 0.18 : Math.sin(t * 1.4) * 0.05) + (M.panicking ? -0.3 : 0);
+    ctx.save(); ctx.translate(side * R * 0.85, -R * 0.05); ctx.rotate(side * (-0.35 + flop));
+    ctx.beginPath(); ctx.moveTo(0, -R * 0.22); ctx.quadraticCurveTo(side * R * 0.6, -R * 0.35, side * R * 0.95, -R * 0.15); ctx.quadraticCurveTo(side * R * 0.55, R * 0.1, 0, R * 0.22); ctx.closePath();
+    shape(ctx, GOB);
+    ctx.beginPath(); ctx.moveTo(side * R * 0.15, 0); ctx.quadraticCurveTo(side * R * 0.5, -R * 0.12, side * R * 0.75, -R * 0.12); ctx.lineWidth = 2.5 * LW; ctx.strokeStyle = GOB_D; ctx.stroke();
+    if ((st.jewels || []).includes(side < 0 ? "left" : "right")) goldRing(ctx, side * R * 0.62, R * 0.04, R * 0.09);
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.ellipse(0, 0, R * 1.0, R * 0.86, 0, 0, Math.PI * 2); ctx.fillStyle = GOB_D; ctx.fill();
+  ctx.save(); ctx.clip(); ctx.fillStyle = GOB; ctx.beginPath(); ctx.ellipse(-R * 0.1, -R * 0.12, R * 0.98, R * 0.8, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  ctx.beginPath(); ctx.ellipse(0, 0, R * 1.0, R * 0.86, 0, 0, Math.PI * 2); ctx.lineWidth = 4.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  // eyes: red like the orc's, mismatched, no lids; little stress lines under them when panicking
+  const eyes = [{ x: -R * 0.36, y: -R * 0.18, r: R * 0.2 }, { x: R * 0.36, y: -R * 0.24, r: R * 0.14 }];
+  const wide = M.panicking ? 1.25 : 1;
+  for (const e of eyes) {
+    if (M.charmed) { heart(ctx, e.x, e.y, e.r * 1.05 * charmBeat(t)); continue; }
+    ell(ctx, e.x, e.y, e.r * wide, e.r * wide, 0, "#e05a4a", 3.5);
+    ctx.fillStyle = "rgba(255,255,255,.75)"; ctx.beginPath(); ctx.arc(e.x - e.r * 0.35, e.y - e.r * 0.35, e.r * 0.22, 0, Math.PI * 2); ctx.fill();
+    if (M.panicking) {
+      ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";
+      for (const d of [0.55, 0.85]) { ctx.beginPath(); ctx.moveTo(e.x - e.r * 0.7, e.y + e.r * wide * (0.9 + d * 0.4)); ctx.quadraticCurveTo(e.x, e.y + e.r * wide * (1.15 + d * 0.4), e.x + e.r * 0.7, e.y + e.r * wide * (0.9 + d * 0.4)); ctx.stroke(); }
+    }
+  }
+  if (M.confused) brows(ctx, eyes, 3.5);
+  // big droopy nose
+  ell(ctx, R * 0.04, R * 0.12, R * 0.17, R * 0.22, 0.15, GOB, 3.5);
+  if ((st.jewels || []).includes("nose")) goldRing(ctx, R * 0.06, R * 0.36, R * 0.08);
+  // grin: wide, a few crooked teeth, opens per step
+  const open = M.walking ? Math.pow(Math.abs(Math.sin(M.p)), 3) * 0.6 : M.attacking ? M.hit * 0.8 : M.panicking ? 0.9 + Math.sin(t * 20) * 0.1 : 0.1;
+  const my = R * 0.45, mw = R * 0.62, mh = R * (0.12 + open * 0.3);
+  ctx.beginPath(); ctx.moveTo(-mw, my - R * 0.06); ctx.quadraticCurveTo(0, my + mh * 1.5, mw, my - R * 0.1); ctx.quadraticCurveTo(0, my + mh * 0.2, -mw, my - R * 0.06); ctx.closePath();
+  shape(ctx, "#3a1f2a", 3.5);
+  ctx.fillStyle = "#f3ead2"; ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW;
+  for (const [tx, tw, th] of [[-0.42, 0.11, 0.12], [-0.12, 0.1, 0.09], [0.25, 0.12, 0.13]]) {
+    const x = tx * R, y = my - R * 0.03 + Math.abs(tx) * R * 0.02;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + tw * R, y - R * 0.01); ctx.lineTo(x + tw * R * 0.5, y + th * R); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+  // hands; the right one holds a tiny knife and jabs
+  for (const side of [-1, 1]) {
+    let x = bx + side * 24 * s - (M.walking ? side * M.swing * 7 * s : 0), y = bodyY + 2 * s;
+    if (M.panicking) { x = bx + side * (26 + Math.sin(t * 25 + side) * 4) * s; y = hy - R * 0.95 + Math.cos(t * 22 + side) * 4 * s; }
+    if (M.main && side === 1) { x += M.k * 26 * s; y -= M.hit * 6 * s; }
+    [x, y] = sharedHands(M, side, x, y, s);
+    if (side === 1 && !M.panicking) {
+      ctx.beginPath(); ctx.moveTo(x + 4 * s, y - 2 * s); ctx.lineTo(x + 22 * s, y - 5 * s); ctx.lineTo(x + 4 * s, y + 3 * s); ctx.closePath(); shape(ctx, "#a7a3ad", 3);
+    }
+    ell(ctx, x, y, 6.5 * s, 6.5 * s, 0, GOB);
+    if (M.main && side === 1 && M.hit > 0.85) burst(ctx, x + 26 * s, y - 4 * s, s, M.hit);
+  }
+  sharedBurst(ctx, M, s, st);
+  qMarks(ctx, st, hx, hy - R * 0.95, s, M.confused);
+  if (M.panicking) { exclaim(ctx, hx, hy - R * 1.2, s, t); sweat(ctx, hx + R * 0.95, hy - R * 0.3, s, t); }
+}
+
+// ---------- Kobold ----------
+const KOB = "#c0703f", KOB_D = "#9c5530", KOB_L = "#e8a46e", HORN = "#efe2c4";
+function kobHead(ctx, R) {
+  ctx.beginPath();
+  ctx.ellipse(0, -R * 0.12, R * 0.92, R * 0.78, 0, Math.PI, 0);           // dome
+  ctx.bezierCurveTo(R * 0.92, R * 0.18, R * 0.44, R * 0.18, R * 0.34, R * 0.4);   // cheek narrows into the muzzle
+  ctx.quadraticCurveTo(R * 0.3, R * 0.6, 0, R * 0.62);
+  ctx.quadraticCurveTo(-R * 0.3, R * 0.6, -R * 0.34, R * 0.4);
+  ctx.bezierCurveTo(-R * 0.44, R * 0.18, -R * 0.92, R * 0.18, -R * 0.92, -R * 0.12);
+  ctx.closePath();
+}
+function kobold(ctx, cx, gy, s0, t, st) {
+  const s = s0 * 0.86, M = motion(t, 8.5, st, ["main", "kick", "headbutt"]), R = 36 * s;
+  const bx = cx + M.bx * s + M.shake * s, bob = M.bob * s;
+  // tail behind everything, always wagging
+  const wag = Math.sin(t * (M.panicking ? 18 : 6)) * 0.5;
+  ctx.save(); ctx.translate(bx - 6 * s, gy - 20 * s + bob); ctx.rotate(-0.4 + wag * 0.6);
+  ctx.beginPath(); ctx.moveTo(0, -5 * s); ctx.quadraticCurveTo(-26 * s, -6 * s, -34 * s, -22 * s); ctx.quadraticCurveTo(-22 * s, 2 * s, 0, 5 * s); ctx.closePath(); shape(ctx, KOB);
+  ctx.restore();
+  feet(ctx, M, bx, gy, s, KOB, 10, kickFoot(M, s, st));
+  const bodyY = gy - 31 * s + bob;
+  ell(ctx, bx, bodyY, 12 * s, 12 * s, 0, KOB);
+  ell(ctx, bx, bodyY + 2 * s, 7 * s, 8 * s, 0, KOB_L, 3);
+  // head
+  const hx = bx + Math.sin(M.tilt) * 9 * s + (M.main ? M.hit * 4 : 0) * s + M.hdx * s, hy = bodyY - 14 * s - R * 0.85 + M.hdy * s;
+  if (M.butt && M.hit > 0.85) st.impact = { x: hx + R * 1.0, y: hy };
+  const headRot = M.tilt + M.tiltAdd;
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(headRot);
+  // stubby horns; some kobolds have lost one
+  for (const side of [-1, 1]) {
+    if (st.hornMissing === side) continue;
+    ctx.beginPath(); ctx.moveTo(side * R * 0.35, -R * 0.62); ctx.quadraticCurveTo(side * R * 0.55, -R * 1.15, side * R * 0.75, -R * 1.05); ctx.quadraticCurveTo(side * R * 0.68, -R * 0.75, side * R * 0.62, -R * 0.5); ctx.closePath(); shape(ctx, HORN, 3.5);
+  }
+  kobHead(ctx, R); ctx.fillStyle = KOB_D; ctx.fill();
+  ctx.save(); kobHead(ctx, R); ctx.clip(); ctx.fillStyle = KOB; ctx.beginPath(); ctx.ellipse(-R * 0.1, -R * 0.2, R * 0.9, R * 0.8, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  kobHead(ctx, R); ctx.lineWidth = 4.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  // eyes: high and round, slit pupils
+  const kEyes = [{ x: -R * 0.38, y: -R * 0.3, r: R * 0.22 }, { x: R * 0.38, y: -R * 0.3, r: R * 0.2 }];
+  for (const [i, e] of kEyes.entries()) {
+    const r = e.r * (M.panicking ? 1.2 : 1);
+    if (M.charmed) { heart(ctx, e.x, e.y, r * 1.05 * charmBeat(t)); continue; }
+    ell(ctx, e.x, e.y, r, r, 0, EYE, 3.5);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(e.x + (i ? -1 : 1) * r * 0.12, e.y, r * (M.panicking ? 0.12 : 0.2), r * (M.panicking ? 0.4 : 0.75), 0, 0, Math.PI * 2); ctx.fill();
+  }
+  if (M.confused) brows(ctx, kEyes.map(e => ({ x: e.x, y: e.y + e.r * 0.15, r: e.r * 0.8 })), 3.2);
+  // the muzzle is the lower part of the head: a ridge, nostril slits near the tip, two fangs at the bottom
+  ctx.strokeStyle = KOB_D; ctx.lineWidth = 2.5 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(0, R * 0.06); ctx.lineTo(0, R * 0.26); ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW;
+  for (const side of [-1, 1]) { ctx.beginPath(); ctx.moveTo(side * R * 0.07, R * 0.38); ctx.quadraticCurveTo(side * R * 0.16, R * 0.35, side * R * 0.18, R * 0.43); ctx.stroke(); }
+  // tongue hangs out of the muzzle tip and lags behind the head's sway
+  const lick = M.panicking ? Math.sin(t * 20) * 0.45 : Math.sin(t * 3) * 0.12;
+  const ts = st.tongue || 1;                                   // rolled: hangs from the left or right side
+  ctx.save(); ctx.translate(ts * R * 0.2, R * 0.5); ctx.rotate(-headRot * 2.2 + lick - ts * 0.3);
+  ctx.beginPath(); ctx.moveTo(-R * 0.11, 0); ctx.lineTo(-R * 0.12, R * 0.38); ctx.quadraticCurveTo(-R * 0.12, R * 0.52, 0, R * 0.47);
+  ctx.quadraticCurveTo(R * 0.12, R * 0.52, R * 0.12, R * 0.38); ctx.lineTo(R * 0.11, 0); ctx.closePath(); shape(ctx, "#e2747e", 3);
+  ctx.strokeStyle = "#b8505c"; ctx.lineWidth = 1.8 * LW; ctx.beginPath(); ctx.moveTo(0, R * 0.08); ctx.lineTo(0, R * 0.38); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = "#fffaf0"; ctx.lineWidth = 2 * LW;
+  for (const side of [-1, 1]) { ctx.beginPath(); ctx.moveTo(side * R * 0.22, R * 0.54); ctx.lineTo(side * R * 0.14, R * 0.58); ctx.lineTo(side * R * 0.2, R * 0.7); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  ctx.restore();
+  // hands: little claws; the right one swipes diagonally
+  for (const side of [-1, 1]) {
+    let x = bx + side * 21 * s - (M.walking ? side * M.swing * 7 * s : 0), y = bodyY + 3 * s;
+    if (M.panicking) { x = bx + side * (24 + Math.sin(t * 27 + side) * 4) * s; y = hy - R * 0.9 + Math.cos(t * 23 + side) * 4 * s; }
+    if (M.main && side === 1) { x += M.k * 18 * s; y += (M.wind * -18 + M.hit * 10) * s; }
+    [x, y] = sharedHands(M, side, x, y, s);
+    ell(ctx, x, y, 6 * s, 6 * s, 0, KOB);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; for (const d of [-3, 0, 3]) { ctx.beginPath(); ctx.moveTo(x + side * 4 * s, y + d * s); ctx.lineTo(x + side * 8 * s, y + d * s - 1 * s); ctx.stroke(); }
+    if (M.main && side === 1 && M.hit > 0.75) {
+      ctx.save(); ctx.globalAlpha = M.hit; ctx.strokeStyle = "#ffd36b"; ctx.lineWidth = 3 * LW; ctx.lineCap = "round";
+      for (const d of [-7, 0, 7]) { ctx.beginPath(); ctx.moveTo(x + 10 * s, y - 16 * s + d * s); ctx.lineTo(x + 24 * s, y + 4 * s + d * s); ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+  sharedBurst(ctx, M, s, st);
+  qMarks(ctx, st, hx, hy - R * 1.0, s, M.confused);
+  if (M.panicking) { exclaim(ctx, hx, hy - R * 1.3, s, t); sweat(ctx, hx + R * 0.9, hy - R * 0.2, s, t); }
+}
+
+// ---------- Orc ----------
+const ORC = "#5f7d45", ORC_D = "#4b6536", TUSK = "#f2e8cf", BELT = "#4a3523";
+function orc(ctx, cx, gy, s0, t, st) {
+  const s = s0 * 1.3, M = motion(t, 5, st, ["main", "kick", "headbutt"]);
+  const R = 37 * s;
+  const bx = cx + M.bx * 0.7 * s + M.shake * s, bob = M.bob * s * 0.8 + (M.main ? M.hit * 4 * s : 0);
+  feet(ctx, M, bx, gy, s, ORC, 13, kickFoot(M, s, st));
+  const bodyY = gy - 34 * s + bob;
+  // chunky torso with a belt
+  ctx.beginPath(); ctx.roundRect(bx - 17 * s, bodyY - 14 * s, 34 * s, 28 * s, 12 * s); shape(ctx, ORC);
+  ctx.beginPath(); ctx.rect(bx - 17 * s, bodyY + 4 * s, 34 * s, 6 * s); shape(ctx, BELT, 3);
+  ctx.beginPath(); ctx.rect(bx - 4 * s, bodyY + 3 * s, 8 * s, 8 * s); shape(ctx, "#b89a5a", 3);
+  // head: broad, a little square
+  const hx = bx + Math.sin(M.tilt) * 8 * s + M.hdx * s, hy = bodyY - 14 * s - R * 0.78 + (M.main ? M.hit * 6 * s : 0) + M.hdy * s;
+  if (M.butt && M.hit > 0.85) st.impact = { x: hx + R * 1.05, y: hy };
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(M.tilt * 0.7 + (M.main ? M.k * 0.06 : M.tiltAdd * 0.8));
+  // topknot
+  ctx.beginPath(); ctx.ellipse(0, -R * 0.95, R * 0.18, R * 0.24, Math.sin(M.p) * 0.2, 0, Math.PI * 2); shape(ctx, "#2b2530", 3.5);
+  ctx.beginPath(); ctx.roundRect(-R * 1.0, -R * 0.82, R * 2.0, R * 1.5, R * 0.55); ctx.fillStyle = ORC_D; ctx.fill();
+  ctx.save(); ctx.clip(); ctx.fillStyle = ORC; ctx.beginPath(); ctx.ellipse(-R * 0.12, -R * 0.25, R * 1.05, R * 0.95, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  ctx.beginPath(); ctx.roundRect(-R * 1.0, -R * 0.82, R * 2.0, R * 1.5, R * 0.55); ctx.lineWidth = 4.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  // heavy brow and small red eyes, one squinting
+  const ey = -R * 0.22, wideEyes = M.panicking;
+  if (M.charmed) for (const ex of [-R * 0.4, R * 0.4]) heart(ctx, ex, ey, R * 0.16 * charmBeat(t));
+  else for (const [i, ex] of [-R * 0.4, R * 0.4].entries()) {
+    const r = R * (wideEyes ? 0.16 : 0.1);
+    ell(ctx, ex, ey, r, i === 1 && !wideEyes ? r * 0.55 : r, 0, wideEyes ? "#ffffff" : "#e05a4a", 3);
+    if (wideEyes) { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ex, ey, r * 0.35, 0, Math.PI * 2); ctx.fill(); }
+  }
+  if (!wideEyes && !M.charmed) {
+    ctx.beginPath(); ctx.moveTo(-R * 0.75, -R * 0.42); ctx.quadraticCurveTo(-R * 0.4, -R * 0.3, -R * 0.08, -R * 0.36);
+    if (M.confused) { ctx.moveTo(R * 0.8, -R * 0.5); ctx.quadraticCurveTo(R * 0.42, -R * 0.82, R * 0.1, -R * 0.5); }
+    else { ctx.moveTo(R * 0.75, -R * 0.42); ctx.quadraticCurveTo(R * 0.4, -R * 0.3, R * 0.08, -R * 0.36); }
+    ctx.lineWidth = 7 * s * 0.8; ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.stroke();
+  }
+  // small flat nose
+  ell(ctx, 0, R * 0.05, R * 0.16, R * 0.1, 0, ORC_D, 3);
+  // each cheek and the forehead independently rolls nothing, a scar or a plaster
+  for (const spot of ["left", "right", "forehead"]) {
+    const kind = (st.marks || {})[spot];
+    if (!kind) continue;
+    const S = { left: [-R * 0.66, -R * 0.02, 0.9], right: [R * 0.66, -R * 0.02, -0.9], forehead: [R * 0.18, -R * 0.58, 0.5] }[spot];
+    ctx.save(); ctx.translate(S[0], S[1]); ctx.rotate(S[2]);
+    const L = R * 0.34;
+    if (kind === "plaster") {
+      // two crossed sticking plasters
+      for (const a of [0.7, -0.7]) {
+        ctx.save(); ctx.rotate(a - S[2]);
+        ctx.beginPath(); ctx.roundRect(-L * 0.7, -R * 0.09, L * 1.4, R * 0.18, R * 0.06); shape(ctx, "#e8cfa4", 2.5);
+        ctx.fillStyle = "#cfb084"; ctx.fillRect(-L * 0.16, -R * 0.09 + 1, L * 0.32, R * 0.18 - 2);
+        ctx.restore();
+      }
+    } else {
+      ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 4.5 * LW; ctx.beginPath(); ctx.moveTo(-L / 2, 0); ctx.lineTo(L / 2, 0); ctx.stroke();
+      ctx.strokeStyle = "#c9806e"; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(-L / 2, 0); ctx.lineTo(L / 2, 0); ctx.stroke();
+      ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW;
+      for (const f of [-0.3, 0, 0.3]) { ctx.beginPath(); ctx.moveTo(f * L, -R * 0.07); ctx.lineTo(f * L, R * 0.07); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
+  // underbite jaw with tusks; it grumbles while walking
+  const grr = M.walking ? Math.abs(Math.sin(M.p)) * 0.3 : M.attacking ? M.hit : M.panicking ? 0.9 : 0.05;
+  const jy = R * 0.38 + grr * R * 0.14;
+  ctx.fillStyle = "#3a1f2a"; ctx.fillRect(-R * 0.5, R * 0.3, R * 1.0, jy - R * 0.28);
+  ctx.beginPath(); ctx.roundRect(-R * 0.66, jy, R * 1.32, R * 0.36, R * 0.16); shape(ctx, ORC, 4);
+  for (const side of [-1, 1]) {
+    ctx.beginPath(); ctx.moveTo(side * R * 0.52, jy + R * 0.08); ctx.quadraticCurveTo(side * R * 0.6, jy - R * 0.3, side * R * 0.42, jy - R * 0.36); ctx.quadraticCurveTo(side * R * 0.42, jy - R * 0.1, side * R * 0.36, jy + R * 0.08); ctx.closePath();
+    shape(ctx, TUSK, 3);
+  }
+  ctx.restore();
+  // fists: big; both rise during the wind-up and slam down on the hit
+  for (const side of [-1, 1]) {
+    let x = bx + side * 28 * s - (M.walking ? side * M.swing * 6 * s : 0), y = bodyY + 2 * s;
+    if (M.panicking) { x = bx + side * (30 + Math.sin(t * 22 + side) * 4) * s; y = hy - R * 1.0 + Math.cos(t * 20 + side) * 4 * s; }
+    if (M.main) { x = bx + side * (16 - M.hit * 6) * s + M.hit * 18 * s; y = bodyY - M.wind * 108 * s + M.hit * 22 * s; }
+    [x, y] = sharedHands(M, side, x, y, s);
+    ell(ctx, x, y, 9 * s, 9 * s, 0, ORC);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW; ctx.beginPath(); ctx.moveTo(x - 3 * s, y - 4 * s); ctx.lineTo(x - 3 * s, y + 2 * s); ctx.moveTo(x + 2 * s, y - 4 * s); ctx.lineTo(x + 2 * s, y + 2 * s); ctx.stroke();
+  }
+  if (M.main && M.hit > 0.85) burst(ctx, bx + 18 * s, gy - 6 * s, s * 1.3, M.hit);
+  sharedBurst(ctx, M, s, st);
+  qMarks(ctx, st, hx, hy - R * 0.95, s, M.confused);
+  if (M.panicking) { exclaim(ctx, hx, hy - R * 1.25, s, t); sweat(ctx, hx + R * 1.05, hy - R * 0.4, s, t); }
+}
+
+
+// ---------- Ogre ----------
+const OGRE = "#a8865a", OGRE_D = "#86683f", LOIN = "#7a5a3a", ROPE = "#d1b277";
+function ogre(ctx, cx, gy, s0, t, st) {
+  const s = s0 * 1.45, slam = st.gmove === "slam";
+  const M = motion(t, 4, st, slam ? ["main"] : ["main", "kick"]);
+  if (slam && M.attacking) { M.mv = "main"; M.main = true; M.kick = false; M.butt = false; M.bx = M.hit * 3; }
+  const bx = cx + M.bx * 0.5 * s + M.shake * s, bob = M.bob * s * 0.6 + (M.main ? M.hit * 5 * s : 0);
+  feet(ctx, M, bx, gy, s, OGRE_D, 15, kickFoot(M, s, st));
+  const bodyY = gy - 38 * s + bob, BW = 31 * s, BH = 27 * s;
+  // the belly: most of the ogre
+  ctx.beginPath(); ctx.ellipse(bx, bodyY, BW, BH, 0, 0, Math.PI * 2); ctx.fillStyle = OGRE; ctx.fill();
+  ctx.save(); ctx.clip(); ctx.fillStyle = OGRE_D; ctx.beginPath(); ctx.ellipse(bx + 17 * s, bodyY + 6 * s, 22 * s, 30 * s, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.ellipse(bx - 10 * s, bodyY - 8 * s, 10 * s, 7 * s, -0.4, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  ctx.beginPath(); ctx.ellipse(bx, bodyY, BW, BH, 0, 0, Math.PI * 2); ctx.lineWidth = 4.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(bx - 2 * s, bodyY + 4 * s, 1.6 * s, 0, Math.PI * 2); ctx.fill();          // belly button
+  // loincloth on a rope belt
+  ctx.beginPath(); ctx.moveTo(bx - 13 * s, bodyY + 15 * s); ctx.lineTo(bx + 13 * s, bodyY + 15 * s); ctx.lineTo(bx + 10 * s + Math.sin(M.p) * 2 * s, bodyY + 33 * s); ctx.lineTo(bx - 9 * s + Math.sin(M.p) * 2 * s, bodyY + 33 * s); ctx.closePath(); shape(ctx, LOIN, 3);
+  ctx.beginPath(); ctx.moveTo(bx - BW * 0.82, bodyY + 11 * s); ctx.quadraticCurveTo(bx, bodyY + 21 * s, bx + BW * 0.82, bodyY + 11 * s);
+  ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 6.5 * LW; ctx.stroke(); ctx.strokeStyle = ROPE; ctx.lineWidth = 3.4 * LW; ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = 1.4 * LW; for (let i = -3; i <= 3; i++) { const x = bx + i * 6 * s, y = bodyY + 16 * s - Math.abs(i) * 0.9 * s; ctx.beginPath(); ctx.moveTo(x - 1.5 * s, y - 1.5 * s); ctx.lineTo(x + 1.5 * s, y + 1.5 * s); ctx.stroke(); }
+  // a small head on a big ogre
+  const R = 16 * s, hx = bx + Math.sin(M.tilt) * 6 * s + 2 * s, hy = bodyY - BH - R * 0.45 + (M.main ? M.hit * 5 * s : 0);
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(M.tilt * 0.6 + M.tiltAdd * 0.5);
+  for (const side of [-1, 1]) ell(ctx, side * R * 0.98, -R * 0.1, R * 0.26, R * 0.32, side * 0.3, OGRE, 3);
+  ell(ctx, 0, 0, R, R * 0.92, 0, OGRE, 4);
+  for (const [wx, wy] of st.warts || []) { ell(ctx, wx * R, wy * R, R * 0.09, R * 0.09, 0, OGRE_D, 1.8); }
+  const wide = M.panicking, ey = -R * 0.18;
+  if (M.charmed) for (const ex of [-R * 0.38, R * 0.38]) heart(ctx, ex, ey, R * 0.2 * charmBeat(t));
+  else for (const ex of [-R * 0.38, R * 0.38]) {
+    if (wide) { ell(ctx, ex, ey, R * 0.18, R * 0.18, 0, "#ffffff", 2.5); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ex, ey, R * 0.07, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ex, ey, R * 0.09, 0, Math.PI * 2); ctx.fill(); }
+  }
+  if (!wide && !M.charmed) { ctx.strokeStyle = INK; ctx.lineWidth = 3.5 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-R * 0.6, -R * 0.42); ctx.lineTo(-R * 0.15, M.confused ? -R * 0.5 : -R * 0.32); ctx.moveTo(R * 0.6, -R * 0.42); ctx.lineTo(R * 0.15, -R * 0.32); ctx.stroke(); }
+  ell(ctx, 0, R * 0.12, R * 0.22, R * 0.17, 0, OGRE_D, 3);                       // a round, squashed nose
+  if (st.noseRing) goldRing(ctx, 0, R * 0.32, R * 0.12);
+  // underbite: a jaw that sticks out further than the face, one big tusk and the odd missing tooth
+  const open = M.walking ? Math.abs(Math.sin(M.p)) * 0.2 : M.attacking ? M.hit * 0.8 : M.panicking ? 0.9 : 0.05, jy = R * 0.45 + open * R * 0.12;
+  ctx.fillStyle = "#3a1f2a"; ctx.fillRect(-R * 0.45, R * 0.36, R * 0.9, jy - R * 0.34);
+  ctx.beginPath(); ctx.roundRect(-R * 0.72, jy, R * 1.44, R * 0.42, R * 0.18); shape(ctx, OGRE, 3.5);
+  const ts = st.tuskSide || 1;
+  ctx.beginPath(); ctx.moveTo(ts * R * 0.42, jy + R * 0.1); ctx.quadraticCurveTo(ts * R * 0.56, jy - R * 0.55, ts * R * 0.3, jy - R * 0.62); ctx.quadraticCurveTo(ts * R * 0.3, jy - R * 0.2, ts * R * 0.2, jy + R * 0.1); ctx.closePath(); shape(ctx, TUSK, 3);
+  if (!st.gap) { ctx.beginPath(); ctx.rect(-ts * R * 0.32, jy - R * 0.16, R * 0.14, R * 0.18); shape(ctx, TUSK, 2); }
+  ctx.restore();
+  // fists: huge; on a slam both come down together
+  for (const side of [-1, 1]) {
+    let x = bx + side * 34 * s - (M.walking ? side * M.swing * 5 * s : 0), y = bodyY + 4 * s;
+    if (M.panicking) { x = bx + side * (34 + Math.sin(t * 20 + side) * 4) * s; y = hy - R * 1.2 + Math.cos(t * 18 + side) * 4 * s; }
+    if (M.main) {
+      if (slam) { x = bx + side * (12 - M.hit * 4) * s + M.hit * 14 * s; y = bodyY - M.wind * 120 * s + M.hit * 32 * s; }
+      else if (side === 1) { x = bx + (30 + M.hit * 16) * s; y = bodyY - M.wind * 70 * s + M.hit * 16 * s; }
+    }
+    [x, y] = sharedHands(M, side, x, y, s);
+    ell(ctx, x, y, 12 * s, 11 * s, 0, OGRE);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW; ctx.beginPath(); ctx.moveTo(x - 4 * s, y - 5 * s); ctx.lineTo(x - 4 * s, y + 2 * s); ctx.moveTo(x + 3 * s, y - 5 * s); ctx.lineTo(x + 3 * s, y + 2 * s); ctx.stroke();
+  }
+  if (M.main && M.hit > 0.85) {
+    burst(ctx, bx + 18 * s, gy - 6 * s, s * (slam ? 2 : 1.3), M.hit);
+    if (slam) for (let i = 0; i < 6; i++) { const a = Math.PI + i * Math.PI / 5; ell(ctx, bx + 14 * s + Math.cos(a) * 40 * s * (1.2 - M.hit), gy - 4 * s + Math.sin(a) * 6 * s, 5 * s, 3 * s, 0, "#8a7a64", 1.5); }
+  }
+  sharedBurst(ctx, M, s, st);
+  qMarks(ctx, st, hx, hy - R * 1.1, s, M.confused);
+  if (M.panicking) { exclaim(ctx, hx, hy - R * 1.4, s, t); sweat(ctx, hx + R * 1.1, hy - R * 0.3, s, t); }
+}
+
+// ---------- Troll ----------
+function troll(ctx, cx, gy, s0, t, st) {
+  const s = s0 * 1.3, M = motion(t, 4.5, st, ["main", "kick", "headbutt"]);
+  const SK = st.skin || ["#6f9a86", "#557a69"];
+  const bx = cx + M.bx * 0.6 * s + M.shake * s, bob = M.bob * s * 0.8;
+  feet(ctx, M, bx - 2 * s, gy, s, SK[1], 12, kickFoot(M, s, st));
+  // the arm at the back swings low
+  const hand = (side) => {
+    let x = bx + side * 26 * s + 8 * s - (M.walking ? side * M.swing * 10 * s : 0), y = gy - 10 * s + Math.abs(M.swing) * 3 * s;
+    if (M.panicking) { x = bx + side * (26 + Math.sin(t * 20 + side) * 5) * s; y = gy - 70 * s + Math.cos(t * 18 + side) * 5 * s; }
+    if (M.main && side === 1) { x = bx + (24 + M.hit * 22 - M.wind * 10) * s; y = gy - 12 * s - M.wind * 60 * s + M.hit * 30 * s; }
+    return sharedHands(M, side, x, y, s);
+  };
+  const arm = (side) => {
+    const [x, y] = hand(side), sx = bx + side * 15 * s + 6 * s, sy = gy - 50 * s + bob;
+    ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 12 * s; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo((sx + x) / 2 + side * 6 * s, (sy + y) / 2, x, y); ctx.stroke();
+    ctx.strokeStyle = side < 0 ? SK[1] : SK[0]; ctx.lineWidth = 12 * s - 4.5 * LW; ctx.stroke();
+    ell(ctx, x, y, 8.5 * s, 7.5 * s, 0, side < 0 ? SK[1] : SK[0], 3);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(x - 3 * s, y - 4 * s); ctx.lineTo(x - 3 * s, y + 2 * s); ctx.moveTo(x + 2 * s, y - 4 * s); ctx.lineTo(x + 2 * s, y + 2 * s); ctx.stroke();
+  };
+  arm(-1);
+  // a hunched body, leaning forward
+  const bodyY = gy - 42 * s + bob;
+  ctx.save(); ctx.translate(bx, bodyY); ctx.rotate(0.32 + M.tilt * 0.5);
+  ctx.beginPath(); ctx.ellipse(0, 0, 21 * s, 26 * s, 0, 0, Math.PI * 2); shape(ctx, SK[0], 4.5);
+  ctx.beginPath(); ctx.ellipse(0, 6 * s, 15 * s, 15 * s, 0, 0, Math.PI); ctx.lineTo(-15 * s, 6 * s); ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-18 * s, 8 * s); ctx.lineTo(18 * s, 8 * s); ctx.lineTo(14 * s, 24 * s); ctx.lineTo(-14 * s, 24 * s); ctx.closePath(); shape(ctx, "#5a4a3a", 3);   // ragged shorts
+  if (st.moss && st.moss.back) { ell(ctx, -14 * s, -14 * s, 8 * s, 5 * s, -0.6, MOSS, 2.5); ell(ctx, -8 * s, -20 * s, 4 * s, 3 * s, -0.4, "#86b05a", 2); }
+  ctx.restore();
+  // head pushed forward, low between the shoulders
+  const R = 22 * s, hx = bx + 16 * s + Math.sin(M.tilt) * 6 * s + M.hdx * s, hy = bodyY - 26 * s + M.hdy * s;
+  if (M.butt && M.hit > 0.85) st.impact = { x: hx + R * 1.3, y: hy + R * 0.2 };
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(M.tilt * 0.5 + M.tiltAdd * 0.6);
+  // shaggy hair: a ring of tufts over the top
+  ctx.fillStyle = st.hair || "#3b4a2a"; ctx.strokeStyle = INK; ctx.lineWidth = 3 * LW;
+  for (let i = 0; i < 7; i++) { const a = -Math.PI * 0.95 + i * Math.PI * 0.9 / 6, len = R * (0.45 + 0.15 * Math.sin(i * 2.3 + t * 2)); ctx.beginPath(); ctx.moveTo(Math.cos(a - 0.25) * R * 0.85, Math.sin(a - 0.25) * R * 0.85); ctx.lineTo(Math.cos(a) * (R + len), Math.sin(a) * (R + len)); ctx.lineTo(Math.cos(a + 0.25) * R * 0.85, Math.sin(a + 0.25) * R * 0.85); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  ell(ctx, 0, 0, R, R * 0.85, 0, SK[0], 4);
+  ctx.beginPath(); ctx.ellipse(-R * 0.1, -R * 0.62, R * 0.8, R * 0.3, 0, Math.PI, 0); ctx.fillStyle = st.hair || "#3b4a2a"; ctx.fill();   // fringe
+  if (st.moss && st.moss.head) ell(ctx, -R * 0.4, -R * 0.78, R * 0.22, R * 0.12, 0, MOSS, 2);
+  // ear and earring
+  ell(ctx, -R * 0.9, R * 0.05, R * 0.2, R * 0.32, -0.3, SK[1], 3);
+  if (st.earring) goldRing(ctx, -R * 0.95, R * 0.38, R * 0.11);
+  // small deep-set eyes under a heavy brow
+  const ey = -R * 0.18;
+  if (M.charmed) for (const ex of [R * 0.05, R * 0.55]) heart(ctx, ex, ey, R * 0.15 * charmBeat(t));
+  else for (const ex of [R * 0.05, R * 0.55]) { const r = R * (M.panicking ? 0.15 : 0.09); ell(ctx, ex, ey, r, r, 0, M.panicking ? "#ffffff" : "#f5e05a", 2.5); if (M.panicking) { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ex, ey, r * 0.4, 0, Math.PI * 2); ctx.fill(); } }
+  if (!M.panicking && !M.charmed) { ctx.strokeStyle = INK; ctx.lineWidth = 4 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-R * 0.15, -R * 0.36); ctx.quadraticCurveTo(R * 0.3, M.confused ? -R * 0.6 : -R * 0.42, R * 0.78, -R * 0.36); ctx.stroke(); }
+  // the nose: big, knobbly and in front of everything
+  ctx.beginPath(); ctx.ellipse(R * 0.62, R * 0.2, R * 0.42, R * 0.3, 0.3, 0, Math.PI * 2); shape(ctx, SK[0], 3.5);
+  ell(ctx, R * 0.88, R * 0.05, R * 0.12, R * 0.1, 0, SK[1], 2); ell(ctx, R * 0.5, R * 0.36, R * 0.09, R * 0.08, 0, SK[1], 2);
+  // a wide mouth with one tooth poking up
+  const open = M.attacking ? M.hit * 0.6 : M.panicking ? 0.8 : M.walking ? Math.abs(Math.sin(M.p)) * 0.15 : 0.05;
+  ctx.beginPath(); ctx.moveTo(-R * 0.25, R * 0.55); ctx.quadraticCurveTo(R * 0.3, R * (0.62 + open * 0.3), R * 0.7, R * 0.52); ctx.strokeStyle = INK; ctx.lineWidth = 3.5 * LW; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(R * 0.12, R * 0.6); ctx.lineTo(R * 0.2, R * 0.38); ctx.lineTo(R * 0.28, R * 0.6); ctx.closePath(); shape(ctx, TUSK, 2);
+  ctx.restore();
+  arm(1);
+  if (M.main && M.hit > 0.85) burst(ctx, bx + 46 * s, gy - 14 * s, s * 1.2, M.hit);
+  sharedBurst(ctx, M, s, st);
+  qMarks(ctx, st, hx, hy - R * 1.2, s, M.confused);
+  if (M.panicking) { exclaim(ctx, hx, hy - R * 1.5, s, t); sweat(ctx, hx - R * 1.1, hy - R * 0.3, s, t); }
+}
+
+// ---------- Wisp ----------
+// a glowing orb: pulses as it drifts, flashes red on a strike, shimmers yellow like a mirage in a panic,
+// and glows pink and lilac, throwing off little hearts, when charmed
+function orb(ctx, x, y, r, core, mid) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, core); g.addColorStop(0.22, core); g.addColorStop(0.42, mid + ",.95)"); g.addColorStop(0.7, mid + ",.35)"); g.addColorStop(1, mid + ",0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+}
+function hsl(h, sat, l) {
+  const k = n => (n + h / 30) % 12, a = sat * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [f(0), f(8), f(4)].map(v => Math.round(v * 255));
+}
+function sparkle(ctx, x, y, r, a) {
+  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+  ctx.restore();
+}
+function wisp(ctx, cx, gy, s, t, st) {
+  const M = motion(t, 6, st, ["main"]);
+  const moving = M.walking || M.panicking;
+  const bob = Math.sin(t * 2.4) * 5 * s;
+  const pulse = M.charmed ? charmBeat(t) * 1.04 : moving ? 1 + Math.sin(t * 6) * 0.1 : 1 + Math.sin(t * 2) * 0.04;
+  const x = cx + (M.main ? M.k * 18 * s : 0), y = gy - 62 * s + bob;
+  const R = 46 * s * pulse * (M.main ? 1 + M.hit * 0.15 : 1);
+  // colours: blue normally, red flash on the hit, yellow in a panic, pink/lilac when charmed
+  let core = "#e8f2ff", mid = "rgba(111,168,255";
+  if (M.panicking) { core = "#fff8d6"; mid = "rgba(255,210,80"; }
+  if (M.confused) {
+    const h = (t * 540) % 360, c = hsl(h, 0.9, 0.62);
+    core = "#ffffff"; mid = "rgba(" + c.join(",");
+  }
+  if (M.charmed) { const lilac = (Math.sin(t * 3) + 1) / 2; core = "#fff0f7"; mid = lilac > 0.5 ? "rgba(214,140,255" : "rgba(255,120,190"; }
+  if (M.main && M.hit > 0.2) { core = "#ffe3e3"; mid = "rgba(255,80,80"; }
+  if (M.panicking) {
+    // mirage: the orb is drawn in thin slices, each nudged sideways by a travelling wave
+    const slices = 14, top = y - R, h = (2 * R) / slices;
+    for (let i = 0; i < slices; i++) {
+      const dx = Math.sin(i * 0.9 + t * 22) * 4 * s;
+      ctx.save(); ctx.beginPath(); ctx.rect(x - R - 10 * s, top + i * h, 2 * R + 20 * s, h + 0.5); ctx.clip();
+      orb(ctx, x + dx, y, R, core, mid); ctx.restore();
+    }
+  } else {
+    orb(ctx, x, y, R, core, mid);
+  }
+  // twinkles that orbit the orb
+  for (let i = 0; i < 4; i++) {
+    const a = t * 1.3 + i * Math.PI / 2, rr = R * (0.75 + 0.15 * Math.sin(t * 2 + i));
+    sparkle(ctx, x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.8, (2.5 + Math.sin(t * 5 + i) * 1.5) * s, 0.5 + 0.5 * Math.sin(t * 4 + i * 1.7));
+  }
+  if (M.main && M.hit > 0.85) burst(ctx, x + R * 0.9, y, s, M.hit, "#ff8080");
+  // hearts fly off when charmed
+  st.hearts = st.hearts || []; st.tick = (st.tick || 0) + 1;
+  if (M.charmed && st.tick % 9 === 0) { const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2; st.hearts.push({ a, d: R * 0.5, life: 0, spin: (Math.random() - 0.5) * 2 }); }
+  for (const h of st.hearts) {
+    h.life += 1 / 60; h.d += 1.4 * s;
+    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - h.life / 1.1);
+    ctx.translate(x + Math.cos(h.a) * h.d, y + Math.sin(h.a) * h.d); ctx.rotate(h.spin * h.life);
+    heart(ctx, 0, 0, (5 + h.life * 3) * s, h.a > -Math.PI / 2 ? "#ff8fc0" : "#d48cff");
+    ctx.restore();
+  }
+  st.hearts = st.hearts.filter(h => h.life < 1.1);
+  qMarks(ctx, st, x, y - R * 1.05, s, M.confused);
+  if (M.panicking) exclaim(ctx, x, y - R * 1.15, s, t);
+}
+
+// ---------- Spirit (summon) ----------
+// a chibi ghost: a floating sheet with a swishing hem and tail, mismatched glowing eyes,
+// sometimes chains, a bow or a torn hem; it flickers while phasing
+function spirit(ctx, cx, gy, s, t, st) {
+  const M = motion(t, 5, st, ["main"]);
+  const bob = Math.sin(t * 2.2) * 6 * s, sway = M.walking || M.panicking ? Math.sin(t * 7) * 0.12 : Math.sin(t * 1.5) * 0.05;
+  const x = cx + (M.main ? M.k * 6 * s : 0) + M.shake * s, y = gy - 72 * s + bob + (M.main ? M.hit * 10 * s : 0);
+  const R = 30 * s;
+  ctx.save();
+  if (st.phasing > 0) ctx.globalAlpha = 0.25 + 0.3 * Math.abs(Math.sin(t * 40));
+  // the chill it gives off when it strikes: a pale ring under the sheet
+  if (M.main) { ctx.save(); ctx.globalAlpha *= M.hit; ctx.strokeStyle = "#cfe0ff"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.ellipse(x, gy - 4 * s, 34 * s * (0.6 + M.hit * 0.5), 8 * s, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+  ctx.fillStyle = "rgba(160,190,255,.18)"; ctx.beginPath(); ctx.ellipse(x, gy - 3 * s, 24 * s, 5 * s, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.translate(x, y); ctx.rotate(sway);
+  // body: dome on top, sides flaring out, a wavy (or torn) hem and a tail that flicks behind
+  const hemY = R * 1.25, ph = t * 5;
+  const body = () => {
+    ctx.beginPath(); ctx.moveTo(-R, 0); ctx.arc(0, 0, R, Math.PI, 0);
+    ctx.quadraticCurveTo(R * 1.08, R * 0.7, R * 1.05, hemY);
+    const n = 5;
+    for (let i = 0; i < n; i++) {
+      const x0 = R * 1.05 - (i + 1) * (R * 2.1 / n), xm = x0 + R * 1.05 / n, dip = st.torn && i % 2 ? R * 0.32 : R * 0.18;
+      if (st.torn) { ctx.lineTo(xm, hemY - dip + Math.sin(ph + i) * 3 * s); ctx.lineTo(x0, hemY + Math.sin(ph + i + 1) * 3 * s); }
+      else ctx.quadraticCurveTo(xm, hemY - dip + Math.sin(ph + i) * 4 * s, x0, hemY + Math.sin(ph + i + 1) * 3 * s);
+    }
+    // the tail curls out to the back
+    ctx.quadraticCurveTo(-R * 1.5, hemY + R * 0.1 + Math.sin(ph) * 4 * s, -R * 1.65 + Math.sin(ph * 0.8) * 4 * s, hemY - R * 0.45);
+    ctx.quadraticCurveTo(-R * 1.25, hemY - R * 0.25, -R * 1.02, R * 0.55);
+    ctx.quadraticCurveTo(-R * 1.05, R * 0.3, -R, 0); ctx.closePath();
+  };
+  body(); ctx.fillStyle = M.main && M.hit > 0.3 ? "#ffffff" : "#e6edff"; ctx.fill();
+  ctx.save(); body(); ctx.clip(); ctx.fillStyle = "#c3d0f0"; ctx.beginPath(); ctx.ellipse(R * 0.7, R * 0.8, R * 0.6, R * 1.4, 0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.ellipse(-R * 0.4, -R * 0.45, R * 0.25, R * 0.16, -0.5, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  body(); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  // little arms
+  for (const side of [-1, 1]) {
+    const ax = side * R * 0.95 + (M.main ? side * M.hit * 6 * s : 0), ay = R * 0.45 - (M.panicking ? R * 0.9 : M.main ? M.wind * R * 0.5 : Math.sin(t * 3 + side) * 3 * s);
+    ell(ctx, ax, ay, R * 0.2, R * 0.13, side * 0.6, "#e6edff", 3);
+  }
+  // mismatched glowing eyes
+  const eyes = st.eyes || [["#6fa8ff", 1], ["#b8f07a", 0.75]];
+  if (M.charmed) { heart(ctx, -R * 0.35, -R * 0.1, R * 0.2 * charmBeat(t)); heart(ctx, R * 0.35, -R * 0.1, R * 0.16 * charmBeat(t)); }
+  else eyes.forEach(([c, k], i) => {
+    const ex = (i ? 1 : -1) * R * 0.35, ey = -R * 0.12, r = R * 0.17 * k * (M.panicking ? 1.3 : 1);
+    const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, r * 2.6); g.addColorStop(0, c); g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ex, ey, r * 2.6, 0, Math.PI * 2); ctx.fill();
+    ell(ctx, ex, ey, r, (t % 4.1) < 0.12 ? r * 0.15 : r * 1.15, 0, c, 2.5);
+  });
+  // an "ooo" mouth
+  const mo = M.panicking ? 1.4 : M.main ? 0.6 + M.hit * 0.6 : 0.6 + 0.15 * Math.sin(t * 2);
+  ell(ctx, 0, R * 0.3, R * 0.1 * mo, R * 0.14 * mo, 0, "#2a2a44", 2);
+  if (st.bow) { const bx = R * 0.55, by = -R * 0.78; ell(ctx, bx - R * 0.17, by, R * 0.2, R * 0.12, 0.3, "#e2566a", 2.5); ell(ctx, bx + R * 0.17, by, R * 0.2, R * 0.12, -0.3, "#e2566a", 2.5); ell(ctx, bx, by, R * 0.08, R * 0.08, 0, "#b83a4f", 2); }
+  if (st.chains) {     // a few loose links dangling from the hem
+    for (let i = 0; i < 4; i++) { const cx2 = -R * 0.5 + i * R * 0.12, cy2 = hemY + R * 0.05 + i * R * 0.13 + Math.sin(t * 3 + i) * 2 * s;
+      ctx.beginPath(); ctx.ellipse(cx2, cy2, R * 0.07, R * 0.1, i % 2 ? 0.9 : 0, 0, Math.PI * 2); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.stroke(); ctx.lineWidth = 2 * LW; ctx.strokeStyle = "#9a98a8"; ctx.stroke(); }
+  }
+  ctx.restore();
+  qMarks(ctx, st, x, y - R * 1.25, s, M.confused);
+  if (M.panicking) exclaim(ctx, x, y - R * 1.35, s, t);
+}
+
+// ---------- Golem (summon) ----------
+const STONE = "#a8a293", STONE_D = "#878171", STONE_L = "#c4beaf", MOSS = "#6f9a4a";
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : (1 - Math.cos(x * Math.PI)) / 2;
+const lerp = (a, b, u) => a + (b - a) * u;
+function roundPoly(ctx, pts, r) {
+  const n = pts.length;
+  ctx.beginPath(); ctx.moveTo((pts[n - 1][0] + pts[0][0]) / 2, (pts[n - 1][1] + pts[0][1]) / 2);
+  for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; ctx.arcTo(p[0], p[1], q[0], q[1], r); }
+  ctx.closePath();
+}
+const offs = (pts, x, y) => pts.map(([a, b]) => [a + x, b + y]);
+// puffy outline: ink circles first, then the fill on top, so overlapping puffs merge into one cloud
+function puffs(ctx, cs, fill, shade) {
+  ctx.fillStyle = INK; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 1.9 * LW, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = shade || fill; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill(); }
+  if (shade) { ctx.fillStyle = fill; for (const c of cs) { ctx.beginPath(); ctx.arc(c.x - c.r * 0.18, c.y - c.r * 0.22, c.r * 0.72, 0, Math.PI * 2); ctx.fill(); } }
+}
+function glowEye(ctx, x, y, r, boost) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.6);
+  g.addColorStop(0, "rgba(255,215,90," + (0.6 * (boost || 1)) + ")"); g.addColorStop(1, "rgba(255,215,90,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 2.6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y, r, r * 1.1, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.35, r * 0.3, 0, Math.PI * 2); ctx.fill();
+}
+const TORSO = [[-30, -28], [29, -31], [38, -6], [33, 24], [-33, 25], [-39, -4]];
+const GHEAD = [[-25, -16], [24, -18], [28, 5], [22, 18], [-22, 18], [-28, 4]];
+const FIST = [[-12, -10], [11, -11], [14, 2], [10, 11], [-11, 10], [-14, 0]];
+function rollGolemCracks() {
+  const starts = [[-37, -3, 0.2], [27, -30, 2.1], [34, 18, 3.6], [-26, 24, -1.1], [8, -31, 1.7]];
+  starts.sort(() => Math.random() - 0.5);
+  return starts.slice(0, 1 + Math.floor(Math.random() * 2)).map(([x, y, d]) => {
+    const pts = [[x, y]];
+    for (let j = 0; j < 3; j++) { const a = d + (j % 2 ? 0.7 : -0.7) * (0.5 + Math.random() * 0.5); x += Math.cos(a) * (5 + Math.random() * 4); y += Math.sin(a) * (5 + Math.random() * 4); pts.push([x, y]); }
+    return pts;
+  });
+}
+function golem(ctx, cx, gy, s0, t, st) {
+  const q = st.quarry || 0, s = s0 * 1.3 * (1 + q * 0.1);
+  const saved = mode, panicky = mode === "panic"; if (panicky) mode = "walk";   // immune to panic in battle, but it can still look alarmed
+  const M = motion(t, 4.2, null, []); mode = saved;
+  const ph = (t / 1.4) % 1;
+  // three single-fist punches, then a ground slam (the battlefield tells it which one; previews follow the basic rhythm)
+  const punch = M.attacking && (st.gmove ? st.gmove === "punch" : Math.floor(t / 1.4) % 4 !== 3);
+  const atk = M.attacking && !punch;
+  ctx.save(); ctx.translate(cx + (panicky ? Math.sin(t * 47) * 1.2 * s : 0), gy); ctx.scale(s, s);
+  const LW0 = LW; LW = LW0 / s;
+  // ground slam: fists rise over the head, smash down in front, rest a moment, come back
+  let lean = M.walking ? Math.sin(M.p) * 0.06 : M.confused ? Math.sin(t * 1.4) * 0.07 : Math.sin(t * 1.1) * 0.02, jolt = 0, raise = 0;
+  if (atk) {
+    if (ph < 0.4) { raise = ease(ph / 0.4); lean = -0.08 * raise; }
+    else if (ph < 0.52) { raise = 1; lean = lerp(-0.08, 0.12, (ph - 0.4) / 0.12); }
+    else if (ph < 0.75) { lean = 0.12; jolt = ph < 0.6 ? Math.sin((ph - 0.52) / 0.08 * Math.PI) * 3 : 0; }
+    else lean = lerp(0.12, 0, ease((ph - 0.75) / 0.25));
+  }
+  if (punch) lean = ph < 0.4 ? -0.05 * ease(ph / 0.4) : ph < 0.52 ? lerp(-0.05, 0.09, (ph - 0.4) / 0.12) : ph < 0.65 ? 0.09 : lerp(0.09, 0, ease((ph - 0.65) / 0.35));
+  const bob = M.bob * 0.7;
+  const fistAt = side => {
+    const rest = [side * 40 - side * M.swing * 9, -44 + bob + (M.walking ? 0 : Math.sin(t * 2 + side) * 1.5)];
+    if (punch && side === 1) {          // one fist: pull back, then a straight jab forward
+      const back = [rest[0] - 12, rest[1] - 6], hit = [62, -54];
+      if (ph < 0.4) { const u = ease(ph / 0.4); return [lerp(rest[0], back[0], u), lerp(rest[1], back[1], u)]; }
+      if (ph < 0.52) { const u = Math.pow((ph - 0.4) / 0.12, 2); return [lerp(back[0], hit[0], u), lerp(back[1], hit[1], u)]; }
+      if (ph < 0.65) return hit;
+      const u = ease((ph - 0.65) / 0.35); return [lerp(hit[0], rest[0], u), lerp(hit[1], rest[1], u)];
+    }
+    if (!atk) return rest;
+    const up = [10 + side * 13, -122], down = [38 + side * 15, -13];
+    if (ph < 0.4) { const u = ease(ph / 0.4); return [lerp(rest[0], up[0], u), lerp(rest[1], up[1], u)]; }
+    if (ph < 0.52) { const u = Math.pow((ph - 0.4) / 0.12, 2); return [lerp(up[0], down[0], u), lerp(up[1], down[1], u)]; }
+    if (ph < 0.75) return down;
+    const u = ease((ph - 0.75) / 0.25); return [lerp(down[0], rest[0], u), lerp(down[1], rest[1], u)];
+  };
+  const drawFist = side => {
+    const [fx, fy] = fistAt(side), ax = side * 30, ay = -58 + bob;
+    for (let i = 1; i <= 2; i++) {                                  // floating pebbles stand in for arms
+      const u = i / 3; ell(ctx, lerp(ax, fx, u) + Math.sin(t * 3 + i + side) * 1.5, lerp(ay, fy, u) + Math.cos(t * 2.6 + i) * 1.5, 4 - i * 0.6, 3.6 - i * 0.5, 0, STONE, 2.5);
+    }
+    roundPoly(ctx, offs(FIST, fx, fy), 5); shape(ctx, STONE, 3.5);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";
+    for (const dy of [-4, 2]) { ctx.beginPath(); ctx.moveTo(fx + 4, fy + dy); ctx.lineTo(fx + 10, fy + dy - 1); ctx.stroke(); }
+  };
+  // stubby boulder feet
+  for (const side of [-1, 1]) {
+    const fwd = M.walking ? side * M.swing : 0;
+    ell(ctx, side * 17 + fwd * 10 + 2, -6 - Math.max(0, fwd) * 5, 13, 7.5, 0, STONE_D, 3.5);
+  }
+  if (!atk) drawFist(-1);
+  ctx.save(); ctx.rotate(lean);
+  const ty = -46 + bob + jolt, hx = 3 + lean * 8, hy = ty - 40 + (M.walking ? Math.abs(Math.sin(M.p)) * 1.5 : 0);
+  // head, sunk into the shoulders
+  roundPoly(ctx, offs(GHEAD, hx, hy), 8); shape(ctx, STONE, 3.5);
+  ctx.save(); roundPoly(ctx, offs(GHEAD, hx, hy), 8); ctx.clip();
+  ctx.fillStyle = STONE_D; ctx.beginPath(); ctx.ellipse(hx + 17, hy + 16, 26, 12, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  roundPoly(ctx, offs(GHEAD, hx, hy), 8); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  // moss on top, maybe with a flower or a mushroom
+  const MS = st.mossSpots || {};
+  if (MS.head) puffs(ctx, [[-10, -18.5, 5], [-3, -21, 6], [4, -19.5, 5]].map(([x, y, r]) => ({ x: hx + x, y: hy + y, r })), "#86b25a", MOSS);
+  if (!MS.head) {}
+  else if (st.mossTop === "flower") {
+    const fx = hx + 2, fy = hy - 27 + Math.sin(t * 2) * 0.6;
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.3; ell(ctx, fx + Math.cos(a) * 3.2, fy + Math.sin(a) * 3.2, 2.6, 2.6, 0, "#fff4f8", 1.6); }
+    ell(ctx, fx, fy, 2, 2, 0, "#ffd24a", 1.4);
+  } else if (st.mossTop === "mushroom") {
+    const fx = hx - 5, fy = hy - 25;
+    ctx.beginPath(); ctx.rect(fx - 1.6, fy, 3.2, 5); shape(ctx, "#f3ead8", 1.8);
+    ctx.beginPath(); ctx.ellipse(fx, fy, 6, 4.5, 0, Math.PI, 0); ctx.closePath(); shape(ctx, "#d8473f", 2);
+    ctx.fillStyle = "#fff"; for (const [dx, dy] of [[-2.5, -1.5], [1.8, -2.6], [3.4, -0.8]]) { ctx.beginPath(); ctx.arc(fx + dx, fy + dy, 0.9, 0, Math.PI * 2); ctx.fill(); }
+  }
+  // heavy stone brow over two small glowing eyes (one bigger, like every summon)
+  const eyes = [[hx - 6, hy + 5.5, 4.4], [hx + 12, hy + 4.6, 3.3]].map(([x, y, r]) => panicky ? [x, y, r * 1.5] : [x, y, r]);
+  const tiltB = M.confused ? -0.35 : 0;
+  if (panicky) {                                                     // brows pop up into two half-arcs, eyes go wide
+    for (const [x, y, r] of eyes) {
+      ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 6.5 * LW; ctx.beginPath(); ctx.arc(x, y + 0.5, r * 1.9, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+      ctx.strokeStyle = STONE_D; ctx.lineWidth = 3 * LW; ctx.stroke();
+    }
+  } else {
+  ctx.save(); ctx.translate(hx + 1, hy - 4); ctx.rotate(tiltB);
+  ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 7 * LW; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(21, -1); ctx.stroke();
+  ctx.strokeStyle = STONE_D; ctx.lineWidth = 3.5 * LW; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(21, -1); ctx.stroke();
+  ctx.restore();
+  }
+  if (M.charmed) for (const [x, y, r] of eyes) heart(ctx, x, y, (r + 1.2) * charmBeat(t), "#ff6f9c");
+  else for (const [x, y, r] of eyes) glowEye(ctx, x, y, r, atk ? 1 + raise * 0.6 : 1);
+  ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(hx - 1, hy + 13.5); ctx.lineTo(hx + 9, hy + 13); ctx.stroke();
+  // torso: one big boulder with the Septagram that bound it glowing in the chest
+  roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.fillStyle = STONE; ctx.fill();
+  ctx.save(); roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.clip();
+  ctx.fillStyle = STONE_D; ctx.beginPath(); ctx.ellipse(20, ty + 22, 36, 20, -0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = STONE_L; ctx.beginPath(); ctx.ellipse(-15, ty - 20, 15, 6, -0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = STONE_D; for (const [x, y] of [[-22, 6], [-12, 15], [16, -18], [24, 4], [-27, -12]]) { ctx.beginPath(); ctx.arc(x, ty + y, 1.4, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  roundPoly(ctx, offs(TORSO, 0, ty), 11); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * LW; ctx.lineJoin = "round";
+  for (const c of st.gcracks || []) { ctx.beginPath(); c.forEach(([x, y], i) => i ? ctx.lineTo(x, ty + y) : ctx.moveTo(x, ty + y)); ctx.stroke(); }
+  // moss on the flanks, rolled per golem
+  if (MS.left) puffs(ctx, [[-38, -6, 4.5], [-36, 1, 5.5], [-35, 9, 4.5], [-31, 14, 3.5]].map(([x, y, r]) => ({ x, y: ty + y, r })), "#86b25a", MOSS);
+  if (MS.right) puffs(ctx, [[35, 8, 4], [33, 14, 5.5], [29, 20, 4.5], [23, 24, 3.5]].map(([x, y, r]) => ({ x, y: ty + y, r })), "#86b25a", MOSS);
+  const pulse = Math.min(1, 0.55 + 0.25 * Math.sin(t * 2.2) + raise * 0.45), rc = [-1, ty - 1];
+  ctx.save(); ctx.globalAlpha = pulse; ctx.shadowColor = "#6fa8ff"; ctx.shadowBlur = 10 * s * (st.dpr || 1);
+  ctx.strokeStyle = "#8fc0ff"; ctx.lineWidth = 1.8 * LW; ctx.beginPath(); ctx.arc(rc[0], rc[1], 12.5, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7, x = rc[0] + Math.cos(a) * 10.5, y = rc[1] + Math.sin(a) * 10.5; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke(); ctx.restore();
+  // Living Quarry: quartz grows out of the shoulders
+  const shards = [[-24, -30, -0.35, 9], [-15, -32, 0.1, 12], [22, -33, 0.3, 10], [30, -28, 0.7, 8]];
+  for (let i = 0; i < Math.min(shards.length, Math.floor(Math.max(0, q - 1) * 2)); i++) {
+    const [x, y, a, h] = shards[i];
+    ctx.save(); ctx.translate(x, ty + y); ctx.rotate(a);
+    ctx.beginPath(); ctx.moveTo(-3.5, 2); ctx.lineTo(-3.5, -h * 0.6); ctx.lineTo(0, -h); ctx.lineTo(3.5, -h * 0.6); ctx.lineTo(3.5, 2); ctx.closePath(); shape(ctx, "#b79cf0", 2.4);
+    ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillRect(-2, -h * 0.55, 1.2, h * 0.45);
+    ctx.restore();
+  }
+  ctx.restore();
+  if (!atk) drawFist(1); else { drawFist(-1); drawFist(1); }
+  if (punch && ph >= 0.52 && ph < 0.62) burst(ctx, 74, -54, 1, 1 - (ph - 0.52) / 0.1);
+  // shockwave, dust and a few flying chips where the fists land
+  if (atk && ph >= 0.52 && ph < 0.95) {
+    const pr = (ph - 0.52) / 0.43, a = 1 - pr, gx = 38, R = 12 + pr * 80;
+    ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = "#efe2c0"; ctx.lineWidth = (1 + 3 * a) * LW;
+    ctx.beginPath(); ctx.ellipse(gx, -2, R, R * 0.22, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = a * 0.7; ctx.fillStyle = "#bfb39b";
+    for (let i = 0; i < 5; i++) { const an = Math.PI * (0.1 + i * 0.2); ctx.beginPath(); ctx.arc(gx + Math.cos(an) * pr * 58 * (i % 2 ? 1 : -1) * 0.9, -6 - Math.sin(an) * pr * 16 - pr * 6, 5 + pr * 6, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    for (let i = 0; i < 3; i++) {
+      const vx = (i - 1) * 30 + 8, x = gx + vx * pr, y = -8 - (70 * pr - 95 * pr * pr) * (1 + i * 0.2);
+      if (y < 0) { ctx.save(); ctx.translate(x, y); ctx.rotate(pr * 8 + i); ctx.beginPath(); ctx.rect(-2.2, -2.2, 4.4, 4.4); shape(ctx, STONE, 1.6); ctx.restore(); }
+    }
+    if (ph < 0.62) burst(ctx, gx, -16, 1, 1 - (ph - 0.52) / 0.1);
+  }
+  ctx.restore(); LW = LW0;
+  qMarks(ctx, st, cx + (hx + 4) * s, gy + (hy - 22) * s, s0, M.confused);
+}
+
+// ---------- The Summonancer ----------
+// Gear is drawn in layers (hat, robe, staff, amulet) so equipment can change how he looks later
+const GEAR = {
+  starter: { name: "Starter gear", hat: ["#4b3780", "#3a2a66"], band: "#2a1d40", buckle: "#d9b45a", patch: true, feather: null,
+             robe: ["#5a3e8e", "#45306e"], trim: "#d9b45a", orb: [111, 168, 255], head: "claw", amulet: null },
+  ember:   { name: "Ember set", hat: ["#8a3329", "#6a261f"], band: "#2b1512", buckle: "#f0a040", patch: false, feather: "#ff9a3c",
+             robe: ["#7c3a2c", "#5e2a20"], trim: "#f0a040", orb: [255, 140, 60], head: "claw", amulet: "#e0403a" },
+  frost:   { name: "Frost set", hat: ["#2f5f8a", "#234a6c"], band: "#e8f2ff", buckle: "#9fd8ff", patch: false, feather: null,
+             robe: ["#35648f", "#284e72"], trim: "#cfe3f5", orb: [150, 230, 255], head: "crystal", amulet: "#7fd0ff" }
+};
+const FACE = "#0f0b15", BEARD = "#efeae0", BEARD_D = "#c9c1b1", GLOVE = "#7a5536", WOOD = "#8a5a34", BOOT = "#3b2a22";
+const BEARDS = ["Apprentice fuzz", "Bushy", "Proper", "Venerable", "Legendary"];
+const rgba = (c, a) => "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
+function wizEyes(ctx, look, boost, dy) {
+  const E = [[-3, -95 + dy, 5.2], [10, -96.5 + dy, 3.9]];
+  ctx.lineCap = "round"; ctx.strokeStyle = GLOW; ctx.lineWidth = 2.3 * LW;
+  E.forEach(([x, y, r], i) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3);
+    g.addColorStop(0, "rgba(255,215,90," + Math.min(0.85, 0.45 * boost) + ")"); g.addColorStop(1, "rgba(255,215,90,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3, 0, Math.PI * 2); ctx.fill();
+    if (look === "blink") { ctx.beginPath(); ctx.moveTo(x - r, y + 1); ctx.lineTo(x + r, y + 1); ctx.stroke(); }
+    else if (look === "narrow") { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y + 0.5, r * 1.1, r * 0.45, 0, 0, Math.PI * 2); ctx.fill(); }
+    else if (look === "squeeze") { const d = i ? -1 : 1; ctx.beginPath(); ctx.moveTo(x - d * r, y - r * 0.8); ctx.lineTo(x + d * r * 0.7, y); ctx.lineTo(x - d * r, y + r * 0.8); ctx.stroke(); }
+    else if (look === "happy") { ctx.beginPath(); ctx.arc(x, y + r * 0.5, r * 0.95, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
+    else if (look === "sad") { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y + 1, r * 0.75, r * 0.6, 0, -0.25 * (i ? -1 : 1), Math.PI - 0.25 * (i ? -1 : 1)); ctx.fill(); }
+    else { ctx.fillStyle = GLOW; ctx.beginPath(); ctx.ellipse(x, y, r, r * 1.15, 0, 0, Math.PI * 2); ctx.fill();
+           ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.4, r * 0.3, 0, Math.PI * 2); ctx.fill(); }
+  });
+}
+// the beard grows a stage with every prestige: from apprentice fuzz to a legendary beard with a gold ring near the tip
+function wizBeard(ctx, stage, t, flutter) {
+  const chin = -83, x0 = 3, L = [5, 15, 27, 41, 57][stage], W = [7, 13, 17, 19, 20][stage], cs = [];
+  const mr = stage === 0 ? 3.6 : 5.6;
+  cs.push({ x: x0 - 8, y: chin + 1, r: mr }, { x: x0 + 9, y: chin, r: mr });
+  const n = Math.max(2, Math.round(L / 6));
+  for (let i = 0; i <= n; i++) {
+    const u = i / n, y = chin + 3 + L * u, w = W * (1 - 0.8 * Math.pow(u, 1.5)), r = (6.5 - 2.2 * u) * (stage === 0 ? 0.65 : 1);
+    const count = Math.max(1, Math.ceil(2 * w / (r * 1.3)));
+    const sw = Math.sin(t * 1.6 + u * 2.5) * u * (1.5 + stage * 0.6) + flutter * u * 6;
+    for (let j = 0; j < count; j++) cs.push({ x: x0 + sw + (count === 1 ? 0 : -w + 2 * w * j / (count - 1)), y, r });
+  }
+  puffs(ctx, cs, BEARD, BEARD_D);
+  if (stage === 4) {
+    const y = chin + 3 + L * 0.82, sw = Math.sin(t * 1.6 + 2) * 0.82 * 4 + flutter * 5;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0 + sw - 5, y - 2.5, 10, 5, 2) : ctx.rect(x0 + sw - 5, y - 2.5, 10, 5); shape(ctx, "#e2b84a", 2);
+  }
+}
+// tall pointy hat: straight at the bottom, then it folds over and droops at the tip
+function wizHat(ctx, G, lift, tipA, sq, t) {
+  const bx = 1, by = -110 - lift;
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, 0, Math.PI * 2); shape(ctx, G.hat[0], 3.5);
+  const N = 20, Lc = 50 * sq + 30, step = Lc / (N - 1), P = [];
+  let x = bx + 1, y = by - 2;
+  for (let i = 0; i < N; i++) {
+    const u = i / (N - 1), ang = -0.05 + (tipA + 0.05) * Math.pow(ease(Math.max(0, (u - 0.42) / 0.58)), 0.9);
+    P.push({ x, y, ang, w: 21 * Math.pow(1 - u, 1.05) + 1.4 });
+    x += Math.sin(ang) * step; y -= Math.cos(ang) * step;
+  }
+  const L = P.map(p => [p.x - Math.cos(p.ang) * p.w, p.y - Math.sin(p.ang) * p.w]), R = P.map(p => [p.x + Math.cos(p.ang) * p.w, p.y + Math.sin(p.ang) * p.w]);
+  const outline = () => { ctx.beginPath(); L.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); const e = P[N - 1]; ctx.arc(e.x, e.y, e.w, e.ang + Math.PI, e.ang, true); for (let i = N - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); };
+  outline(); ctx.fillStyle = G.hat[0]; ctx.fill();
+  ctx.beginPath(); P.forEach((p, i) => i ? ctx.lineTo(p.x + Math.cos(p.ang) * p.w * 0.2, p.y + Math.sin(p.ang) * p.w * 0.2) : ctx.moveTo(p.x + Math.cos(p.ang) * p.w * 0.2, p.y + Math.sin(p.ang) * p.w * 0.2));
+  for (let i = N - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); ctx.fillStyle = G.hat[1]; ctx.fill();
+  outline(); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  // band and buckle
+  ctx.beginPath(); for (let i = 0; i <= 3; i++) i ? ctx.lineTo(L[i][0], L[i][1]) : ctx.moveTo(L[i][0], L[i][1]); for (let i = 3; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]); ctx.closePath(); shape(ctx, G.band, 2.5);
+  const bp = P[2]; ctx.save(); ctx.translate(bp.x + Math.cos(bp.ang) * bp.w * 0.35, bp.y - 1); ctx.rotate(bp.ang);
+  ctx.beginPath(); ctx.rect(-3.5, -3.5, 7, 7); shape(ctx, G.buckle, 2); ctx.fillStyle = G.band; ctx.fillRect(-1.5, -1.5, 3, 3); ctx.restore();
+  if (G.feather) {
+    const fp = P[3]; ctx.save(); ctx.translate(fp.x - fp.w * 0.7, fp.y - 2); ctx.rotate(-0.9 + Math.sin(t * 2) * 0.06);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-7, -14, 2, -30); ctx.quadraticCurveTo(8, -14, 0, 0); shape(ctx, G.feather, 2);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.2 * LW; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(1, -14, 2, -28); ctx.stroke(); ctx.restore();
+  }
+  // a patch, because hats are expensive
+  if (G.patch) {
+    const pp = P[9]; ctx.save(); ctx.translate(pp.x - Math.cos(pp.ang) * pp.w * 0.25, pp.y - Math.sin(pp.ang) * pp.w * 0.25); ctx.rotate(pp.ang + 0.25);
+    ctx.beginPath(); ctx.rect(-4.5, -4, 9, 8); shape(ctx, "#7b62b4", 2);
+    ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 1.1 * LW; ctx.setLineDash([1.6, 1.6]); ctx.beginPath(); ctx.rect(-3, -2.6, 6, 5.2); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+  }
+  if (G.head === "crystal") { const e = P[N - 1]; ell(ctx, e.x + Math.sin(e.ang) * 2, e.y - Math.cos(e.ang) * 2, 3.6, 3.6, 0, "#f4fbff", 2); }
+  // the front half of the brim goes over the bottom of the cone
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, 0, Math.PI); ctx.fillStyle = G.hat[0]; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bx, by, 45, 9.5, 0.05, -0.08, Math.PI + 0.08); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(bx, by + 3, 38, 5, 0.05, 0.3, Math.PI - 0.3); ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 2 * LW; ctx.stroke();
+}
+function wizHand(ctx, x, y, side, G, rot) {
+  ell(ctx, x - side * 6, y + 3, 8, 6.5, rot || side * 0.4, G.robe[0], 3);
+  if (G.cuff) ell(ctx, x - side * 3, y + 1.5, 3.5, 6.5, rot || side * 0.4, G.cuff, 2);
+  ctx.beginPath(); ctx.arc(x, y, 6.5, 0, Math.PI * 2); shape(ctx, G.glove || GLOVE, 3);
+  if (G.ring && side === 1) { ell(ctx, x - 2, y + 4, 2.4, 2.4, 0, "#e8c45a", 1.5); sparkle(ctx, x - 2, y + 1, 2.4, 0.9); }
+}
+function wizard(ctx, cx, gy, s, t, st) {
+  const G = typeof st.gear === "object" ? st.gear : GEAR[st.gear || "starter"], m = st.wmode || "idle";
+  let dx = 0, by = Math.sin(t * 2) * 1.2, lean = 0, lift = 0, tipA = 1.95 + Math.sin(t * 1.3) * 0.12, sq = 1;
+  let look = (t % 3.7) < 0.13 ? "blink" : "open", eyeDy = 0, boost = 1, flutter = st.talking ? Math.sin(t * 13) * 0.12 : 0;
+  let hF = [31, -50], hB = [-33, -48], staffA = -0.05, orbGlow = 0.55 + 0.15 * Math.sin(t * 3), c = 0, r = 0, ph = 0, hop = 0, j = 0;
+  if (m === "cast") {
+    ph = st.castHold != null ? 0 : st.oneT != null ? Math.min(0.999, st.oneT / 1.6) : (t / 1.6) % 1;
+    c = st.castHold != null ? st.castHold : ph < 0.55 ? ease(ph / 0.55) : ph < 0.7 ? 1 : 1 - ease((ph - 0.7) / 0.3);
+    r = ph >= 0.55 && ph < 0.7 ? Math.sin((ph - 0.55) / 0.15 * Math.PI) : 0;
+    hF = [31 + 4 * c + 8 * r, -50 - 26 * c]; hB = [-33 + 6 * c, -48 - 30 * c];
+    staffA = -0.05 + 0.3 * c + 0.3 * r; lean = -0.04 * c + 0.14 * r; orbGlow = 0.5 + 0.9 * c;
+    tipA -= 0.5 * r - 0.15 * c; flutter = r * 0.6 - c * 0.2; boost = 1 + c * 0.8;
+    if (c > 0.3 && look !== "blink") look = "narrow";
+  } else if (m === "flinch") {
+    ph = st.oneT != null ? Math.min(0.999, st.oneT / 1.5) : (t / 1.5) % 1;
+    j = ph < 0.07 ? ph / 0.07 : 1 - ease((ph - 0.07) / 0.5);
+    dx = -8 * j; lean = -0.18 * j; lift = 10 * j; tipA = 1.95 - 1.3 * j + Math.sin(ph * 40) * 0.35 * j;
+    hF = [31 - 4 * j, -50 - 14 * j]; hB = [-33 - 6 * j, -48 - 22 * j]; staffA = -0.05 - 0.3 * j; flutter = -j * 0.5;
+    if (j > 0.25) look = "squeeze";
+  } else if (m === "cheer") {
+    ph = (t / 0.9) % 1; hop = Math.sin(ph * Math.PI);
+    by = -hop * 16; lift = hop * 9; tipA = 1.35 + (1 - hop) * 0.5 + Math.sin(t * 9) * 0.1;
+    hF = [28, -84 - hop * 6]; hB = [-31, -90 - hop * 8]; staffA = Math.sin(t * 9) * 0.18; orbGlow = 1.1; flutter = (hop - 0.5) * 0.5;
+    look = "happy"; boost = 1.3;
+  } else if (m === "despair") {
+    by = 4 + Math.pow(Math.max(0, Math.sin(t * 1.2)), 8) * 2; lean = 0.1; sq = 0.82; lift = -4; tipA = 2.8 + Math.sin(t * 0.9) * 0.05;
+    hF = [27, -40]; hB = [-28, -38]; staffA = 0.38; orbGlow = 0.2; look = "sad"; eyeDy = 1.5; boost = 0.6;
+  }
+  ctx.save(); ctx.translate(cx + dx * s, gy + by * s); ctx.scale(s, s); ctx.rotate(lean);
+  const LW0 = LW; LW = LW0 / s;
+  // boots peek out under the robe
+  if (G.cloak) {         // a cloak hangs from the shoulders behind everything else
+    const sw = Math.sin(t * 2) * 2 + flutter * 8;
+    ctx.beginPath(); ctx.moveTo(-26, -78); ctx.quadraticCurveTo(-44 - sw, -40, -46 - sw, -2); ctx.quadraticCurveTo(-20, 4 + sw * 0.3, 2, -1); ctx.quadraticCurveTo(24, 4, 40 - sw * 0.5, -3); ctx.quadraticCurveTo(40, -40, 26, -78); ctx.closePath();
+    shape(ctx, G.cloak[0], 3.5); ctx.fillStyle = G.cloak[1]; ctx.beginPath(); ctx.moveTo(-40 - sw, -6); ctx.quadraticCurveTo(-30, -2, -22, 0); ctx.lineTo(-30, -40); ctx.closePath(); ctx.fill();
+  }
+  if (st.lev) for (const side of [-1, 1]) ell(ctx, side * 9 + 4, -2, 8.5, 4.6, 1.15 + Math.sin(t * 1.8 + side) * 0.08, G.boot || BOOT, 3);
+  else for (const side of [-1, 1]) ell(ctx, side * 11 + 3, -4, 9, 5, 0, G.boot || BOOT, 3);
+  // robe: a bell from the shoulders to a hem that sways a little
+  const hemW = Math.sin(t * 2.4) * 1.2 + flutter * 5;
+  const robe = () => {
+    ctx.beginPath(); ctx.moveTo(-22, -80);
+    ctx.quadraticCurveTo(-33, -80, -33, -68);                       // padded shoulder
+    ctx.quadraticCurveTo(-33, -38, -35 + hemW, -7);
+    for (let i = 0; i < 4; i++) { const x0 = -35 + i * 17.5, x1 = x0 + 17.5; ctx.quadraticCurveTo(lerp(x0, x1, 0.5) + hemW, -2 + (i % 2 ? -2 : 1), x1 + hemW * (i === 3 ? 1 : 0.5), -7); }
+    ctx.quadraticCurveTo(33, -38, 33, -68); ctx.quadraticCurveTo(33, -80, 22, -80); ctx.quadraticCurveTo(0, -85, -22, -80); ctx.closePath();
+  };
+  robe(); ctx.fillStyle = G.robe[0]; ctx.fill();
+  ctx.save(); robe(); ctx.clip();
+  ctx.fillStyle = G.robe[1]; ctx.beginPath(); ctx.ellipse(30, -36, 18, 56, 0.05, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = G.robe[1]; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";            // a couple of folds so it hangs
+  for (const x of [-16, 12]) { ctx.beginPath(); ctx.moveTo(x, -34); ctx.quadraticCurveTo(x - 1.5, -20, x + hemW * 0.4, -9); ctx.stroke(); }
+  ctx.strokeStyle = G.trim; ctx.lineWidth = 3.5 * LW; ctx.beginPath(); ctx.moveTo(-40, -11); ctx.quadraticCurveTo(0, -5 + hemW, 40, -11); ctx.stroke();
+  ctx.strokeStyle = "#c79a5a"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.moveTo(-34, -42); ctx.quadraticCurveTo(0, -37, 34, -42); ctx.stroke();
+  ctx.restore();
+  robe(); ctx.lineWidth = 3.5 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  ctx.strokeStyle = G.trim; ctx.lineWidth = 2 * LW;                  // seams of the shoulder pads
+  for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * 20, -80); ctx.quadraticCurveTo(sd * 24, -70, sd * 33, -66); ctx.stroke(); }
+  for (const [x, y, rr] of [[-14, -24, 2.6], [8, -58, 2], [15, -20, 2.2]]) sparkle(ctx, x, y, rr, 0.35);
+  if (G.amulet) { ctx.strokeStyle = "#d9b45a"; ctx.lineWidth = 1.6 * LW; ctx.beginPath(); ctx.moveTo(-9, -78); ctx.quadraticCurveTo(0, -60, 11, -78); ctx.stroke(); ell(ctx, 1, -64, 3.6, 4.4, 0, G.amulet, 2); }
+  // the face: nothing but shadow under the brim, and two yellow eyes, one bigger than the other
+  ell(ctx, 3, -94, 21, 14.5, 0, FACE, 3);
+  wizEyes(ctx, look, boost, eyeDy);
+  wizBeard(ctx, st.beard == null ? 2 : st.beard, t, flutter);
+  wizHand(ctx, hB[0], hB[1], -1, G);
+  wizHat(ctx, G, lift, tipA, sq, t);
+  // staff, then the hand gripping it
+  const up = [Math.sin(staffA), -Math.cos(staffA)], top = [hF[0] + up[0] * 62, hF[1] + up[1] * 62], bot = [hF[0] - up[0] * 46, hF[1] - up[1] * 46];
+  ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 7.5 * LW; ctx.beginPath(); ctx.moveTo(bot[0], bot[1]); ctx.lineTo(top[0], top[1]); ctx.stroke();
+  ctx.strokeStyle = WOOD; ctx.lineWidth = 7.5 * LW - 3.5 * LW; ctx.stroke();
+  const ob = [top[0] + up[0] * 7, top[1] + up[1] * 7];
+  const g = ctx.createRadialGradient(ob[0], ob[1], 0, ob[0], ob[1], 7 * (2 + orbGlow * 1.6));
+  g.addColorStop(0, rgba(G.orb, Math.min(0.6, 0.35 * orbGlow + 0.1))); g.addColorStop(1, rgba(G.orb, 0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ob[0], ob[1], 7 * (2 + orbGlow * 1.6), 0, Math.PI * 2); ctx.fill();
+  if (G.head === "crystal") {
+    ctx.save(); ctx.translate(ob[0], ob[1]); ctx.rotate(staffA);
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(6, -2); ctx.lineTo(0, 8); ctx.lineTo(-6, -2); ctx.closePath(); shape(ctx, rgba(G.orb, 1), 2.5);
+    ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(-3, -2); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill(); ctx.restore();
+  } else {
+    ctx.beginPath(); ctx.arc(ob[0], ob[1], 7, 0, Math.PI * 2);
+    const og = ctx.createRadialGradient(ob[0] - 2, ob[1] - 2, 0, ob[0], ob[1], 7);
+    og.addColorStop(0, "#ffffff"); og.addColorStop(0.45, rgba(G.orb, 1)); og.addColorStop(1, rgba(G.orb.map(v => Math.round(v * 0.6)), 1));
+    shape(ctx, og, 2.5);
+    ctx.save(); ctx.translate(ob[0], ob[1]); ctx.rotate(staffA);
+    ctx.strokeStyle = INK; ctx.lineWidth = 5.5 * LW; ctx.beginPath(); ctx.arc(0, 0, 8.5, 0.35, Math.PI - 0.35); ctx.stroke();
+    ctx.strokeStyle = WOOD; ctx.lineWidth = 2.5 * LW; ctx.stroke(); ctx.restore();
+  }
+  wizHand(ctx, hF[0], hF[1], 1, G);
+  // effects
+  if (m === "cast") {
+    if (c > 0.15 && ph < 0.55) for (let i = 0; i < 5; i++) { const a = i * 1.2566 + t * 3, rr = (1 - ((t * 1.6 + i / 5) % 1)) * 26; sparkle(ctx, ob[0] + Math.cos(a) * rr, ob[1] + Math.sin(a) * rr, 2.6, c); }
+    if (c > 0.3) sparkle(ctx, hB[0] - 2, hB[1] - 9, 3.2 * c, c * 0.9);
+    if (!st.noBolt && ph >= 0.55 && ph < 0.95) {
+      const pr = (ph - 0.55) / 0.4;
+      for (let k = 5; k >= 0; k--) {
+        const pk = Math.max(0, pr - k * 0.04), x = ob[0] + 8 + pk * 150, y = ob[1] - pk * 25;
+        ctx.save(); ctx.globalAlpha = (1 - pr) * (1 - k / 6); ctx.fillStyle = k ? rgba(G.orb, 1) : "#ffffff";
+        ctx.beginPath(); ctx.arc(x, y, (k ? 5 - k * 0.6 : 4), 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+    }
+  }
+  if (m === "flinch") { if (ph < 0.3) burst(ctx, 48, -66, 1, 1 - ph / 0.3, "#ff8a8a"); if (j > 0.2) sweat(ctx, -14, -108 - lift, 1, t); }
+  if (m === "cheer") for (let i = 0; i < 6; i++) { const a = t * 3 + i * 1.047; sparkle(ctx, ob[0] + Math.cos(a) * 20, ob[1] + Math.sin(a) * 15, 3, 0.5 + 0.5 * Math.sin(t * 6 + i)); }
+  if (m === "despair" && !st.cloud) rainCloud(ctx, 2, -172, t, { grow: 1, rain: 1, bolt: 0, fade: 1 });
+  ctx.restore(); LW = LW0;
+}
+
+// levitation: blue motes trickle down from under the robe; later they rise from a slowly turning Septagram
+function mote(ctx, x, y, r, a) {
+  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = "#9cc8ff";
+  ctx.beginPath(); ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+  ctx.globalAlpha = a * 0.35; ctx.beginPath(); ctx.arc(x, y, r * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+function motes(ctx, cx, gy, s, t, hover, lev) {
+  const g = ctx.createRadialGradient(cx, gy - hover * s * 0.4, 0, cx, gy - hover * s * 0.4, 40 * s);
+  g.addColorStop(0, "rgba(111,168,255,.28)"); g.addColorStop(1, "rgba(111,168,255,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, gy - hover * s * 0.4, 40 * s, 22 * s, 0, 0, Math.PI * 2); ctx.fill();
+  const N = lev === 2 ? 16 : 9;
+  for (let i = 0; i < N; i++) {
+    const f = (t * (lev === 2 ? 0.45 : 0.7) + i / N) % 1, spread = lev === 2 ? 44 : 22;
+    const x = cx + Math.sin(i * 12.9898) * spread * s + Math.sin(t * 2 + i) * 2.5 * s;
+    const y = lev === 2 ? gy - f * (hover + 50) * s : gy - hover * s - 4 * s + f * (hover + 4) * s;
+    mote(ctx, x, y, (1.6 + (i % 3) * 0.8) * s * (1 + 0.3 * Math.sin(t * 6 + i)), Math.sin(f * Math.PI));
+  }
+}
+function septagram(ctx, cx, gy, s, t) {
+  ctx.save(); ctx.translate(cx, gy); ctx.scale(1, 0.3);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 60 * s);
+  g.addColorStop(0, "rgba(111,168,255,.35)"); g.addColorStop(1, "rgba(111,168,255,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 60 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.rotate(t * 0.5);
+  ctx.shadowColor = "#6fa8ff"; ctx.shadowBlur = 12 * s; ctx.strokeStyle = "rgba(160,205,255," + (0.75 + 0.2 * Math.sin(t * 2.5)) + ")"; ctx.lineWidth = 2.2 * s;
+  ctx.beginPath(); ctx.arc(0, 0, 48 * s, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, 42 * s, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7; k ? ctx.lineTo(Math.cos(a) * 42 * s, Math.sin(a) * 42 * s) : ctx.moveTo(Math.cos(a) * 42 * s, Math.sin(a) * 42 * s); }
+  ctx.stroke();
+  ctx.fillStyle = "#cfe4ff";
+  for (let k = 0; k < 7; k++) { const a = -Math.PI / 2 + k * Math.PI * 2 / 7; ctx.beginPath(); ctx.arc(Math.cos(a) * 45 * s, Math.sin(a) * 45 * s, 1.8 * s, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+}
+
+// the little raincloud of defeat: grows, rumbles a small lightning bolt into the air, then rains on his hat
+function rainCloud(ctx, x, y, t, cl) {
+  const g = cl.grow * cl.fade; if (g <= 0.01) return;
+  ctx.save(); ctx.globalAlpha = cl.fade;
+  if (cl.rain) for (let i = 0; i < 6; i++) {
+    const f = (t * 1.6 + i / 6) % 1;
+    ctx.save(); ctx.globalAlpha = (1 - f) * cl.fade * cl.rain; ctx.strokeStyle = "#8fb8ff"; ctx.lineWidth = 2 * LW; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x - 13 + i * 5.4, y + 8 + f * 32); ctx.lineTo(x - 14 + i * 5.4, y + 13 + f * 32); ctx.stroke(); ctx.restore();
+  }
+  if (cl.bolt > 0) {
+    const pts = cl.path || [[x + 4, y - 8], [x, y - 17], [x + 8, y - 20], [x + 3, y - 31], [x + 12, y - 27], [x + 9, y - 42]];
+    ctx.save(); ctx.globalAlpha = cl.bolt; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.shadowColor = "#fff6a0"; ctx.shadowBlur = 14;
+    ctx.strokeStyle = INK; ctx.lineWidth = 5 * LW; ctx.beginPath(); pts.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); ctx.stroke();
+    ctx.strokeStyle = "#ffe95a"; ctx.lineWidth = 2.4 * LW; ctx.stroke(); ctx.restore();
+    const end = pts[pts.length - 1]; if (cl.bolt > 0.5) burst(ctx, end[0], end[1], 1, 0.9, "#ffe95a");
+  }
+  const dark = cl.bolt > 0 ? ["#9a95ad", "#7d7892"] : ["#77718a", "#5f5a72"];
+  puffs(ctx, [[-12, 2, 7], [-3, -4, 9], [9, 0, 8], [2, 4, 7]].map(([a, b, r]) => ({ x: x + a * g, y: y + b * g, r: r * g })), dark[0], dark[1]);
+  ctx.restore();
+}
+// teleport: stars and mystic symbols flung out in a burst
+function spawnTwinkles(st, x, y, s) {
+  st.parts = st.parts || [];
+  for (let i = 0; i < 16; i++) {
+    const a = Math.random() * Math.PI * 2, v = (60 + Math.random() * 90) * s;
+    st.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30 * s, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 8,
+                    kind: ["star", "hept", "moon", "rune"][i % 4], hue: Math.random() * 360, r: (4 + Math.random() * 3) * s, life: 0 });
+  }
+}
+function drawTwinkles(ctx, st, dt) {
+  for (const p of st.parts || []) {
+    p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.97; p.vy *= 0.97; p.rot += p.vr * dt;
+    const r = p.r, col = "hsl(" + p.hue + ",90%,72%)";
+    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - p.life / 1.1); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    ctx.shadowColor = col; ctx.shadowBlur = 8; ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1.6 * LW; ctx.lineJoin = "round";
+    ctx.beginPath();
+    if (p.kind === "star") { for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r; k ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); }
+    else if (p.kind === "hept") { for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7; k ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.stroke(); }
+    else if (p.kind === "moon") { ctx.moveTo(0, -r); ctx.quadraticCurveTo(r * 1.5, 0, 0, r); ctx.quadraticCurveTo(r * 0.6, 0, 0, -r); ctx.fill(); }
+    else { ctx.moveTo(0, -r); ctx.lineTo(r * 0.9, r * 0.7); ctx.lineTo(-r * 0.9, r * 0.7); ctx.closePath(); ctx.moveTo(0, -r * 0.2); ctx.lineTo(0, r * 0.4); ctx.stroke(); }
+    ctx.restore();
+  }
+  st.parts = (st.parts || []).filter(p => p.life < 1.1);
+}
+// a cosy corner of town: cobbles and a couple of houses
+// ---------- Townsfolk: chibi humans for the conversation window ----------
+const SKIN = ["#f0c9a0", "#e2ad84", "#c98d64"], NPC_BOOT = "#4a3523";
+// a talking or idle villager; o: { skin, top, legs, kind, talking, mutter, lean, big, phase }
+function human(ctx, cx, gy, s, t, o) {
+  const ph = o.phase || 0, bob = Math.sin((t + ph) * 2) * 1.2 + (o.talking ? -Math.abs(Math.sin((t + ph) * 9)) * 1.5 : 0);
+  const W = o.big ? 1.25 : 1;
+  ctx.save(); ctx.translate(cx, gy); ctx.scale(s, s); ctx.rotate(o.lean || 0);
+  const L0 = LW; LW = L0 / s;
+  for (const side of [-1, 1]) ell(ctx, side * 10 * W + 2, -4, 9, 5, 0, NPC_BOOT, 3);
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-17 * W, -28, 34 * W, 22, 4) : ctx.rect(-17 * W, -28, 34 * W, 22); shape(ctx, o.legs, 3);
+  ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, -7); ctx.stroke();
+  // body
+  const by = bob;
+  ctx.beginPath(); ctx.moveTo(-15 * W, -66 + by); ctx.quadraticCurveTo(-24 * W, -64 + by, -22 * W, -40 + by); ctx.lineTo(-20 * W, -22); ctx.lineTo(20 * W, -22);
+  ctx.lineTo(22 * W, -40 + by); ctx.quadraticCurveTo(24 * W, -64 + by, 15 * W, -66 + by); ctx.closePath(); shape(ctx, o.top, 3.5);
+  if (o.kind === "builder") {         // overalls: a bib with two straps
+    ctx.beginPath(); ctx.moveTo(-13, -48 + by); ctx.lineTo(13, -48 + by); ctx.lineTo(17, -22); ctx.lineTo(-17, -22); ctx.closePath(); shape(ctx, "#3f6fb0", 3);
+    ctx.strokeStyle = "#3f6fb0"; ctx.lineWidth = 5 * LW; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * 10, -48 + by); ctx.lineTo(sd * 13, -64 + by); ctx.stroke(); }
+    ell(ctx, -9, -45 + by, 2, 2, 0, "#e8c45a", 1.5); ell(ctx, 9, -45 + by, 2, 2, 0, "#e8c45a", 1.5);
+  }
+  if (o.kind === "lady") { ctx.beginPath(); ctx.moveTo(-12, -46 + by); ctx.lineTo(12, -46 + by); ctx.lineTo(15, -22); ctx.lineTo(-15, -22); ctx.closePath(); shape(ctx, "#efe6d2", 3); }
+  // head
+  const hy = -94 + by, R = 30;
+  for (const sd of [-1, 1]) ell(ctx, sd * (R - 1), hy + 3, 5, 7, 0, o.skin, 3);
+  ell(ctx, 0, hy, R, R * 0.97, 0, o.skin, 3.5);
+  ctx.fillStyle = "rgba(230,120,120,.25)"; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.arc(sd * 16, hy + 10, 5, 0, Math.PI * 2); ctx.fill(); }
+  // hair and hats
+  if (o.kind === "bob") {
+    for (const sd of [-1, 1]) puffs(ctx, [{ x: sd * 25, y: hy - 4, r: 6 }, { x: sd * 26, y: hy + 5, r: 6 }], "#7a5232");
+    puffs(ctx, [{ x: -14, y: hy + 20, r: 8 }, { x: 0, y: hy + 25, r: 10 }, { x: 14, y: hy + 20, r: 8 }, { x: -20, y: hy + 10, r: 6 }, { x: 20, y: hy + 10, r: 6 }], "#8a5c38", "#6e4a2c");
+    ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.ellipse(-8, hy - 18, 8, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+  } else if (o.kind === "lady") {
+    ctx.beginPath(); ctx.moveTo(-R - 3, hy + 6); ctx.quadraticCurveTo(-R - 2, hy - R - 6, 0, hy - R - 6); ctx.quadraticCurveTo(R + 2, hy - R - 6, R + 3, hy + 6);
+    ctx.quadraticCurveTo(R - 4, hy - 12, 0, hy - 14); ctx.quadraticCurveTo(-R + 4, hy - 12, -R - 3, hy + 6); ctx.closePath(); shape(ctx, "#b0473f", 3);
+    ctx.fillStyle = "#f1e8d4"; for (const [x, y] of [[-14, -22], [0, -28], [14, -22], [-22, -10], [22, -10]]) { ctx.beginPath(); ctx.arc(x, hy + y, 2, 0, Math.PI * 2); ctx.fill(); }
+  } else if (o.kind === "old") {
+    ctx.beginPath(); ctx.ellipse(2, hy - 16, R + 3, 13, -0.08, Math.PI, 0); ctx.closePath(); shape(ctx, "#6c6676", 3);
+    ctx.beginPath(); ctx.ellipse(12, hy - 15, 20, 5, -0.08, 0, Math.PI); shape(ctx, "#5a5462", 3);
+  } else if (o.kind === "builder") {
+    ctx.beginPath(); ctx.ellipse(0, hy - 10, R + 3, 26, 0, Math.PI, 0); ctx.closePath(); shape(ctx, "#e8c45a", 3.5);
+    ctx.strokeStyle = INK; ctx.lineWidth = 7 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-R - 9, hy - 10); ctx.lineTo(R + 9, hy - 10); ctx.stroke();
+    ctx.strokeStyle = "#e8c45a"; ctx.lineWidth = 3.5 * LW; ctx.stroke();
+    ctx.strokeStyle = "#c9a43a"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.moveTo(0, hy - 34); ctx.lineTo(0, hy - 12); ctx.stroke();
+  }
+  // face
+  const blink = ((t + ph * 1.7) % 3.3) < 0.12;
+  for (const sd of [-1, 1]) {
+    const ex = sd * 10, ey = hy + 3;
+    if (blink) { ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * LW; ctx.beginPath(); ctx.moveTo(ex - 3.5, ey); ctx.lineTo(ex + 3.5, ey); ctx.stroke(); }
+    else { ell(ctx, ex, ey, 3.4, 3.8, 0, INK, 0.01); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(ex - 1, ey - 1.4, 1.1, 0, Math.PI * 2); ctx.fill(); }
+    ctx.strokeStyle = o.kind === "old" ? "#e8e2d6" : "#5a3a24"; ctx.lineWidth = 2.4 * LW; ctx.lineCap = "round";
+    const frown = o.grumpy ? 2.5 : 0;
+    ctx.beginPath(); ctx.moveTo(ex - 5, ey - 8 - (sd < 0 ? frown : -frown) * 0); ctx.lineTo(ex + 5, ey - 8 + (o.grumpy ? -sd * 2.5 : 0)); ctx.stroke();
+  }
+  ell(ctx, 0, hy + 10, 3.5, 2.6, 0, "rgba(0,0,0,.12)", 0.01);
+  const my = hy + 18;
+  const stache = o.kind === "old" || o.kind === "builder";
+  if (stache) puffs(ctx, [{ x: -8, y: my - 5, r: 4 }, { x: 0, y: my - 4.5, r: 4.5 }, { x: 8, y: my - 5, r: 4 }], o.kind === "old" ? "#efeae0" : "#7a5232");
+  if (o.talking) { const open = 1 + Math.abs(Math.sin((t + ph) * 11)) * 4.5; ell(ctx, 0, my + (stache ? 4 : 2), 5, open, 0, "#5a1f22", 2); }
+  else if (o.mutter) { ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); for (let i = 0; i <= 6; i++) { const x = -6 + i * 2, y = my + 1 + Math.sin(i * 1.8 + t * 14) * 1.3; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
+  else if (o.kind !== "bob") { ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); o.grumpy ? ctx.arc(0, my + 6, 5, Math.PI * 1.2, Math.PI * 1.8) : ctx.arc(0, my - 2, 5, Math.PI * 0.2, Math.PI * 0.8); ctx.stroke(); }
+  // hands: talkers gesture with the free hand; the Builder keeps hold of his hammer
+  if (o.grumpy) {                     // arms crossed
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-21 * W, -50 + by, 42 * W, 13, 6) : ctx.rect(-21 * W, -50 + by, 42 * W, 13); shape(ctx, o.top, 3);
+    for (const sd of [-1, 1]) ell(ctx, sd * 19 * W, -44 + by, 6, 6, 0, o.skin, 3);
+  } else for (const sd of [-1, 1]) {
+    let hx = sd * 27 * W, hyy = -40 + by;
+    const gest = o.kind === "builder" ? -1 : 1;
+    if (o.talking && sd === gest) { hx += sd * 4; hyy -= 8 + Math.sin((t + ph) * 5) * 6; }
+    if (o.kind === "builder" && sd === 1) hammer(ctx, hx + 2, hyy, t, 0.45);
+    ell(ctx, hx, hyy, 6.5, 6.5, 0, o.skin, 3);
+  }
+  if (o.mutter) { ctx.save(); ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 6 + ph); ctx.strokeStyle = "#a69eb3"; ctx.lineWidth = 2 * LW; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(18 + i * 7, hy - 22 - i * 6, 3 + i, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); } ctx.restore(); }
+  LW = L0; ctx.restore();
+}
+function hammer(ctx, x, y, t, a) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate((a === undefined ? -0.5 : a) + Math.sin(t * 1.5) * 0.05);
+  ctx.strokeStyle = INK; ctx.lineWidth = 6 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(0, 6); ctx.lineTo(0, -34); ctx.stroke();
+  ctx.strokeStyle = "#8a5a34"; ctx.lineWidth = 3 * LW; ctx.stroke();
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-11, -42, 22, 10, 2) : ctx.rect(-11, -42, 22, 10); shape(ctx, "#8a8495", 3);
+  ctx.restore();
+}
+// warm tavern corner behind the villagers
+function tavernBack(ctx, W, gy, s) {
+  ctx.fillStyle = "#3a2a20"; ctx.fillRect(0, 0, W, W);
+  ctx.strokeStyle = "#2c1f17"; ctx.lineWidth = 2; for (let x = 0; x < W; x += 22 * s) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, gy); ctx.stroke(); }
+  const g = ctx.createRadialGradient(W * 0.82, W * 0.2, 0, W * 0.82, W * 0.2, W * 0.45); g.addColorStop(0, "rgba(255,200,110,.35)"); g.addColorStop(1, "rgba(255,200,110,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, W);
+  ctx.fillStyle = "#ffcf6a"; ctx.beginPath(); ctx.arc(W * 0.82, W * 0.2, 5 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#4a3523"; ctx.fillRect(0, gy - 4 * s, W, W - gy + 4 * s);
+}
+// the person (or people) the wizard is talking to; who = the line being spoken
+function renderNpc(cv, npc, who, t, st) {
+  const ctx = cv.getContext("2d"), W = cv.clientWidth || 150, dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(W * dpr); }
+  const s = W / 250, gy = W * 0.92;
+  LW = Math.max(0.5, s); mode = "idle";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, W);
+  const shadow = (x, r) => { ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(x, gy, r * s, r * 0.19 * s, 0, 0, Math.PI * 2); ctx.fill(); };
+  if (npc === "saina") {
+    townBack(ctx, W, gy, s); shadow(W * 0.48, 36);
+    st.ctx = ctx; st.talking = who === "Saina Lot"; skeleton(st, W * 0.48, gy, s, t);
+    ctx.save(); ctx.translate(W * 0.48 + 4 * s, gy - 146 * s); ctx.scale(s, s); const L0 = LW; LW = L0 / s;
+    ctx.save(); ctx.rotate(-0.18); ctx.beginPath(); ctx.ellipse(6, 0, 46, 15, 0, 0, Math.PI * 2); shape(ctx, "#7a2f6a", 3.5);
+    ctx.beginPath(); ctx.ellipse(6, -6, 34, 13, 0, Math.PI, 0); ctx.closePath(); shape(ctx, "#8e3a7c", 3);
+    ctx.beginPath(); ctx.moveTo(30, -8); ctx.quadraticCurveTo(70, -50, 58, -70); ctx.quadraticCurveTo(52, -40, 26, -12); ctx.closePath(); shape(ctx, "#e8c45a", 2.5); ctx.restore();
+    // the lute, held across the ribs
+    ctx.save(); ctx.translate(-4, 112); ctx.rotate(-0.6 + Math.sin(t * (st.talking ? 9 : 1.5)) * 0.04);
+    ctx.beginPath(); ctx.ellipse(0, 0, 18, 14, 0, 0, Math.PI * 2); shape(ctx, "#c98d4a", 3);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(3, 0, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.rect(14, -3, 34, 6); shape(ctx, "#8a5a34", 2.5); ctx.beginPath(); ctx.rect(46, -5, 8, 10); shape(ctx, "#6b4426", 2);
+    ctx.restore();
+    if (st.talking) for (let i = 0; i < 2; i++) { const f = (t * 0.8 + i * 0.5) % 1; ctx.save(); ctx.globalAlpha = 1 - f; ctx.fillStyle = "#e8c45a"; ctx.font = "700 " + 22 + "px serif"; ctx.fillText(i ? "♫" : "♪", 50 + i * 14, 70 - f * 50); ctx.restore(); }
+    LW = L0; ctx.restore();
+    return;
+  }
+  if (npc === "villagers") {
+    tavernBack(ctx, W, gy, s);
+    const mutter = /muttering/i.test(who), talk = who === "Villagers";
+    shadow(W * 0.5, 40); shadow(W * 0.2, 30); shadow(W * 0.8, 30);
+    human(ctx, W * 0.5, gy - 6 * s, s * 0.95, t, { skin: SKIN[1], top: "#5f7d45", legs: "#5a4032", kind: "bob", big: true, grumpy: !talk && !mutter || mutter, phase: 1.3 });
+    human(ctx, W * 0.2, gy, s * 0.82, t, { skin: SKIN[0], top: "#5b5fa8", legs: "#4a3f5a", kind: "lady", talking: talk, mutter, lean: mutter ? 0.12 : 0, phase: 0 });
+    human(ctx, W * 0.8, gy, s * 0.82, t, { skin: SKIN[2], top: "#b08a5a", legs: "#4a4553", kind: "old", mutter, lean: mutter ? -0.12 : 0, phase: 2.1 });
+  } else {
+    townBack(ctx, W, gy, s); shadow(W * 0.48, 36);
+    const talking = who === "Builder";
+    if (npc === "builderSkel") {
+      st.ctx = ctx; st.talking = talking; skeleton(st, W * 0.48, gy, s, t);
+      const hx = W * 0.48 + 2 * s, hy = gy - 142 * s;
+      ctx.save(); ctx.translate(hx, hy); ctx.scale(s, s); const L0 = LW; LW = L0 / s;
+      ctx.beginPath(); ctx.ellipse(0, 0, 44, 30, 0, Math.PI, 0); ctx.closePath(); shape(ctx, "#e8c45a", 3.5);
+      ctx.strokeStyle = INK; ctx.lineWidth = 7 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-54, 0); ctx.lineTo(54, 0); ctx.stroke();
+      ctx.strokeStyle = "#e8c45a"; ctx.lineWidth = 3.5 * LW; ctx.stroke();
+      ctx.strokeStyle = "#c9a43a"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.moveTo(0, -28); ctx.lineTo(0, -3); ctx.stroke();
+      hammer(ctx, 26, 112, t, 0.55); LW = L0; ctx.restore();
+    } else human(ctx, W * 0.48, gy, s, t, { skin: SKIN[0], top: "#c0503a", legs: "#2f548a", kind: "builder", talking, phase: 0.4 });
+  }
+}
+function townBack(ctx, W, gy, s) {
+  ctx.fillStyle = "#2a2433";
+  ctx.beginPath(); ctx.moveTo(W * 0.62, gy - 4 * s); ctx.lineTo(W * 0.62, gy - 70 * s); ctx.lineTo(W * 0.72, gy - 100 * s); ctx.lineTo(W * 0.82, gy - 70 * s); ctx.lineTo(W * 0.82, gy - 4 * s); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W * 0.02, gy - 4 * s); ctx.lineTo(W * 0.02, gy - 58 * s); ctx.lineTo(W * 0.1, gy - 84 * s); ctx.lineTo(W * 0.18, gy - 58 * s); ctx.lineTo(W * 0.18, gy - 4 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#ffcf6a"; for (const [x, y] of [[0.68, 60], [0.75, 60], [0.07, 40], [0.12, 40]]) ctx.fillRect(W * x, gy - y * s, 7 * s, 9 * s);
+  ctx.fillStyle = "#3a3540"; ctx.fillRect(0, gy - 4 * s, W, W - gy + 4 * s);
+  ctx.fillStyle = "#4a4452";
+  for (let row = 0; row < 3; row++) for (let i = -1; i < W / (18 * s) + 1; i++) { ctx.beginPath(); ctx.ellipse((i + (row % 2) * 0.5) * 18 * s, gy + (2 + row * 8) * s, 7 * s, 3 * s, 0, 0, Math.PI * 2); ctx.fill(); }
+}
+
+const clamp01 = x => Math.max(0, Math.min(1, x));
+// one-shot wizard sequences: "defeat" (ward falls: cloud, bolt, rain, vanish), "vanish" (cast and blink out), "appear"
+function seqFx(q, st) {
+  const e = q.e, out = { shimmer: 0, squash: 0, flash: 0, burst: false, events: [] };
+  const once = (k, at) => { if (e >= at && !q[k]) { q[k] = true; return true; } return false; };
+  const vanish = t0 => {
+    out.shimmer = clamp01((e - t0) / 0.6); out.squash = clamp01((e - t0 - 0.55) / 0.25);
+    out.flash = Math.max(0, 1 - Math.abs(e - t0 - 0.8) / 0.15);
+    if (once("v", t0 + 0.78)) { out.burst = true; out.events.push("puff"); }
+    if (e > t0 + 0.8) out.squash = 1;
+  };
+  const appear = t0 => {
+    out.squash = e < t0 ? 1 : 1 - clamp01((e - t0) / 0.3); out.shimmer = e < t0 ? 1 : 1 - clamp01((e - t0 - 0.1) / 0.6);
+    out.flash = Math.max(0, 1 - Math.abs(e - t0 - 0.05) / 0.15);
+    if (once("a", t0)) { out.burst = true; out.events.push("appear"); }
+  };
+  if (q.kind === "defeat") {
+    if (!q.boltPath) {
+      const side = Math.random() < 0.5 ? -1 : 1, ex = side * (60 + Math.random() * 30), ey = -2 - Math.random() * 30;
+      const sx = 2 + side * 14, sy = -168, pts = [[sx, sy]];
+      for (let k = 1; k < 6; k++) { const u = k / 6; pts.push([lerp(sx, ex, u) + (k % 2 ? 1 : -1) * (5 + Math.random() * 5), lerp(sy, ey, u) + (Math.random() - 0.5) * 6]); }
+      pts.push([ex, ey]); q.boltPath = pts;
+    }
+    if (once("g", 0)) out.events.push("gong");
+    if (once("th", 1.3)) out.events.push("thunder");
+    st.wmode = "despair"; st.oneT = null;
+    st.cloud = { grow: ease(clamp01((e - 0.2) / 0.9)), bolt: e > 1.3 && e < 1.8 ? (e < 1.42 || e > 1.5 ? 1 : 0.25) * (1 - clamp01((e - 1.6) / 0.2)) : 0,
+                 rain: clamp01((e - 1.8) / 0.2), fade: 1 - clamp01((e - 3.9) / 0.6), path: q.boltPath };
+    if (e > 3.2) vanish(3.2);
+    q.done = e > 5.0;
+  } else if (q.kind === "victory") {
+    if (once("f", 0)) out.events.push("fanfare");
+    st.wmode = "cheer"; st.oneT = null;
+    if (e > 2.4) vanish(2.4);
+    q.done = e > 4.2;
+  } else if (q.kind === "vanish") {
+    st.wmode = "cast"; st.castHold = ease(clamp01(e / 0.9)); st.oneT = null;
+    if (e > 1.0) vanish(1.0);
+    q.done = e > 2.0;
+  } else {
+    st.wmode = "idle"; st.castHold = null; appear(0.25);
+    q.done = e > 1.1;
+  }
+  if (q.done) { st.cloud = null; st.castHold = null; }
+  return out;
+}
+const NOFX = { shimmer: 0, squash: 0, flash: 0, burst: false, events: [] };
+// the wizard, with his levitation, teleport shimmer, raincloud, twinkles and flash
+function drawWizard(ctx, x, gy, s, t, st, fx, dt, dpr) {
+  fx = fx || NOFX; mode = "idle"; LW = Math.max(0.5, s * 1.1);
+  const hover = st.lev ? 16 + Math.sin(t * 1.8) * 3 : 0;
+  if (st.lev === 2) septagram(ctx, x, gy, s, t);
+  const shrink = (1 - hover / 60) * (1 - fx.squash);
+  ctx.fillStyle = "rgba(0,0,0," + (0.25 * shrink) + ")"; ctx.beginPath(); ctx.ellipse(x, gy, 38 * s * Math.max(0.01, shrink), 7 * s * Math.max(0.01, shrink), 0, 0, Math.PI * 2); ctx.fill();
+  if (st.lev && fx.squash < 1) motes(ctx, x, gy, s, t, hover, st.lev);
+  if (fx.squash < 1) {
+    if (!fx.shimmer) { ctx.save(); ctx.translate(0, -hover * s); wizard(ctx, x, gy, s, t, st); ctx.restore(); }
+    else {
+      const bw = 260 * s, bh = 300 * s, ox = x - bw / 2, oy = gy + 20 * s - bh;
+      if (!st.off) st.off = document.createElement("canvas");
+      const off = st.off, W = Math.ceil(bw * dpr), H = Math.ceil(bh * dpr);
+      if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
+      const o = off.getContext("2d"); o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, W, H);
+      o.setTransform(dpr, 0, 0, dpr, 0, 0); o.translate(-ox, -oy - hover * s);
+      wizard(o, x, gy, s, t, st);
+      o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = "source-atop";
+      o.fillStyle = "hsla(" + ((t * 420) % 360) + ",95%,62%," + (0.6 * fx.shimmer) + ")"; o.fillRect(0, 0, W, H); o.globalCompositeOperation = "source-over";
+      const ccy = gy - (hover + 70) * s;
+      ctx.save(); ctx.translate(x, ccy); ctx.scale(Math.max(0.001, 1 - fx.squash), 1 + fx.squash * 0.8); ctx.translate(-x, -ccy);
+      const sh = Math.max(2, Math.round(4 * s * dpr));
+      for (let y = 0; y < H; y += sh) {
+        const dx = Math.sin(y / dpr * 0.15 + t * 22) * 5 * s * fx.shimmer;
+        ctx.drawImage(off, 0, y, W, Math.min(sh + 1, H - y), ox + dx, oy + y / dpr, bw, Math.min(sh + 1, H - y) / dpr);
+      }
+      ctx.restore();
+    }
+    LW = Math.max(0.5, s * 1.1);
+  }
+  if (st.cloud) { ctx.save(); ctx.translate(x, gy - hover * s); ctx.scale(s, s); const L0 = LW; LW = L0 / s; rainCloud(ctx, 2, -172, t, st.cloud); LW = L0; ctx.restore(); }
+  const cy = gy - (hover + 70) * s;
+  if (fx.burst) spawnTwinkles(st, x, cy, s);
+  drawTwinkles(ctx, st, dt);
+  if (fx.flash > 0) {
+    const g = ctx.createRadialGradient(x, cy, 0, x, cy, 90 * s);
+    g.addColorStop(0, "rgba(255,255,255," + fx.flash + ")"); g.addColorStop(0.4, "rgba(200,170,255," + (0.6 * fx.flash) + ")"); g.addColorStop(1, "rgba(160,120,255,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, cy, 90 * s, 0, Math.PI * 2); ctx.fill();
+  }
+  if (st.cloud && st.cloud.bolt > 0) { ctx.fillStyle = "rgba(255,250,220," + (0.12 * st.cloud.bolt) + ")"; ctx.beginPath(); ctx.arc(x, cy, 140 * s, 0, Math.PI * 2); ctx.fill(); }
+}
+// ---------- Looks rolled per character ----------
+function rollTeeth() {
+  const all = [];
+  for (let i = 0; i < 4; i++) { all.push(["up", i]); all.push(["low", i]); }
+  all.sort(() => Math.random() - 0.5);
+  const k = 1 + Math.floor(Math.random() * 4), up = [], low = [];
+  for (const [row, i] of all.slice(0, k)) (row === "up" ? up : low).push(i);
+  return { up, low };
+}
+const JEWELS = ["left", "right", "nose"];
+// 1-3 jagged cracks starting at the edge of the dome and running a little way in, away from the eyes
+function rollCracks() {
+  const n = 1 + Math.floor(Math.random() * 3), out = [];
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI + 0.45 + Math.random() * (Math.PI - 0.9);
+    let x = Math.cos(a) * 0.98, y = -0.05 + Math.sin(a) * 0.88;
+    const pts = [[x, y]], dir = Math.atan2(-0.35 - y, -x * 0.4 - x);
+    const segs = 2 + Math.floor(Math.random() * 2);
+    for (let j = 0; j < segs; j++) {
+      const len = 0.1 + Math.random() * 0.08, d = dir + (j % 2 ? 0.7 : -0.7) * (0.6 + Math.random() * 0.5);
+      x += Math.cos(d) * len; y += Math.sin(d) * len; pts.push([x, y]);
+    }
+    out.push(pts);
+  }
+  return out;
+}
+
+
+  const DRAW = { kobold, bog_goblin: goblin, orc, golem, wisp, ogre, troll, spirit,
+    skeleton_warrior: (ctx, x, gy, s, t, st) => { st.ctx = ctx; skeleton(st, x, gy, s, t); },
+    skeleton_archer: (ctx, x, gy, s, t, st) => { st.ctx = ctx; st.archer = true; skeleton(st, x, gy, s, t); } };
+  // draw one character on a square canvas: ground, shadow and the creature, in the given animation mode
+  function render(kind, cv, st, t, dt, m) {
+    const ctx = cv.getContext("2d"), W = cv.clientWidth || 240, dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(W * dpr); }
+    mode = m;
+    const s = W / 300, gy = W * 0.86, tile = 30 * s;
+    LW = Math.max(0.55, s);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, W);
+    const moving = m === "walk" || m === "panic" || m === "charm";
+    if (moving) st.x = ((st.x || 0) + dt * (m === "panic" ? 70 : 34) * s) % (tile * 2);
+    for (let i = -2; i < W / tile + 2; i++) { ctx.fillStyle = i % 2 ? GROUND : GROUND2; ctx.fillRect(i * tile - (st.x || 0), gy - 4 * s, tile, W - gy + 4 * s); }
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(W * 0.46, gy, 36 * s, 7 * s, 0, 0, Math.PI * 2); ctx.fill();
+    DRAW[kind](ctx, W * 0.46, gy, s, t, st);
+  }
+  // roll the cosmetic quirks a creature is born with
+  function looks(kind) {
+    const st = { x: 0 };
+    if (kind === "skeleton_warrior" || kind === "skeleton_archer") {
+      const r = rollTeeth(); st.upMiss = r.up; st.lowMiss = r.low;
+      st.glow = Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1];
+      st.cracks = rollCracks(); st.archer = kind === "skeleton_archer";
+    }
+    if (kind === "bog_goblin") st.jewels = JEWELS.filter(() => Math.random() < 0.4);
+    if (kind === "kobold") { st.tongue = Math.random() < 0.5 ? -1 : 1; st.hornMissing = Math.random() < 0.4 ? (Math.random() < 0.5 ? -1 : 1) : null; }
+    if (kind === "golem") {
+      st.mossSpots = { head: Math.random() < 0.5, left: Math.random() < 0.5, right: Math.random() < 0.5 };
+      st.mossTop = ["plain", "flower", "mushroom"][Math.floor(Math.random() * 3)]; st.gcracks = rollGolemCracks(); st.quarry = 0;
+    }
+    if (kind === "spirit") {
+      const c = ["#6fa8ff", "#b8f07a", "#ffd75a", "#ff8fc0", "#c79bff"].sort(() => Math.random() - 0.5);
+      st.eyes = Math.random() < 0.5 ? [[c[0], 1], [c[1], 0.72]] : [[c[0], 0.75], [c[1], 1]];
+      st.chains = Math.random() < 0.4; st.bow = Math.random() < 0.3; st.torn = Math.random() < 0.4;
+    }
+    if (kind === "ogre") {
+      st.warts = Array.from({ length: Math.floor(Math.random() * 4) }, () => [Math.random() * 1.2 - 0.6, Math.random() * 0.7 - 0.5]);
+      st.noseRing = Math.random() < 0.4; st.gap = Math.random() < 0.5; st.tuskSide = Math.random() < 0.5 ? -1 : 1;
+    }
+    if (kind === "troll") {
+      st.hair = ["#3b4a2a", "#5a3a2a", "#2b2a35", "#8a7a5a", "#6a2e2e"][Math.floor(Math.random() * 5)];
+      st.earring = Math.random() < 0.45; st.moss = { head: Math.random() < 0.5, back: Math.random() < 0.6 };
+      st.skin = Math.random() < 0.5 ? ["#6f9a86", "#557a69"] : ["#6f8aa0", "#557086"];
+    }
+    if (kind === "orc") { st.marks = {}; for (const spot of ["left", "right", "forehead"]) { const r = Math.random(); st.marks[spot] = r < 0.35 ? "scar" : r < 0.65 ? "plaster" : null; } }
+    return st;
+  }
+  // draw a character standing on (x, gy) on the battlefield; flip mirrors it to face left
+  function drawAt(kind, ctx, x, gy, s, t, st, m, flip) {
+    mode = m; LW = Math.max(0.45, s * 1.15);
+    ctx.save();
+    if (flip) { ctx.translate(x, 0); ctx.scale(-1, 1); ctx.translate(-x, 0); }
+    DRAW[kind](ctx, x, gy, s, t, st);
+    ctx.restore();
+  }
+  // the wizard on a small square canvas in town
+  function renderTownWizard(cv, st, t, dt, fx) {
+    const ctx = cv.getContext("2d"), W = cv.clientWidth || 150, dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(W * dpr); }
+    const s = W / 250, gy = W * 0.92;
+    LW = Math.max(0.5, s);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, W);
+    ctx.fillStyle = "#f1e8d4";
+    for (const [x, y, r] of [[0.12, 0.12, 1.2], [0.8, 0.08, 1], [0.9, 0.3, 1.4], [0.3, 0.22, 0.9], [0.62, 0.18, 1.1]]) { ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 1.5 + x * 9); ctx.beginPath(); ctx.arc(x * W, y * W, r * s * 1.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    townBack(ctx, W, gy, s);
+    drawWizard(ctx, W * 0.45, gy, s, t, st, fx, dt, dpr);
+  }
+  return { render, looks, drawAt, drawWizard, seqFx, renderTownWizard, renderNpc, GEAR };
+})();
+const CAST = [
+  { k: "ogre", name: "Ogre", tag: "Enemy", stats: [["HP", 70], ["Damage", 6], ["Every", "1.7 s"], ["Speed", 0.5], ["From wave", 17]],
+    lore: "Ochre and grey-brown, a huge belly and a small head, an underbite with one big tusk and a loincloth on a rope belt. Every 6th or 7th blow is a two-handed ground slam on every summon around it. Never panics; burns but keeps going.",
+    moves: [["main", "Fist"], ["kick", "Stomp"], ["slam", "Ground slam"]], looks: "Rolled: warts, nose ring, tusk side, missing tooth" },
+  { k: "troll", name: "Troll", tag: "Enemy", stats: [["HP", 70], ["Damage", 5], ["Every", "1.4 s"], ["Speed", 0.6], ["From wave", 20]],
+    lore: "Hunched and long-armed, moss-green or bluish, a big knobbly nose and shaggy hair. Mends 1 HP every 5 s unless burning; fire hurts it twice as much and makes it run.",
+    moves: [["main", "Long-arm swipe"], ["kick", "Kick"], ["headbutt", "Nose butt"]], looks: "Rolled: skin tone, hair colour, earring, moss on head and back" },
+  { k: "spirit", name: "Spirit", tag: "Summon", stats: [["HP", 40], ["Damage", "1.5"], ["Every", "0.9 s"], ["Speed", 1.6], ["Mana", 25]],
+    lore: "A chibi ghost: a floating sheet with a swishing hem and a tail, glowing mismatched eyes. Hovers on top of enemies and hurts everything beneath; falls back to a wisp at half health. Flickers while Phasing.",
+    moves: [["main", "Hover strike"]], extra: [["phase", "Phasing"]], looks: "Rolled: eye colours and sizes, chains, a bow, torn hem" }
+];
+const tiles = [];
+let flip = false;
+function tile(parent, kind, mode, label, opts) {
+  const f = document.createElement("figure"), cv = document.createElement("canvas"), c = document.createElement("figcaption");
+  cv.setAttribute("aria-label", label); c.textContent = label; if (opts && opts.hit) c.className = "hit";
+  f.append(cv, c); parent.appendChild(f);
+  const st = ART.looks(opts && opts.npc ? "skeleton_warrior" : kind);
+  if (opts && opts.move) { st.fixedMove = opts.move === "slam" ? "main" : opts.move; if (opts.move === "slam") st.gmove = "slam"; }
+  if (kind === "ogre" && !(opts && opts.move === "slam")) st.gmove = "punch";
+  tiles.push({ cv, kind, st, mode, npc: opts && opts.npc, who: opts && opts.who, phasing: opts && opts.phasing, phase: Math.random() * 3 });
+}
+function build() {
+  tiles.length = 0;
+  const root = document.getElementById("cast"); root.innerHTML = "";
+  for (const F of CAST) {
+    const sec = document.createElement("section"); sec.className = "foe";
+    sec.innerHTML = "<div class='top'><div><span class='tag'>" + F.tag + "</span><h2>" + F.name + "</h2></div><p class='lore'>" + F.lore + "</p><div class='stats'>" + F.stats.map(([a, b]) => "<span>" + a + " <b>" + b + "</b></span>").join("") + "</div></div><div class='tiles'></div><h3>Rolled looks</h3><p class='lore' style='margin:0'>" + F.looks + "</p><div class='looks'></div>";
+    root.appendChild(sec);
+    const T = sec.querySelector(".tiles"); T.style.setProperty("--n", 5 + F.moves.length + (F.extra ? 1 : 0));
+    tile(T, F.k, "walk", F.k === "spirit" ? "Drift" : "Walk"); tile(T, F.k, "idle", F.k === "spirit" ? "Hover" : "Stand");
+    for (const [mv, label] of F.moves) tile(T, F.k, "attack", label, { move: mv, hit: true });
+    if (F.extra) tile(T, F.k, "idle", "Phasing", { phasing: true });
+    tile(T, F.k, "panic", "Panic"); tile(T, F.k, "charm", "Charmed"); tile(T, F.k, "confused", "Confused");
+    const Lk = sec.querySelector(".looks");
+    for (let i = 0; i < 6; i++) tile(Lk, F.k, i % 2 ? "idle" : "walk", "Look " + (i + 1));
+  }
+  // Saina Lot: only ever seen in conversation portraits, talking or listening
+  const sec = document.createElement("section"); sec.className = "foe";
+  sec.innerHTML = "<div class='top'><div><span class='tag'>Townsfolk</span><h2>Saina Lot</h2></div><p class='lore'>Skeleton bard and bookkeeper. A purple beret with a yellow feather and a lute held across the ribs; notes float up while she talks. Arrives after the fifth battle and keeps the ledger at her wagon. Each skeleton rolls its own missing teeth, cracks and eye glow, so here are a few takes on her face.</p></div><div class='saina'></div>";
+  root.appendChild(sec);
+  const sa = sec.querySelector(".saina");
+  for (let i = 0; i < 4; i++) tile(sa, "saina", "talk", i % 2 ? "Listening" : "Talking", { npc: true, who: i % 2 ? "The Summonancer" : "Saina Lot" });
+}
+let playing = !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches), clock = 0, last = 0;
+function mirror(c) { const ctx = c.getContext("2d"); ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = "copy"; ctx.scale(-1, 1); ctx.drawImage(c, -c.width, 0); ctx.restore(); }
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now; if (playing) clock += dt;
+  for (const T of tiles) {
+    if (T.npc) { ART.renderNpc(T.cv, "saina", T.who, clock + T.phase, T.st); if (flip) mirror(T.cv); continue; }
+    if (T.phasing) T.st.phasing = (clock + T.phase) % 2 < 1 ? 0.5 : 0;        // a hit, half a second untouchable, then solid again
+    ART.render(T.kind, T.cv, T.st, clock + T.phase * (T.mode === "attack" ? 0 : 1), playing ? dt : 0, T.mode);
+    if (flip) mirror(T.cv);
+  }
+  requestAnimationFrame(frame);
+}
+document.getElementById("play").textContent = playing ? "Pause" : "Play";
+document.getElementById("play").setAttribute("aria-pressed", playing ? "true" : "false");
+document.getElementById("play").addEventListener("click", e => { playing = !playing; e.target.textContent = playing ? "Pause" : "Play"; e.target.setAttribute("aria-pressed", playing ? "true" : "false"); });
+document.getElementById("reroll").addEventListener("click", build);
+document.getElementById("flip").addEventListener("click", e => { flip = !flip; e.target.setAttribute("aria-pressed", flip ? "true" : "false"); e.target.textContent = flip ? "Face right" : "Face left"; });
+build(); requestAnimationFrame(t => { last = t; frame(t); });
+</script>
