@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.9.4-alpha
+- The Earl Grey moment at the Tavern is now a proper easter egg: 1 visit in 20.
+
 ## 0.9.3-alpha
 - A small tribute to a certain captain: now and then the wizard orders Earl Grey at the Tavern, and Saina remembers singing for a captain who made things so (and insists there are four lights on her wagon).
 
