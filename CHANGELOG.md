@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.9.1-alpha
+- Spirit upgrades renamed: Heavier Sheet is now Thicker Mist, Draughty Halls is now Restless Swirl (levels kept).
+
 ## 0.9.0-alpha
 - **Spirit** gets the dark violet smoke look; the sheet drawing moves to the new Ghost. Spirit behaviour is unchanged. Its armour upgrade "Starched Hem" is now **Ectoplasmic Skin** (levels kept).
 - **New summon: Ghost** (bind 300 gold, 15 skulls, 10 crystal; 20 mana, 1 slot). Never attacks. Hangs back ~1.5 tiles behind its group, away from the fighting; centres when the fight is on several sides; backs off from enemies within 2 tiles. Haunts summons within 2 tiles: +10 % damage and +10 % move speed. Floats, doesn't burn or freeze.

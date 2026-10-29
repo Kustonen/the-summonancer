@@ -701,7 +701,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.0-alpha";
+const VERSION = "0.9.1-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -794,9 +794,9 @@ const DATA = {
       { key: "gsHeal",   name: "Soothing Stone",  max: 4, gold: 25, needsSpell: "guardstone", fx: lv => lv ? "guards inside the circle mend 1 HP every " + (6 - lv) + " s" : "no mending" }
     ],
     spiritstones: [
-      { key: "hp",    name: "Heavier Sheet",   max: 10, gold: 20, fx: lv => "+" + lv * 10 + " % health" },
+      { key: "hp",    name: "Thicker Mist",    max: 10, gold: 20, fx: lv => "+" + lv * 10 + " % health" },
       { key: "armor", name: "Ectoplasmic Skin", max: 6, gold: 25, fx: lv => "blocks " + fmt(lv * 0.3) + " damage per hit" },
-      { key: "speed", name: "Draughty Halls",  max: 8,  gold: 15, fx: lv => "+" + lv * 5 + " % move speed" },
+      { key: "speed", name: "Restless Swirl",  max: 8,  gold: 15, fx: lv => "+" + lv * 5 + " % move speed" },
       { key: "dmg",   name: "Chilling Touch",  max: 10, gold: 20, fx: lv => "+" + lv * 10 + " % damage" },
       { key: "phase", name: "Phasing",         max: 10, costs: [{ gold: 30 }, { gold: 60 }, { gold: 100 }, { gold: 150 }, { gold: 400, crystal: 5, skulls: 2 }, { gold: 800, crystal: 10, skulls: 4 },
         { gold: 1500, crystal: 20, skulls: 6 }, { gold: 2500, crystal: 35, skulls: 10 }, { gold: 4000, crystal: 50, skulls: 15 }, { gold: 6000, crystal: 80, skulls: 20 }],
