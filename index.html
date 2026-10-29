@@ -675,7 +675,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.8.14-alpha";
+const VERSION = "0.8.15-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -4919,7 +4919,7 @@ function wraith(ctx, cx, gy, s, t, st) {
     ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1.3 * LW; ctx.beginPath();
     C0.slice(4, N - 3).forEach(([cx, cy], i) => i ? ctx.lineTo(side * (cx - 1.5) * s, (cy - 1.5) * s) : ctx.moveTo(side * (cx - 1.5) * s, (cy - 1.5) * s)); ctx.stroke();
   };
-  horn(-1); horn(1);
+  for (const sd of [-1, 1]) { ctx.save(); ctx.translate(sd * 9 * s, -14 * s); ctx.scale(0.84, 0.84); ctx.translate(-sd * 9 * s, 14 * s); horn(sd); ctx.restore(); }   // a touch smaller, shrunk toward the root
   // the skull: a broad brow narrowing to a long snout
   ctx.beginPath(); ctx.moveTo(-13 * s, -14 * s); ctx.quadraticCurveTo(0, -20 * s, 13 * s, -14 * s); ctx.quadraticCurveTo(14 * s, 2 * s, 7 * s, 10 * s); ctx.lineTo(5 * s, 24 * s); ctx.quadraticCurveTo(0, 28 * s, -5 * s, 24 * s); ctx.lineTo(-7 * s, 10 * s); ctx.quadraticCurveTo(-14 * s, 2 * s, -13 * s, -14 * s); ctx.closePath(); shape(ctx, BONE, 3);
   if (st.crack) { ctx.strokeStyle = INK; ctx.lineWidth = 1.5 * LW; ctx.beginPath(); ctx.moveTo(4 * s, -17 * s); ctx.lineTo(2 * s, -11 * s); ctx.lineTo(5 * s, -7 * s); ctx.lineTo(3 * s, -2 * s); ctx.stroke(); }

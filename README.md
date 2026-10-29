@@ -1,6 +1,6 @@
 # The Summonancer
 
-Version 0.8.14-alpha · see [CHANGELOG.md](CHANGELOG.md)
+Version 0.8.15-alpha · see [CHANGELOG.md](CHANGELOG.md)
 
 An incremental browser game about a wizard who summons skeletons (summons, not raises) to hold back goblins, gathers resources and builds up a city.
 
