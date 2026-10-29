@@ -2,6 +2,10 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.26-alpha
+- Ogre Chieftain's drumstick has a shorter bone; the meat starts right at his fist.
+- Kobold King has a small pair of bat wings.
+
 ## 0.8.25-alpha
 - Ogre Chieftain's drumstick is a bit smaller.
 - Goblin Boss stabs with the right dagger, the left dagger or both at once.

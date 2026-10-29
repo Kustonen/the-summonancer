@@ -468,6 +468,17 @@ function kobold(ctx, cx, gy, s0, t, st) {
   ctx.restore();
   feet(ctx, M, bx, gy, s, KOB, 10, kickFoot(M, s, st));
   const bodyY = gy - 31 * s + bob;
+  if (st.boss) for (const side of [-1, 1]) {      // the king's small bat wings, folded behind the shoulders and twitching
+    const flap = Math.sin(t * (M.walking ? 9 : M.panicking ? 22 : 3)) * (M.panicking ? 0.35 : 0.14);
+    ctx.save(); ctx.translate(bx + side * 7 * s, bodyY - 4 * s); ctx.scale(side * 1.45, 1.45); ctx.rotate(0.05 - flap);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(10 * s, -12 * s); ctx.lineTo(22 * s, -10 * s);         // arm and finger tip
+    ctx.quadraticCurveTo(19 * s, -3 * s, 21 * s, 3 * s); ctx.quadraticCurveTo(15 * s, 0, 13 * s, 5 * s);   // scalloped trailing edge
+    ctx.quadraticCurveTo(8 * s, 1 * s, 4 * s, 7 * s); ctx.closePath(); shape(ctx, "#7a3d2c", 2.5);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.4 * LW; ctx.lineCap = "round"; ctx.beginPath();
+    ctx.moveTo(10 * s, -12 * s); ctx.lineTo(19 * s, 1 * s); ctx.moveTo(10 * s, -12 * s); ctx.lineTo(12 * s, 3 * s); ctx.stroke();   // finger bones
+    ctx.beginPath(); ctx.moveTo(10 * s, -12 * s); ctx.lineTo(8 * s, -16 * s); ctx.lineWidth = 2 * LW; ctx.stroke();               // little claw on top
+    ctx.restore();
+  }
   ell(ctx, bx, bodyY, 12 * s, 12 * s, 0, KOB);
   ell(ctx, bx, bodyY + 2 * s, 7 * s, 8 * s, 0, KOB_L, 3);
   // head
@@ -733,9 +744,9 @@ function ogre(ctx, cx, gy, s0, t, st) {
     if (st.boss && side === 1) {        // a roast ham on the bone: lifted behind on the wind-up, swung down on the hit
       const ang = M.main && !slam ? 0.3 - M.wind * 1.5 + M.hit * 2.0 : M.main ? -0.2 + M.hit * 1.2 : 0.45 + Math.sin(t * 1.4) * 0.06;
       ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
-      ctx.beginPath(); ctx.roundRect(-2.8 * s, -27 * s, 5.6 * s, 42 * s, 2.6 * s); shape(ctx, BONE, 2.5);          // the bone handle
+      ctx.beginPath(); ctx.roundRect(-2.8 * s, -16 * s, 5.6 * s, 31 * s, 2.6 * s); shape(ctx, BONE, 2.5);          // the bone handle
       for (const dx of [-2.6, 2.6]) { ctx.beginPath(); ctx.arc(dx * s, 15 * s, 3.6 * s, 0, Math.PI * 2); shape(ctx, BONE, 2.2); }   // knobbly end
-      ctx.translate(0, -22 * s); ctx.scale(0.82, 0.82); ctx.translate(0, 22 * s);           // the meat, a touch smaller than the arm swinging it
+      ctx.translate(0, -12 * s); ctx.scale(0.82, 0.82); ctx.translate(0, 22 * s);           // the meat, a touch smaller than the arm swinging it
       ctx.beginPath(); ctx.moveTo(-4 * s, -22 * s); ctx.bezierCurveTo(-21 * s, -30 * s, -19 * s, -58 * s, 0, -59 * s); ctx.bezierCurveTo(19 * s, -58 * s, 21 * s, -30 * s, 4 * s, -22 * s); ctx.closePath(); shape(ctx, "#a8502e", 3.5);
       ctx.save(); ctx.clip(); ctx.fillStyle = "#7e3720"; ctx.beginPath(); ctx.ellipse(10 * s, -40 * s, 10 * s, 22 * s, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "rgba(255,226,180,.35)"; ctx.beginPath(); ctx.ellipse(-7 * s, -45 * s, 4 * s, 8 * s, -0.3, 0, Math.PI * 2); ctx.fill(); ctx.restore();
