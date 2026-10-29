@@ -2,6 +2,10 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.9.2-alpha
+- New ghost upgrade at the Remembrance Lanterns: Draughty Halls (+5 % move speed per level, up to 8 levels).
+- Restless Feet is now Anxious Presence (levels kept).
+
 ## 0.9.1-alpha
 - Spirit upgrades renamed: Heavier Sheet is now Thicker Mist, Draughty Halls is now Restless Swirl (levels kept).
 

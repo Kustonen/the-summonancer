@@ -701,7 +701,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.1-alpha";
+const VERSION = "0.9.2-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -811,7 +811,8 @@ const DATA = {
       { key: "resist", name: "Starched Hem",   max: 5,  gold: 30, soon: true, fx: lv => "resists elemental damage" },
       { key: "radius", name: "Wider Haunt",    max: 4,  gold: 30, fx: lv => "haunts everything within " + fmt(2 + 0.25 * lv) + " tiles" },
       { key: "hymn",   name: "Battle Hymn",    max: 5,  gold: 30, fx: lv => "haunted summons deal +" + (10 + 3 * lv) + " % damage" },
-      { key: "feet",   name: "Restless Feet",  max: 5,  gold: 25, fx: lv => "haunted summons move +" + (10 + 3 * lv) + " % faster" },
+      { key: "move",   name: "Draughty Halls", max: 8,  gold: 15, fx: lv => "+" + lv * 5 + " % move speed" },
+      { key: "feet",   name: "Anxious Presence", max: 5,  gold: 25, fx: lv => "haunted summons move +" + (10 + 3 * lv) + " % faster" },
       { key: "calm",   name: "Eerie Calm",     max: 5,  gold: 35, fx: lv => lv ? "haunted summons attack " + 3 * lv + " % faster" : "no effect on attack speed" }
     ],
     // the wraith's upgrades (and, one day, other spellcasters')
@@ -1902,7 +1903,7 @@ function unitDef(kind) {
     d.phasing = 0.1 * g("phase"); if (g("regen")) d.regen = { amount: g("regen"), every: 5 };
   } else if (kind === "ghost") {
     const g = k => lv("lanterns", k);
-    d.hp = Math.round(b.hp * (1 + 0.15 * g("hp"))); d.armor = 0.3 * g("armor");
+    d.hp = Math.round(b.hp * (1 + 0.15 * g("hp"))); d.armor = 0.3 * g("armor"); d.speed = b.speed * (1 + 0.05 * g("move"));
     d.haunt = { r: b.haunt.r + 0.25 * g("radius"), dmg: b.haunt.dmg + 0.03 * g("hymn"), spd: b.haunt.spd + 0.03 * g("feet"), rate: 0.03 * g("calm") };
   } else if (kind === "wraith") {
     const g = k => lv("cloister", k);
