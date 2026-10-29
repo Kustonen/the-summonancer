@@ -693,7 +693,7 @@ function ogre(ctx, cx, gy, s0, t, st) {
   ctx.save(); ctx.translate(hx, hy); ctx.rotate(M.tilt * 0.6 + M.tiltAdd * 0.5);
   for (const side of [-1, 1]) ell(ctx, side * R * 0.98, -R * 0.1, R * 0.26, R * 0.32, side * 0.3, OGRE, 3);
   ell(ctx, 0, 0, R, R * 0.92, 0, OGRE, 4);
-  if (st.horn && !st.boss) {          // one stubby horn, centre of the forehead
+  if (st.horn || st.boss) {          // one stubby horn, centre of the forehead (the chieftain always has one)
     ctx.beginPath(); ctx.moveTo(-R * 0.17, -R * 0.72); ctx.quadraticCurveTo(-R * 0.1, -R * 1.25, R * 0.06, -R * 1.42); ctx.quadraticCurveTo(R * 0.12, -R * 1.05, R * 0.17, -R * 0.74); ctx.closePath(); shape(ctx, HORN, 3);
     ctx.strokeStyle = "#cfc2a6"; ctx.lineWidth = 1.6 * LW; for (const k of [0.95, 1.12]) { ctx.beginPath(); ctx.moveTo(-R * 0.12 * (1.5 - k), -R * k); ctx.lineTo(R * 0.12 * (1.6 - k), -R * k + R * 0.03); ctx.stroke(); }
   }
@@ -714,7 +714,7 @@ function ogre(ctx, cx, gy, s0, t, st) {
   const tk = st.boss ? 1.08 : 1, tt = st.boss ? 0.24 : 0;        // the chieftain's tusk is bigger and leans out, clear of the eye
   ctx.beginPath(); ctx.moveTo(ts * R * 0.42, jy + R * 0.1); ctx.quadraticCurveTo(ts * R * (0.3 + 0.26 * tk + tt), jy - R * 0.55 * tk, ts * R * (0.3 + tt * 1.6), jy - R * 0.62 * tk); ctx.quadraticCurveTo(ts * R * 0.3, jy - R * 0.2, ts * R * 0.2, jy + R * 0.1); ctx.closePath(); shape(ctx, TUSK, 3);
   if (!st.gap) { ctx.beginPath(); ctx.rect(-ts * R * 0.32, jy - R * 0.16, R * 0.14, R * 0.18); shape(ctx, TUSK, 2); }
-  if (st.boss) crownAt(ctx, -R * 0.8, R * 0.62);
+  if (st.boss) { ctx.save(); ctx.translate(-R * 0.42, -R * 0.62); ctx.rotate(-0.42); crownAt(ctx, 0, R * 0.5); ctx.restore(); }   // worn at a rakish tilt, clear of the horn
   ctx.restore();
   // fists: huge; on a slam both come down together
   for (const side of [-1, 1]) {
