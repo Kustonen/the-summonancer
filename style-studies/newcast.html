@@ -424,19 +424,21 @@ function goblin(ctx, cx, gy, s, t, st) {
   }
   if (st.boss) crownAt(ctx, -R * 0.72, R * 0.52);
   ctx.restore();
-  // hands; the right one holds a tiny knife and jabs
+  // hands; the right one holds a tiny knife and jabs. The boss stabs with the right, the left or both daggers at once
+  if (st.boss && M.main && st.handCyc !== st.cyc) { st.handCyc = st.cyc; st.hand = [1, -1, 0][Math.floor(Math.random() * 3)]; }
+  const stabs = side => M.main && (st.boss ? st.hand === side || st.hand === 0 : side === 1);
   for (const side of [-1, 1]) {
     let x = bx + side * 24 * s - (M.walking ? side * M.swing * 7 * s : 0), y = bodyY + 2 * s;
     if (M.panicking) { x = bx + side * (26 + Math.sin(t * 25 + side) * 4) * s; y = hy - R * 0.95 + Math.cos(t * 22 + side) * 4 * s; }
-    if (M.main && side === 1) { x += M.k * 26 * s; y -= M.hit * 6 * s; }
+    if (stabs(side)) { x += M.k * (side === 1 ? 26 : 52) * s; y -= M.hit * (side === 1 ? 6 : 2) * s; }
     [x, y] = sharedHands(M, side, x, y, s);
     if ((side === 1 || st.boss) && !M.panicking) {        // the boss carries a knife in each hand
-      const dir = st.boss ? side : 1, kl = st.boss ? 28 : 22;      // the boss's knives are bigger and point outward
+      const dir = st.boss && !stabs(side) ? side : 1, kl = st.boss ? 28 : 22;      // the boss's knives are bigger and point outward
       ctx.beginPath(); ctx.moveTo(x + dir * 4 * s, y - 3 * s); ctx.lineTo(x + dir * kl * s, y - 6 * s); ctx.lineTo(x + dir * 4 * s, y + 3 * s); ctx.closePath(); shape(ctx, st.boss ? "#d0d4dc" : "#a7a3ad", 3);
       if (st.boss) { ctx.beginPath(); ctx.rect(x + (dir > 0 ? -2 : -5) * s, y - 4 * s, 7 * s, 7 * s); shape(ctx, "#6b4426", 2); }
     }
     ell(ctx, x, y, 6.5 * s, 6.5 * s, 0, GOB);
-    if (M.main && side === 1 && M.hit > 0.85) burst(ctx, x + 26 * s, y - 4 * s, s, M.hit);
+    if (stabs(side) && M.hit > 0.85) burst(ctx, x + (st.boss ? 30 : 26) * s, y - 4 * s, s, M.hit);
   }
   sharedBurst(ctx, M, s, st);
   qMarks(ctx, st, hx, hy - R * 0.95, s, M.confused);
@@ -731,6 +733,7 @@ function ogre(ctx, cx, gy, s0, t, st) {
       ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
       ctx.beginPath(); ctx.roundRect(-2.8 * s, -27 * s, 5.6 * s, 42 * s, 2.6 * s); shape(ctx, BONE, 2.5);          // the bone handle
       for (const dx of [-2.6, 2.6]) { ctx.beginPath(); ctx.arc(dx * s, 15 * s, 3.6 * s, 0, Math.PI * 2); shape(ctx, BONE, 2.2); }   // knobbly end
+      ctx.translate(0, -22 * s); ctx.scale(0.82, 0.82); ctx.translate(0, 22 * s);           // the meat, a touch smaller than the arm swinging it
       ctx.beginPath(); ctx.moveTo(-4 * s, -22 * s); ctx.bezierCurveTo(-21 * s, -30 * s, -19 * s, -58 * s, 0, -59 * s); ctx.bezierCurveTo(19 * s, -58 * s, 21 * s, -30 * s, 4 * s, -22 * s); ctx.closePath(); shape(ctx, "#a8502e", 3.5);
       ctx.save(); ctx.clip(); ctx.fillStyle = "#7e3720"; ctx.beginPath(); ctx.ellipse(10 * s, -40 * s, 10 * s, 22 * s, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "rgba(255,226,180,.35)"; ctx.beginPath(); ctx.ellipse(-7 * s, -45 * s, 4 * s, 8 * s, -0.3, 0, Math.PI * 2); ctx.fill(); ctx.restore();
