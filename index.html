@@ -671,7 +671,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.7.2-alpha";
+const VERSION = "0.7.3-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -700,7 +700,7 @@ const DATA = {
     archivus:     { name: "Archivus Arcanus",        cost: 150, about: "Forbidden tomes on modifying summons. Allegedly." },
     blacksmith:   { name: "Blacksmith",              cost: { gold: 150, stone: 30, wood: 20 }, about: "Turns what you find into what you need: charcoal, iron ingots and steel. Keeps working while you're away." },
     academy:      { name: "Invisible Academy",       cost: { gold: 300, stone: 200, ingot: 20 }, after: "blacksmith", about: "Where summons learn new skills and choose which ones to use. You can't see it. That's the curriculum." },
-    spiritstones: { name: "Spirit Stones (Wisping Well, tier 2)", cost: { gold: 150, stone: 20, crystal: 10 }, needs: "spirit", after: "well", about: "An extension of the Wisping Well: humming stones that make spirits sturdier, quicker and harder to hit." }
+    spiritstones: { name: "Spirit Stones", cost: { gold: 150, stone: 20, crystal: 10 }, needs: "spirit", after: "well", about: "Will expand the Wisping Well. Humming stones that make spirits sturdier, quicker and harder to hit." }
   },
   // binding a new kind of summon at the Septagram, once
   unlocks: {
@@ -3512,7 +3512,7 @@ function renderTown() {
   // the Spirit Stones are the Wisping Well's second tier, not a building of their own
   const tier2 = !!META.built.spiritstones;
   $("wellTitle").textContent = tier2 ? "Wisping Well with Spirit Stones" : "Wisping Well"; $("wellQuote2").hidden = !tier2; $("wellSpirit").hidden = !tier2;
-  $("b_well").querySelector("b").textContent = tier2 ? "Wisping Well with Spirit Stones" : "Wisping Well";
+  $("b_well").querySelector("b").textContent = tier2 ? "Stony Wisping Well" : "Wisping Well";
   const alive = META.builder === "alive";
   $("builderAlive").toggleAttribute("hidden", !alive); $("builderSkel").toggleAttribute("hidden", alive);   // svg elements have no .hidden
   $("builderAbout").textContent = alive ? "Your local engineer: hard hat, overalls, a hammer and boundless optimism. Give him gold and he'll put up whatever you point at."

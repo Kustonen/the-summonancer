@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.7.3-alpha – 2026-10-29
+- The Builder notes that the Spirit Stones will expand the Wisping Well; once built, the well's tile reads "Stony Wisping Well"
+
 ## 0.7.2-alpha – 2026-10-29
 - The Spirit Stones are now the Wisping Well's second tier instead of a building of their own: once built, the well becomes "Wisping Well with Spirit Stones", gets a second quote and shows the spirit research under the wisp research
 
