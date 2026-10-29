@@ -2,6 +2,14 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.18-alpha – 2026-10-29
+- Raid chiefs get their own looks, and their crowns now sit on their heads and move with them:
+  - Kobold King: glaring half-moon eyes, smoke curling from the nostrils every few seconds
+  - Goblin Boss: glaring eyes, an earring in each ear, a knife in each hand
+  - Orc Warlord: a sword and a round shield
+  - Ogre Chieftain: a bigger tusk and a row of skulls on the belt
+  - Troll Elder: red glowing eyes and bigger fangs; it now mends 20 HP every 5 s
+
 ## 0.8.17-alpha – 2026-10-29
 - Wraith drawings: the vortex is narrower at the top so it stays hidden behind the shroud, also when the wraith panics or is charmed
 

@@ -1,0 +1,325 @@
+<title>Skeleton Style Study</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: a short intro, then two equal study cards side by side (stacked on phones), shared controls below. Same night palette as the game. */
+:root {
+  --night: #15131c;
+  --slate: #211e2b;
+  --line: #3a3547;
+  --bone: #ece3cf;
+  --dim: #a69eb3;
+  --mana: #6fa8ff;
+  --display: "Grenze Gotisch", "Palatino Linotype", Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--night); color: var(--bone); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.wrap {
+  max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;
+  padding-block: 24px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(32px, 6vw, 48px); line-height: 1; margin: 0; text-wrap: balance; }
+.intro { color: var(--dim); max-width: 62ch; margin: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.card { background: var(--slate); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card h2 { font-family: var(--display); font-weight: 500; font-size: 26px; margin: 0; line-height: 1.1; }
+.card p { margin: 0; color: var(--dim); font-size: 15px; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--mana); }
+canvas { width: 100%; aspect-ratio: 1 / 1; max-width: 100%; display: block; border-radius: 8px; background: #1b1824; }
+canvas.wide { aspect-ratio: 2.4 / 1; }
+.moves { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.moves figure { margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.moves figcaption { text-align: center; font-family: var(--display); font-size: 18px; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.controls span { color: var(--dim); font-size: 14px; margin-right: 4px; }
+button {
+  background: var(--slate); color: var(--bone); border: 1px solid var(--line); border-radius: 999px;
+  font: inherit; font-weight: 700; font-size: 14px; padding: 6px 14px; cursor: pointer;
+}
+button[aria-pressed="true"] { background: var(--bone); color: var(--night); border-color: var(--bone); }
+button:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
+.notes { color: var(--dim); font-size: 15px; max-width: 62ch; margin: 0; padding-left: 1.2em; }
+.notes li + li { margin-top: 4px; }
+</style>
+
+<div class="wrap">
+  <div>
+    <div class="tag">The Summonancer · style study</div>
+    <h1>Skeleton Warrior, two takes</h1>
+  </div>
+  <p class="intro">Chibi proportions, thick outlines, flat colours. The skull is most of the skeleton, the upper teeth are part of it, the eye sockets don't match, and the lower jaw drops open on every step, swaying left and right in turn. No arms or legs, just floating hands that pump the air and feet that shuffle under a tiny torso. Left: empty sockets. Right: the same sockets with small glowing pupils that don't quite agree on where to look.</p>
+
+  <div class="cards">
+    <section class="card">
+      <h2>Empty sockets</h2>
+      <canvas id="cvA" aria-label="Animated skeleton with empty, mismatched eye sockets"></canvas>
+      <p>Reads as blank and a bit dim. Expression comes from the jaw and the wobble alone.</p>
+    </section>
+    <section class="card">
+      <h2>Glowing pupils</h2>
+      <canvas id="cvB" aria-label="Animated skeleton with mismatched eye sockets and small blue pupils"></canvas>
+      <p>A spark of life. The pupils point slightly different ways, which adds a cross-eyed, eager look.</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Three ways to hit</h2>
+    <div class="moves">
+      <figure><canvas id="cvPunch" aria-label="Skeleton punching"></canvas><figcaption>Punch</figcaption></figure>
+      <figure><canvas id="cvKick" aria-label="Skeleton kicking"></canvas><figcaption>Kick</figcaption></figure>
+      <figure><canvas id="cvHead" aria-label="Skeleton headbutting"></canvas><figcaption>Headbutt</figcaption></figure>
+    </div>
+    <p>Each swing winds up, snaps forward and recovers. In the Attack mode above, every swing picks one of the three at random.</p>
+  </section>
+
+  <section class="card">
+    <h2>Every skeleton is a little different</h2>
+    <canvas id="cvCrowd" class="wide" aria-label="Four walking skeletons, each missing a different set of teeth"></canvas>
+    <p>In the game each summoned skeleton would roll 1–4 missing teeth when it appears. It's only looks: no effect on health or damage.</p>
+    <div class="controls"><button id="reroll" type="button">Roll new teeth</button></div>
+  </section>
+
+  <div class="controls" role="group" aria-label="Animation">
+    <span>Animation</span>
+    <button id="mWalk" type="button" aria-pressed="true">Walk</button>
+    <button id="mIdle" type="button" aria-pressed="false">Stand</button>
+    <button id="mAttack" type="button" aria-pressed="false">Attack</button>
+  </div>
+
+  <ul class="notes">
+    <li>Outlines are thick and slightly warm-dark, never pure black, so they sit well on the night battlefield.</li>
+    <li>The skull tilts a little with each step and the body bobs, which keeps a very simple drawing feeling alive. The lower jaw always hangs below the skull, so it never disappears behind it.</li>
+    <li>Everything is drawn in code, so the same skeleton scales to any screen and can swap parts (helmet, bow, colours) for the other summons.</li>
+  </ul>
+</div>
+
+<script>
+const INK = "#2a1f2e", BONE = "#f1e8d4", SHADE = "#d6c9ad", SOCKET = "#2a1f2e", GLOW = "#7fb6ff", GROUND = "#26301f", GROUND2 = "#232b22";
+const MOVES = ["punch", "kick", "headbutt"];
+const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let mode = reduce ? "idle" : "walk";
+
+function setup(id, pupils) {
+  const cv = document.getElementById(id), ctx = cv.getContext("2d");
+  const st = { cv, ctx, pupils, was: [], lastStep: 0, x: 0 };
+  const fit = () => {
+    const w = cv.clientWidth || 300, dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(w * dpr);
+    st.size = w; st.dpr = dpr;
+  };
+  fit(); window.addEventListener("resize", fit);
+  return st;
+}
+const A = setup("cvA", false), B = setup("cvB", true);
+const P1 = setup("cvPunch", true), P2 = setup("cvKick", false), P3 = setup("cvHead", true);
+[[P1, "punch"], [P2, "kick"], [P3, "headbutt"]].forEach(([q, mvName], i) => { q.forceMode = "attack"; q.fixedMove = mvName; q.upMiss = [[0], [2, 3], [1]][i]; q.lowMiss = [[3], [], [0, 2]][i]; q.small = true; });
+A.upMiss = B.upMiss = [1, 3];   // upper: second from left, last on the right
+A.lowMiss = B.lowMiss = [2];    // lower: second from right
+
+function line(ctx, x1, y1, x2, y2, w) {
+  ctx.lineCap = "round";
+  ctx.strokeStyle = INK; ctx.lineWidth = w + 5; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.strokeStyle = BONE; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+}
+function blob(ctx, x, y, r, fill) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = fill || BONE; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.stroke();
+}
+
+// one skeleton, centred at (cx, groundY); s scales everything; t in seconds
+function skullPath(ctx, R) {
+  ctx.beginPath();
+  ctx.ellipse(0, -0.05 * R, R, 0.9 * R, 0, Math.PI, 0);                 // cranium dome
+  ctx.quadraticCurveTo(R * 1.02, R * 0.36, R * 0.62, R * 0.5);           // right cheekbone
+  ctx.lineTo(R * 0.5, R * 0.62);                                          // down to the upper jaw
+  ctx.lineTo(-R * 0.5, R * 0.62);
+  ctx.lineTo(-R * 0.62, R * 0.5);
+  ctx.quadraticCurveTo(-R * 1.02, R * 0.36, -R, -0.05 * R);              // left cheekbone
+  ctx.closePath();
+}
+function teeth(ctx, R, y, h, missing) {
+  const n = 4, w = R * 0.2, gap = R * 0.04, x0 = -(n * w + (n - 1) * gap) / 2;
+  for (let i = 0; i < n; i++) {
+    if (missing && missing.includes(i)) continue;   // a gap, purely cosmetic
+    const x = x0 + i * (w + gap);
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, 3) : ctx.rect(x, y, w, h);
+    ctx.fillStyle = BONE; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = INK; ctx.stroke();
+  }
+}
+function shape(ctx, fill, w) { ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = w || 4; ctx.strokeStyle = INK; ctx.stroke(); }
+
+function skeleton(st, cx, gy, s, t) {
+  const ctx = st.ctx;
+  const m = st.forceMode || mode, walking = m === "walk", attacking = m === "attack";
+  // attacks: wind up, snap forward, recover. Each swing rolls punch, kick or headbutt (or uses the card's fixed move)
+  const PERIOD = 1.3, cyc = Math.floor(t / PERIOD), ph = (t / PERIOD) % 1;
+  if (attacking && st.cyc !== cyc) { st.cyc = cyc; st.move = st.fixedMove || MOVES[Math.floor(Math.random() * MOVES.length)]; }
+  const k = !attacking ? 0 : ph < 0.35 ? -0.35 * Math.sin(ph / 0.35 * Math.PI / 2)
+          : ph < 0.47 ? -0.35 + 1.35 * Math.sin((ph - 0.35) / 0.12 * Math.PI / 2)
+          : 1 - (1 - Math.cos((ph - 0.47) / 0.53 * Math.PI)) / 2;
+  const hit = Math.max(0, k), mv = attacking ? st.move : null;
+  const p = t * (walking ? 7 : 2.2);                       // step phase
+  const swing = walking ? Math.sin(p) : 0;
+  const bob = walking ? -Math.abs(Math.sin(p)) * 6 * s : Math.sin(p) * 1.5 * s;
+  // jaw: drops on every step when walking, chatters when attacking, rests otherwise
+  const jaw = walking ? Math.pow(Math.abs(Math.sin(p)), 3) : attacking ? Math.pow(hit, 2) * 0.9 + 0.05 : 0.06 + Math.sin(t * 1.3) * 0.04;
+  let tilt = walking ? Math.sin(p) * 0.09 : Math.sin(t * 1.1) * 0.04, bx = cx, headDx = 0, headDy = 0;
+  if (mv === "punch") { tilt += k * 0.12; bx += hit * 8 * s; }
+  if (mv === "kick") { tilt -= hit * 0.18; bx -= hit * 5 * s; }
+  if (mv === "headbutt") { tilt += k * 0.45; bx += hit * 5 * s; headDx = hit * 16 * s; headDy = hit * 8 * s; }
+
+  // feet: no legs, just two little bones stepping under the body
+  for (const side of [-1, 1]) {
+    const fwd = walking ? side * swing : 0;
+    let fx = bx + side * 11 * s + fwd * 13 * s, fy = gy - Math.max(0, fwd) * 7 * s, rot = 0;
+    if (mv === "kick" && side === 1) { fx += k * 30 * s; fy -= hit * 26 * s; rot = -hit * 0.7; }
+    ctx.beginPath(); ctx.ellipse(fx + 3 * s, fy - 4 * s, 9 * s, 5 * s, rot, 0, Math.PI * 2); shape(ctx, BONE);
+    if (mv === "kick" && side === 1 && hit > 0.85) st.impact = { x: fx + 14 * s, y: fy - 6 * s, a: hit };
+  }
+  // pelvis, spine, ribcage: small
+  const pelY = gy - 22 * s + bob, ribY = gy - 38 * s + bob;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = INK; ctx.lineWidth = 9 * s; ctx.beginPath(); ctx.moveTo(bx, pelY); ctx.lineTo(bx + Math.sin(tilt) * 4 * s, ribY); ctx.stroke();
+  ctx.strokeStyle = BONE; ctx.lineWidth = 4 * s; ctx.beginPath(); ctx.moveTo(bx, pelY); ctx.lineTo(bx + Math.sin(tilt) * 4 * s, ribY); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(bx, pelY, 10 * s, 5 * s, 0, 0, Math.PI * 2); shape(ctx, BONE);
+  ctx.save(); ctx.translate(bx + Math.sin(tilt) * 4 * s, ribY); ctx.rotate(tilt * 0.6);
+  ctx.beginPath(); ctx.ellipse(0, 0, 12 * s, 9.5 * s, 0, 0, Math.PI * 2); shape(ctx, BONE);
+  ctx.lineWidth = 2.5; ctx.strokeStyle = INK;
+  for (const ry of [-3, 2.5]) { ctx.beginPath(); ctx.moveTo(-8 * s, ry * s); ctx.quadraticCurveTo(0, (ry + 3) * s, 8 * s, ry * s); ctx.stroke(); }
+  ctx.restore();
+  // head
+  const R = 40 * s;
+  const headX = bx + Math.sin(tilt) * 10 * s + headDx, headY = ribY - 25 * s - R * 1.3 + headDy;
+  if (mv === "headbutt" && hit > 0.85) st.impact = { x: headX + R * 1.05, y: headY - R * 0.1, a: hit };
+  ctx.save(); ctx.translate(headX, headY); ctx.rotate(tilt);
+  // lower jaw: always below the skull, it drops rather than hides
+  const jy = R * 0.86 + jaw * 17 * s;
+  const opening = walking ? Math.floor(p / Math.PI) : cyc;
+  const sway = (opening % 2 === 0 ? 1 : -1) * (walking || attacking ? 1 : 0);
+  ctx.save(); ctx.translate(sway * jaw * 3 * s, jy); ctx.rotate(sway * jaw * 0.16);
+  teeth(ctx, R, -R * 0.04, R * 0.17, st.lowMiss);
+  ctx.beginPath(); ctx.moveTo(-R * 0.55, R * 0.1); ctx.quadraticCurveTo(-R * 0.58, R * 0.52, 0, R * 0.55); ctx.quadraticCurveTo(R * 0.58, R * 0.52, R * 0.55, R * 0.1); ctx.closePath();
+  shape(ctx, BONE, 4.5);
+  ctx.restore();
+  // skull with the upper teeth attached
+  teeth(ctx, R, R * 0.58, R * 0.22, st.upMiss);
+  skullPath(ctx, R); ctx.fillStyle = SHADE; ctx.fill();
+  ctx.save(); skullPath(ctx, R); ctx.clip();
+  ctx.fillStyle = BONE; ctx.beginPath(); ctx.ellipse(-R * 0.12, -R * 0.14, R * 0.98, R * 0.86, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  skullPath(ctx, R); ctx.lineWidth = 4.5; ctx.strokeStyle = INK; ctx.stroke();
+  // mismatched sockets: big one on the left, small one higher on the right
+  const eyes = [{ x: -R * 0.38, y: R * 0.06, rx: R * 0.27, ry: R * 0.3 }, { x: R * 0.38, y: -R * 0.02, rx: R * 0.15, ry: R * 0.16 }];
+  for (const e of eyes) { ctx.beginPath(); ctx.ellipse(e.x, e.y, e.rx, e.ry, 0, 0, Math.PI * 2); ctx.fillStyle = SOCKET; ctx.fill(); }
+  if (st.pupils) {
+    const look = Math.sin(t * 0.9) * 0.25;
+    const pts = [{ e: eyes[0], dx: 0.35 + look, dy: 0.1, r: 0.32 }, { e: eyes[1], dx: -0.25 + look * 0.5, dy: -0.2, r: 0.42 }];
+    for (const q of pts) {
+      const px = q.e.x + q.dx * q.e.rx, py = q.e.y + q.dy * q.e.ry, r = q.e.rx * q.r;
+      const g = ctx.createRadialGradient(px, py, 0, px, py, r * 2.4);
+      g.addColorStop(0, "rgba(127,182,255,.55)"); g.addColorStop(1, "rgba(127,182,255,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = GLOW; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(px - r * 0.3, py - r * 0.3, r * 0.3, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // nose: little upside-down heart
+  const ny = R * 0.38;
+  ctx.fillStyle = SOCKET; ctx.beginPath();
+  ctx.moveTo(0, ny + R * 0.1); ctx.quadraticCurveTo(-R * 0.13, ny - R * 0.04, -R * 0.06, ny - R * 0.08); ctx.quadraticCurveTo(0, ny - R * 0.06, 0, ny - R * 0.02);
+  ctx.quadraticCurveTo(0, ny - R * 0.06, R * 0.06, ny - R * 0.08); ctx.quadraticCurveTo(R * 0.13, ny - R * 0.04, 0, ny + R * 0.1); ctx.fill();
+  // a small crack, for character
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(R * 0.15, -R * 0.93); ctx.lineTo(R * 0.24, -R * 0.73); ctx.lineTo(R * 0.17, -R * 0.61); ctx.stroke();
+  ctx.restore();
+
+  // hands: floating fists drawn last so a raised one sits in front, beside the skull
+  for (const side of [-1, 1]) {
+    // on alternate steps each hand pumps up into the air
+    const pump = walking ? Math.pow(Math.max(0, -side * swing), 0.8) : 0;
+    let hx = bx + side * (22 + pump * 30) * s, hy = ribY + 6 * s - pump * 46 * s + (walking ? 0 : Math.sin(t * 2 + side) * 1.5 * s);
+    if (mv === "punch" && side === 1) { hx += k * 26 * s; hy -= hit * 12 * s; if (hit > 0.85) st.impact = { x: hx + 9 * s, y: hy, a: hit }; }
+    if (mv === "kick") { hx += side * hit * 6 * s; hy -= hit * 16 * s; }          // arms out for balance
+    if (mv === "headbutt") { hx -= hit * 6 * s; hy += hit * 4 * s; }              // fists pulled back
+    ctx.beginPath(); ctx.arc(hx, hy, 6.5 * s, 0, Math.PI * 2); shape(ctx, BONE);
+    ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(hx - side * 1 * s, hy - 3 * s); ctx.lineTo(hx + side * 3 * s, hy - 1 * s); ctx.stroke();
+  }
+  // a little burst where the blow lands
+  if (st.impact && attacking) {
+    const I = st.impact, r = 10 * s * (0.6 + (1 - I.a) * 4);
+    ctx.save(); ctx.globalAlpha = Math.min(1, I.a); ctx.strokeStyle = "#ffd36b"; ctx.lineWidth = 3; ctx.lineCap = "round";
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + 0.3; ctx.beginPath(); ctx.moveTo(I.x + Math.cos(a) * r * 0.5, I.y + Math.sin(a) * r * 0.5); ctx.lineTo(I.x + Math.cos(a) * r, I.y + Math.sin(a) * r); ctx.stroke(); }
+    ctx.restore();
+  }
+  if (!(hit > 0.6)) st.impact = null;
+}
+
+function frame(st, t, dt) {
+  const ctx = st.ctx, W = st.size;
+  ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0);
+  ctx.clearRect(0, 0, W, W);
+  const gy = W * 0.84, s = W / 300;
+  // ground: the game's grass checker, scrolling while walking
+  const tile = 30 * s;
+  if ((st.forceMode || mode) === "walk") st.x = (st.x + dt * 34 * s) % (tile * 2);
+  for (let i = -2; i < W / tile + 2; i++) {
+    ctx.fillStyle = i % 2 ? GROUND : GROUND2;
+    ctx.fillRect(i * tile - st.x, gy - 4 * s, tile, W - gy + 4 * s);
+  }
+  ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(W / 2, gy, 34 * s, 7 * s, 0, 0, Math.PI * 2); ctx.fill();
+  skeleton(st, st.forceMode ? W * 0.42 : W / 2, gy, s, t);
+}
+
+// the crowd shares one canvas; each member keeps its own teeth
+const crowdCv = document.getElementById("cvCrowd"), crowd = { cv: crowdCv, ctx: crowdCv.getContext("2d"), members: [] };
+function rollTeeth() {
+  const all = [];
+  for (let i = 0; i < 4; i++) { all.push(["up", i]); all.push(["low", i]); }
+  all.sort(() => Math.random() - 0.5);
+  const k = 1 + Math.floor(Math.random() * 4), up = [], low = [];
+  for (const [row, i] of all.slice(0, k)) (row === "up" ? up : low).push(i);
+  return { up, low };
+}
+function makeCrowd() {
+  crowd.members = [0, 1, 2, 3].map(i => { const r = rollTeeth(); return { ctx: crowd.ctx, pupils: i % 2 === 1, upMiss: r.up, lowMiss: r.low, off: i * 0.53 }; });
+}
+makeCrowd();
+document.getElementById("reroll").addEventListener("click", makeCrowd);
+function fitCrowd() {
+  const w = crowdCv.clientWidth || 600, h = w / 2.4, dpr = window.devicePixelRatio || 1;
+  crowdCv.width = Math.round(w * dpr); crowdCv.height = Math.round(h * dpr); crowd.w = w; crowd.h = h; crowd.dpr = dpr;
+}
+fitCrowd(); window.addEventListener("resize", fitCrowd);
+function drawCrowd(t, dt) {
+  const ctx = crowd.ctx, W = crowd.w, H = crowd.h;
+  ctx.setTransform(crowd.dpr, 0, 0, crowd.dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const s = H / 230, gy = H * 0.86, tile = 30 * s;
+  if (mode === "walk") crowd.x = ((crowd.x || 0) + dt * 34 * s) % (tile * 2);
+  for (let i = -2; i < W / tile + 2; i++) { ctx.fillStyle = i % 2 ? GROUND : GROUND2; ctx.fillRect(i * tile - (crowd.x || 0), gy - 4 * s, tile, H - gy + 4 * s); }
+  crowd.members.forEach((m, i) => {
+    const cx = W * (i + 0.5) / 4;
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(cx, gy, 30 * s, 6 * s, 0, 0, Math.PI * 2); ctx.fill();
+    skeleton(m, cx, gy, s, t + m.off);
+  });
+}
+
+let last = 0;
+function loop(ms) {
+  const t = ms / 1000, dt = Math.min(0.05, t - last || 0); last = t;
+  frame(A, t, dt); frame(B, t + 0.37, dt); frame(P1, t, dt); frame(P2, t + 0.4, dt); frame(P3, t + 0.8, dt); drawCrowd(t, dt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function setMode(m) {
+  mode = m;
+  for (const [id, k] of [["mWalk", "walk"], ["mIdle", "idle"], ["mAttack", "attack"]]) document.getElementById(id).setAttribute("aria-pressed", k === m ? "true" : "false");
+}
+document.getElementById("mWalk").addEventListener("click", () => setMode("walk"));
+document.getElementById("mIdle").addEventListener("click", () => setMode("idle"));
+document.getElementById("mAttack").addEventListener("click", () => setMode("attack"));
+setMode(mode);
+</script>
