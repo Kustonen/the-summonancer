@@ -46,8 +46,8 @@ h3 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 4px
 </style>
 <div class="wrap">
   <header>
-    <h1>Ghost &amp; Wraith <small>The Summonancer · future summons</small></h1>
-    <p class="note-motion">Two summons that aren't in the game yet, drawn with the game's own code so they can join it later. Looks only: no stats or behaviour have been decided.</p>
+    <h1>Ghost &amp; Wraith <small>The Summonancer · spirit, ghost and wraith</small></h1>
+    <p class="note-motion">The spirit's new look, and the two summons that joined in 0.9.0, drawn with the game's own code.</p>
     <div class="bar"><button type="button" id="play" aria-pressed="true">Pause</button><button type="button" id="reroll">Roll new looks</button><button type="button" id="flip" aria-pressed="false">Face left</button></div>
   </header>
   <div id="cast"></div>
@@ -918,9 +918,10 @@ function wisp(ctx, cx, gy, s, t, st) {
 }
 
 // ---------- Spirit (summon) ----------
+// ---------- Ghost ----------
 // a chibi ghost: a floating sheet with a swishing hem and tail, mismatched glowing eyes,
 // sometimes chains, a bow or a torn hem; it flickers while phasing
-function spirit(ctx, cx, gy, s, t, st) {
+function ghost(ctx, cx, gy, s, t, st) {
   const M = motion(t, 5, st, ["main"]);
   const bob = Math.sin(t * 2.2) * 6 * s, sway = M.walking || M.panicking ? Math.sin(t * 7) * 0.12 : Math.sin(t * 1.5) * 0.05;
   const x = cx + (M.main ? M.k * 6 * s : 0) + M.shake * s, y = gy - 72 * s + bob + (M.main ? M.hit * 10 * s : 0);
@@ -979,14 +980,15 @@ function spirit(ctx, cx, gy, s, t, st) {
   if (M.panicking) exclaim(ctx, x, y - R * 1.35, s, t);
 }
 
-// ---------- Ghost (future summon) ----------
+// ---------- Spirit ----------
 // a wisp gone dark: an amorphous, always-shifting blob of grey, black, violet and purple, trailing smoke
-function ghost(ctx, cx, gy, s, t, st) {
+function spirit(ctx, cx, gy, s, t, st) {
   const M = motion(t, 6, st, ["main"]);
   const moving = M.walking || M.panicking, bob = Math.sin(t * 2.1) * 6 * s;
   const x = cx + (M.main ? M.k * 16 * s : 0) + M.shake * s, y = gy - 64 * s + bob;
   const R = 40 * s * (M.charmed ? charmBeat(t) : 1) * (M.main ? 1 + M.hit * 0.2 : 1);
   const C = st.tint || ["rgba(150,90,220", "rgba(90,40,140"];
+  ctx.save(); if (st.phasing > 0) ctx.globalAlpha = 0.25 + 0.3 * Math.abs(Math.sin(t * 40));     // phasing: barely there
   // smoke trailing off behind and below
   for (let i = 0; i < Math.max(2, st.trails || 4); i++) {
     const a = Math.PI * 0.55 + i * 0.35 + Math.sin(t * 1.5 + i) * 0.2, d = R * (0.9 + ((t * 0.6 + i * 0.27) % 1) * 0.9), f = 1 - ((t * 0.6 + i * 0.27) % 1);
@@ -1027,11 +1029,12 @@ function ghost(ctx, cx, gy, s, t, st) {
     ctx.fillStyle = "rgb(" + (st.eyeCol || [220, 170, 255]).map(v => Math.min(255, v + 40)).join(",") + ")"; ctx.beginPath(); ctx.ellipse(x + ex * R, y - R * 0.15, r, blink ? r * 0.15 : r * 1.2, 0, 0, Math.PI * 2); ctx.fill();
   }
   if (M.main && M.hit > 0.85) { ctx.strokeStyle = "rgba(160,100,230," + (1 - (M.hit - 0.85) * 4) + ")"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.arc(x + R * 0.9, y, R * 0.6 * (1 + (M.hit - 0.85) * 3), 0, Math.PI * 2); ctx.stroke(); }
+  ctx.restore();
   qMarks(ctx, st, x, y - R * 1.2, s, M.confused);
   if (M.panicking) exclaim(ctx, x, y - R * 1.35, s, t);
 }
 
-// ---------- Wraith (future summon) ----------
+// ---------- Wraith ----------
 // a tall, vaguely human shape in a tattered shroud, a goat skull for a face, long clawed arms,
 // and below the waist a whirling column of smoke instead of legs
 function wraith(ctx, cx, gy, s, t, st) {
@@ -1092,6 +1095,11 @@ function wraith(ctx, cx, gy, s, t, st) {
     for (let c = -1; c <= 1; c++) { ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx + side * 6 * s, hy + 4 * s + c * 3 * s, hx + side * 9 * s, hy + 10 * s + c * 4 * s); ctx.stroke(); }
     ctx.strokeStyle = BONE; ctx.lineWidth = 1.6 * LW;
     for (let c = -1; c <= 1; c++) { ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx + side * 6 * s, hy + 4 * s + c * 3 * s, hx + side * 9 * s, hy + 10 * s + c * 4 * s); ctx.stroke(); }
+    if (M.main && side === 1 && M.hit < 0.6) {          // a Frost Bolt gathering in the claw
+      const r = (5 + (M.hit > 0 ? 9 : M.wind * 9)) * s * (1 - M.hit * 1.4), g = ctx.createRadialGradient(hx + 6 * s, hy + 4 * s, 0, hx + 6 * s, hy + 4 * s, Math.max(0.1, r * 2));
+      g.addColorStop(0, "rgba(255,255,255,.95)"); g.addColorStop(0.4, "rgba(150,210,255,.85)"); g.addColorStop(1, "rgba(120,180,255,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx + 6 * s, hy + 4 * s, Math.max(0.1, r * 2), 0, Math.PI * 2); ctx.fill();
+    }
   };
   arm(-1);
   // the hood, and inside it a goat skull: long snout, curling ridged horns, ember eyes
@@ -1896,7 +1904,7 @@ function rollCracks() {
       st.mossSpots = { head: Math.random() < 0.5, left: Math.random() < 0.5, right: Math.random() < 0.5 };
       st.mossTop = ["plain", "flower", "mushroom"][Math.floor(Math.random() * 3)]; st.gcracks = rollGolemCracks(); st.quarry = 0;
     }
-    if (kind === "ghost") {
+    if (kind === "spirit") {
       st.tint = Math.random() < 0.5 ? ["rgba(150,90,220", "rgba(90,40,140"] : ["rgba(190,110,230", "rgba(110,50,150"];
       const w = 0.18 + Math.random() * 0.08; st.eyes = [-w, w];
       st.eyeCol = [[220, 170, 255], [170, 255, 190], [255, 205, 110], [150, 215, 255], [255, 120, 130]][Math.floor(Math.random() * 5)];
@@ -1907,7 +1915,7 @@ function rollCracks() {
       st.hornLift = 0.8 + Math.random() * 0.5; st.crack = Math.random() < 0.4; st.rags = 7 + Math.floor(Math.random() * 3); st.ragLen = Array.from({ length: 9 }, () => 7 + Math.random() * 14);
       st.cloak = Math.random() < 0.5 ? ["#2e2a37", "#1c1923"] : ["#33282d", "#1f181b"];
     }
-    if (kind === "spirit") {
+    if (kind === "ghost") {
       const c = ["#6fa8ff", "#b8f07a", "#ffd75a", "#ff8fc0", "#c79bff"].sort(() => Math.random() - 0.5);
       st.eyes = Math.random() < 0.5 ? [[c[0], 1], [c[1], 0.72]] : [[c[0], 0.75], [c[1], 1]];
       st.chains = Math.random() < 0.4; st.bow = Math.random() < 0.3; st.torn = Math.random() < 0.4;
@@ -1950,12 +1958,15 @@ function rollCracks() {
   return { render, looks, drawAt, drawWizard, seqFx, renderTownWizard, renderNpc, GEAR };
 })();
 const CAST = [
-  { k: "ghost", name: "Ghost", tag: "Future summon", stats: [["Status", "graphics only"]],
+  { k: "spirit", name: "Spirit", tag: "Summon (new look in 0.9.0)", stats: [["Status", "in the game"]],
     lore: "A wisp gone dark: an amorphous blob of black and grey with a violet-to-purple glow at the edge and two glowing eyes, always shifting like a panicking wisp, trailing smoke and sinking motes of violet light. It strikes with a dark pulse.",
     moves: [["main", "Dark pulse"]], looks: "Rolled: eye colour (violet, green, amber, ice blue, red), violet or purple glow, how lumpy it is, how much smoke trails off it (always some)" },
-  { k: "wraith", name: "Wraith", tag: "Future summon", stats: [["Status", "graphics only"]],
+  { k: "ghost", name: "Ghost", tag: "Summon (0.9.0)", stats: [["Status", "in the game"]],
+    lore: "Somebody's old bedsheet with opinions: a floating sheet with a swishing hem and tail and mismatched glowing eyes. It never fights; it haunts the ground around it so nearby summons hit harder and move faster.",
+    moves: [["main", "Boo"]], looks: "Rolled: eye colours, rattling chains, a bow, a torn hem" },
+  { k: "wraith", name: "Wraith", tag: "Summon (0.9.0)", stats: [["Status", "in the game"]],
     lore: "A tall, vaguely human shape in a long, dark shroud whose torn strips stream round in the wind of its vortex, hanging open over a bare ribcage and spine, a goat skull for a face with a pair of bull horns that sweep out and curl back in, their points standing straight up over the sides of the skull and slit-pupilled embers in the sockets. Long arms end in bony claws; below the waist it is a whirling column of smoke. It pulses: a dark aura breathes around it and the whole figure fades in and out.",
-    moves: [["main", "Claw rake"]], looks: "Rolled: ember colour (green, red, blue, violet), how high the horns sweep, a cracked skull, shroud colour, how many strips the hem is torn into and how long each one is" }
+    moves: [["main", "Frost Bolt"]], looks: "Rolled: ember colour (green, red, blue, violet), how high the horns sweep, a cracked skull, shroud colour, how many strips the hem is torn into and how long each one is" }
 ];
 const tiles = [];
 let flip = false;

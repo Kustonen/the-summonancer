@@ -2,6 +2,16 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.9.0-alpha
+- **Spirit** gets the dark violet smoke look; the sheet drawing moves to the new Ghost. Spirit behaviour is unchanged. Its armour upgrade "Starched Hem" is now **Ectoplasmic Skin** (levels kept).
+- **New summon: Ghost** (bind 300 gold, 15 skulls, 10 crystal; 20 mana, 1 slot). Never attacks. Hangs back ~1.5 tiles behind its group, away from the fighting; centres when the fight is on several sides; backs off from enemies within 2 tiles. Haunts summons within 2 tiles: +10 % damage and +10 % move speed. Floats, doesn't burn or freeze.
+- **Remembrance Lanterns** (Builder, 300 gold, 50 smooth stone, 10 iron ingots): expands the Wisping Well (Hallowed / Hallowed Stony Wisping Well) with ghost upgrades: Memorial Urns, Thicker Sheet, Wider Haunt, Battle Hymn, Restless Feet, Eerie Calm; Starched Hem (elemental resistance) is listed as coming later.
+- **New summon: Wraith** (bind 500 gold, 25 skulls, 25 crystal, 100 charcoal; 30 mana, 2 slots). Frost Bolt from 2 tiles every 2.2 s for 3 damage, chilling 40 % for 3 s (never freezes). Floats, doesn't burn or freeze; wards take half damage.
+- **The Hollow Cloister** (Builder, 600 gold, 100 smooth stone, 20 iron ingots, 20 crystal): wraith upgrades for damage, cast speed, move speed, armour, health, range and Deep Cold.
+- Invisible Academy: **Overlapping Haunting Grounds** (ghost auras stack 1 / 1.5 / 1.75 / 1.875 / 2x) and **Cold Snap** (every 4th Frost Bolt chills a 3 x 3 area).
+- Both new summons have battle cards (keys 1-7), sounds, classic shapes, Grimoire pages, quests and quips.
+- **Saina's ledger** now tracks spending (per resource and what it went on, exp included), Marketplace sales and purchases, Blacksmith inputs and outputs, mana and bones used, spells cast, battles per field, Gauntlet caves cleared, chiefs defeated, gear found and sold, and quests and their goods.
+
 ## 0.8.31-alpha
 - Ogre Chieftain's drumstick meat is 10 % bigger.
 
