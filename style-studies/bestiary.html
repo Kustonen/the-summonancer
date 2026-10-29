@@ -712,7 +712,7 @@ function ogre(ctx, cx, gy, s0, t, st) {
   ctx.beginPath(); ctx.roundRect(-R * 0.72, jy, R * 1.44, R * 0.42, R * 0.18); shape(ctx, OGRE, 3.5);
   const ts = st.tuskSide || 1;
   const tusk = (ts, tk, tt) => { ctx.beginPath(); ctx.moveTo(ts * R * 0.42, jy + R * 0.1); ctx.quadraticCurveTo(ts * R * (0.3 + 0.26 * tk + tt), jy - R * 0.55 * tk, ts * R * (0.3 + tt * 1.6), jy - R * 0.62 * tk); ctx.quadraticCurveTo(ts * R * 0.3, jy - R * 0.2, ts * R * 0.2, jy + R * 0.1); ctx.closePath(); shape(ctx, TUSK, 3); };
-  if (st.boss) { tusk(ts, 1.08, 0.24); tusk(-ts, 0.88, 0.2); }   // the chieftain has two, both leaning out clear of the eyes; one a little smaller
+  if (st.boss) { tusk(ts, 1.08, 0.24); tusk(-ts, 0.46, 0.1); }   // the chieftain has two, leaning out clear of the eyes; the second only half as long
   else tusk(ts, 1, 0);
   if (!st.gap && !st.boss) { ctx.beginPath(); ctx.rect(-ts * R * 0.32, jy - R * 0.16, R * 0.14, R * 0.18); shape(ctx, TUSK, 2); }
   if (st.boss) { ctx.save(); ctx.translate(-R * 0.42, -R * 0.62); ctx.rotate(-0.42); crownAt(ctx, 0, R * 0.5); ctx.restore();   // worn at a rakish tilt
