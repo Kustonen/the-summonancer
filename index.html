@@ -375,6 +375,10 @@ div.mapbtn { cursor: default; }
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V28L32 12l24 16v30z" fill="none" stroke="#9fd0ff" stroke-width="2" stroke-dasharray="4 3" opacity=".75"/><path d="M26 58V44h12v14" fill="none" stroke="#9fd0ff" stroke-width="2" stroke-dasharray="3 3" opacity=".6"/><path d="M16 30l16-7 16 7-16 7z" fill="#2a2433" stroke="#e8c45a" stroke-width="1.8"/><path d="M22 33v7c5 3 15 3 20 0v-7" fill="#2a2433" stroke="#e8c45a" stroke-width="1.8"/><path d="M46 31v9" stroke="#e8c45a" stroke-width="1.6"/><circle cx="46" cy="41" r="1.8" fill="#e8c45a"/><circle cx="14" cy="16" r="1.2" fill="#ece3cf"/><circle cx="52" cy="14" r="1" fill="#ece3cf"/></svg>
       <b>Invisible Academy</b>
     </button>
+    <button class="bld" id="b_chrono" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="57" rx="18" ry="4" fill="#26301f"/><path d="M22 56l4-8h12l4 8z" fill="#6c6676" stroke="#2a1f2e" stroke-width="2"/><path d="M32 6l11 14-11 28-11-28z" fill="#9fd0ff" stroke="#2a1f2e" stroke-width="2"/><path d="M32 6l-4 14 4 28" fill="#cfe8ff" opacity=".7"/><circle cx="32" cy="24" r="8" fill="none" stroke="#2a1f2e" stroke-width="1.6"/><path d="M32 19v5l3.5 2" stroke="#2a1f2e" stroke-width="1.8" stroke-linecap="round"/><path d="M10 18a24 24 0 0 1 8-9M54 18a24 24 0 0 0-8-9" stroke="#e8c45a" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M16 8l2 1-1 2M48 8l-2 1 1 2" stroke="#e8c45a" stroke-width="2" fill="none"/></svg>
+      <b>Chrono Crystal</b>
+    </button>
     <button class="bld" id="b_archivus" type="button" aria-pressed="false" hidden>
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 58V24a20 20 0 0 1 40 0v34z" fill="#3a3547" stroke="#2a1f2e" stroke-width="2"/><path d="M20 58V28a12 12 0 0 1 24 0v30z" fill="#15131c"/><rect x="24" y="36" width="16" height="12" rx="2" fill="#e8dcbf" stroke="#2a1f2e" stroke-width="2"/><path d="M27 40h10M27 44h7" stroke="#8a5a34" stroke-width="1.5"/><rect x="28" y="30" width="8" height="7" rx="1.5" fill="none" stroke="#e8c45a" stroke-width="2"/><circle cx="32" cy="52" r="2" fill="#e8c45a"/></svg>
       <b>Archivus Arcanus</b>
@@ -513,6 +517,12 @@ div.mapbtn { cursor: default; }
     <div id="academyList"></div>
   </section>
 
+  <section class="panel" id="p_chrono" hidden>
+    <h2>The Chrono Crystal</h2>
+    <p class="quote">“Time flies when you're summoning. Now it flies twice as fast.”</p>
+    <p>A crystal that hums slightly faster than everything else around it. On every battlefield a <b>Speed</b> button now switches between normal and double speed: everything (enemies, summons, mana, spells, waves) happens twice as fast. The setting is remembered between battles.</p>
+  </section>
+
   <section class="panel" id="p_archivus" hidden>
     <h2>Archivus Arcanus</h2>
     <p class="quote">“You are not prepared!”</p>
@@ -558,6 +568,7 @@ div.mapbtn { cursor: default; }
     <button class="mini" id="artBtn" type="button">Art: new</button>
     <button class="mini" id="music" type="button" aria-pressed="true">Music on</button>
     <button class="mini" id="sfx" type="button" aria-pressed="true">Sound on</button>
+    <button class="mini" id="speedBtn" type="button" aria-pressed="false" hidden title="The Chrono Crystal: double speed">Speed 1×</button>
     <button class="mini" id="pause" type="button">Pause</button>
     <button class="mini" id="retreat" type="button" title="Leave the battle and keep what you've gathered">Retreat</button>
   </div>
@@ -671,7 +682,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.7.4-alpha";
+const VERSION = "0.8.0-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -700,6 +711,7 @@ const DATA = {
     archivus:     { name: "Archivus Arcanus",        cost: 150, about: "Forbidden tomes on modifying summons. Allegedly." },
     blacksmith:   { name: "Blacksmith",              cost: { gold: 150, stone: 30, wood: 20 }, about: "Turns what you find into what you need: charcoal, iron ingots and steel. Keeps working while you're away." },
     academy:      { name: "Invisible Academy",       cost: { gold: 300, stone: 200, ingot: 20 }, after: "blacksmith", about: "Where summons learn new skills and choose which ones to use. You can't see it. That's the curriculum." },
+    chrono:       { name: "The Chrono Crystal",      cost: { gold: 1000, crystal: 100 }, about: "A crystal that hums slightly faster than everything else. Lets you run any battle at double speed." },
     spiritstones: { name: "Spirit Stones", cost: { gold: 150, stone: 20, crystal: 10 }, needs: "spirit", after: "well", about: "Will expand the Wisping Well. Humming stones that make spirits sturdier, quicker and harder to hit." }
   },
   // binding a new kind of summon at the Septagram, once
@@ -1035,12 +1047,12 @@ const DATA = {
   },
   // skills summons learn at the Invisible Academy; their upgrades live in each summon's own building
   skills: {
-    rapid: { name: "Rapid Slash",    unit: "skeleton_warrior", cost: { gold: 200, crystal: 5 }, about: "Every 5th hit the skeleton attacks 75 % faster for the next 3 hits. The count starts again once the frenzy is over." },
-    flame: { name: "Flaming Arrows", unit: "skeleton_archer",  cost: { gold: 100 },             about: "Every 5th arrow is on fire and may set its target ablaze." },
-    frost: { name: "Frost Arrows",   unit: "skeleton_archer",  cost: { gold: 200, crystal: 5 }, about: "Every 5th arrow is ice-cold and slows its target 60 % for 6 seconds." },
-    pseudoW: { name: "Pseudo Reality", unit: "wisp",   cost: { gold: 300, crystal: 10 }, about: "The wisp is only mostly there: 10 % of physical attacks aimed at it miss." },
-    pseudoS: { name: "Pseudo Reality", unit: "spirit", cost: { gold: 300, crystal: 10 }, about: "The spirit is only mostly there: 10 % of physical attacks aimed at it miss." },
-    slam:  { name: "Ground Slam",    unit: "golem",            cost: { gold: 100, stone: 20 },  about: "Every 4th attack is a two-fisted slam that hits everything in front and shoves it back." }
+    rapid: { name: "Rapid Slash",    unit: "skeleton_warrior", cost: { gold: 1200, crystal: 30, ingot: 20 }, about: "Every 5th hit the skeleton attacks 75 % faster for the next 3 hits. The count starts again once the frenzy is over." },
+    flame: { name: "Flaming Arrows", unit: "skeleton_archer",  cost: { gold: 600, crystal: 15 },             about: "Every 5th arrow is on fire and may set its target ablaze." },
+    frost: { name: "Frost Arrows",   unit: "skeleton_archer",  cost: { gold: 1200, crystal: 30, ingot: 20 }, about: "Every 5th arrow is ice-cold and slows its target 60 % for 6 seconds." },
+    pseudoW: { name: "Pseudo Reality", unit: "wisp",   cost: { gold: 1500, crystal: 40, skulls: 10 }, about: "The wisp is only mostly there: 10 % of physical attacks aimed at it miss." },
+    pseudoS: { name: "Pseudo Reality", unit: "spirit", cost: { gold: 1500, crystal: 40, skulls: 10 }, about: "The spirit is only mostly there: 10 % of physical attacks aimed at it miss." },
+    slam:  { name: "Ground Slam",    unit: "golem",            cost: { gold: 600, stone: 100, crystal: 15 },  about: "Every 4th attack is a two-fisted slam that hits everything in front and shoves it back." }
   },
   // the Blacksmith: what goes in, what comes out and how long one takes
   smith: {
@@ -1596,7 +1608,7 @@ function startBattle(key, diff) {
   S.dropMult = 1 + gearStat("drop") / 100; S.reassemble = []; S.summonedNow = {};
   S.waveGap = S.assault ? S.assault.gap : DATA.waves.gap;
   if (L.arena) setupArena(diff || "easy", faction);
-  $("spell_move").hidden = !L.arena; $("killStat").hidden = !L.arena; $("waveLbl").textContent = L.arena === "gauntlet" ? "cave" : "wave";
+  $("spell_move").hidden = !L.arena; markSpeed(); $("killStat").hidden = !L.arena; $("waveLbl").textContent = L.arena === "gauntlet" ? "cave" : "wave";
   $("waveStat").hidden = L.arena === "raid";
   if (S.assault) {
     // every tile of the enemy ward shares one pool of health
@@ -3124,7 +3136,7 @@ function showBest() {
 }
 
 // ---------- Town ----------
-const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "wagon", "spellbook", "market", "blacksmith", "academy", "lab", "well", "septagram", "golematorium", "library", "stones", "archivus"];
+const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "wagon", "spellbook", "market", "blacksmith", "academy", "lab", "well", "chrono", "septagram", "golematorium", "library", "stones", "archivus"];
 function openBuilding(k) {
   for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
   if (k === "grimoire") renderGrimoire();
@@ -5780,12 +5792,15 @@ function drawTown(dt) {
 function loop(t) {
   const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t; frameDt = dt; wizClock += dt;
   if ((smithT += dt) > 0.2) { smithT = 0; smithTick(); if (!inBattle && !$("p_blacksmith").hidden) renderSmithQueue(); }
-  if (inBattle && S) { if (!paused) update(dt); draw(); hud(); }
+  if (inBattle && S) { if (!paused) { update(dt); if (META.fast && META.built.chrono && !S.over) update(dt); } draw(); hud(); }
   else drawTown(dt);
   drawGrimoire(dt);
   requestAnimationFrame(loop);
 }
 
+// the Chrono Crystal: double speed on every battlefield, remembered between battles
+function markSpeed() { const on = !!META.fast; $("speedBtn").textContent = on ? "Speed 2×" : "Speed 1×"; $("speedBtn").setAttribute("aria-pressed", on ? "true" : "false"); $("speedBtn").hidden = !META.built.chrono; }
+$("speedBtn").addEventListener("click", () => { META.fast = !META.fast; saveMeta(); markSpeed(); say(META.fast ? "The Chrono Crystal hums. Everything moves twice as fast. Try to keep up." : "Back to normal speed. The kobolds look relieved."); });
 $("verTown").textContent = "v" + VERSION; $("verBattle").textContent = "The Summonancer v" + VERSION;
 // a brand-new wizard wakes up in the middle of a battle; everyone else starts in town
 if (META.stage === "intro") startBattle("hillside");

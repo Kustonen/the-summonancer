@@ -2,6 +2,10 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.0-alpha – 2026-10-29
+- The Chrono Crystal (Builder, 1000 gold + 100 crystal shards): a Speed button on every battlefield switches between normal and double speed; the choice is remembered
+- Academy skills cost much more: Flaming Arrows 600 gold + 15 crystal shards, Ground Slam 600 gold + 100 smooth stone + 15 crystal shards, Rapid Slash and Frost Arrows 1200 gold + 30 crystal shards + 20 iron ingots, Pseudo Reality 1500 gold + 40 crystal shards + 10 skulls (each, for wisps and for spirits). Skills already learned stay learned
+
 ## 0.7.4-alpha – 2026-10-29
 - Once the Spirit Stones are built, the Wisping Well's icon gets a ring of standing stones around it
 
