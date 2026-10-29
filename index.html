@@ -701,7 +701,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.8-alpha";
+const VERSION = "0.9.9-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -1666,6 +1666,8 @@ function buildLevel(key) {
 
 function startBattle(key, diff) {
   levelKey = key;
+  if (META.fast) { META.fast = false; saveMeta(); }          // every battle starts at normal speed
+  if (typeof markSpeed === "function") markSpeed();
   let faction = null;
   if (key === "raid") { [faction, diff] = (diff || "kobold:easy").split(":"); }
   L = buildLevel(levelKey);

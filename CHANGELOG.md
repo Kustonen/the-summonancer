@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.9.9-alpha
+- Every battle starts at 1x speed, even if the Chrono Crystal's 2x was on when the last one ended.
+
 ## 0.9.8-alpha
 - Spirit is now a mobile skirmisher: it never stops to attack, but sweeps through enemies and out the other side, hurting everything it passes over, then picks the next one. It still falls back to a wisp to mend when badly hurt.
 - New spirit upgrade at the Spirit Stones: Warmth Sponge, +0.1 healing from wisps per level (up to +1.0).
