@@ -226,6 +226,12 @@ div.mapbtn { cursor: default; }
 .quest .qstate.claimed { color: var(--heal); }
 .quest p { margin: 0; color: var(--dim); }
 #ledger .sec p .ri { margin-right: 10px; }
+.smithjob { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; padding: 6px 0; border-top: 1px solid #2f2a3b; }
+.smithjob .bar2 { grid-column: 1 / -1; height: 6px; background: #2a2433; border-radius: 3px; overflow: hidden; }
+.smithjob .bar2 > div { height: 100%; background: var(--gold); }
+.smithjob .acts { display: flex; gap: 4px; flex-wrap: wrap; }
+.smithjob .acts .btn { padding: 4px 9px; font-size: 13px; }
+.num.small { width: 80px; }
 .gearslots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
 .gslot { text-align: left; background: var(--panel2, #24202e); border: 1px solid #3a3547; border-radius: 10px; padding: 6px 8px; color: inherit; font: inherit; cursor: pointer; min-height: 52px; }
 .gslot small { display: block; color: var(--dim); font-size: 12px; }
@@ -358,6 +364,14 @@ div.mapbtn { cursor: default; }
       <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="54" rx="28" ry="6" fill="#26301f"/><rect x="8" y="26" width="9" height="28" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><rect x="25" y="26" width="9" height="28" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><rect x="5" y="19" width="32" height="8" rx="2" fill="#a8a293" stroke="#2a1f2e" stroke-width="2"/><rect x="44" y="30" width="10" height="24" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><ellipse cx="42" cy="50" rx="7" ry="5" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2"/><circle cx="48" cy="47" r="3" fill="#2a1f2e"/></svg>
       <b>Stone Circle</b>
     </button>
+    <button class="bld" id="b_blacksmith" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 58V30l14-10h24l14 10v28z" fill="#3a3547" stroke="#2a1f2e" stroke-width="2"/><rect x="40" y="8" width="8" height="16" fill="#4a4553" stroke="#2a1f2e" stroke-width="2"/><path d="M42 6c2-3 5-2 4-6" stroke="#8a8495" stroke-width="2" fill="none"/><rect x="10" y="38" width="14" height="20" rx="3" fill="#15131c"/><ellipse cx="17" cy="52" rx="5" ry="3" fill="#f08a3c"/><circle cx="17" cy="49" r="2" fill="#ffd36b"/><path d="M28 46h24l-4 5H32z" fill="#6c6676" stroke="#2a1f2e" stroke-width="2"/><path d="M34 51h12v7H34z" fill="#4a4553" stroke="#2a1f2e" stroke-width="2"/><path d="M46 30l10 8" stroke="#8a5a34" stroke-width="3" stroke-linecap="round"/><rect x="40" y="25" width="10" height="7" rx="1" transform="rotate(38 45 28)" fill="#8a8f99" stroke="#2a1f2e" stroke-width="1.5"/><path d="M38 42l-2-4M42 41l1-4" stroke="#ffd36b" stroke-width="1.5"/></svg>
+      <b>Blacksmith</b>
+    </button>
+    <button class="bld" id="b_academy" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V28L32 12l24 16v30z" fill="none" stroke="#9fd0ff" stroke-width="2" stroke-dasharray="4 3" opacity=".75"/><path d="M26 58V44h12v14" fill="none" stroke="#9fd0ff" stroke-width="2" stroke-dasharray="3 3" opacity=".6"/><path d="M16 30l16-7 16 7-16 7z" fill="#2a2433" stroke="#e8c45a" stroke-width="1.8"/><path d="M22 33v7c5 3 15 3 20 0v-7" fill="#2a2433" stroke="#e8c45a" stroke-width="1.8"/><path d="M46 31v9" stroke="#e8c45a" stroke-width="1.6"/><circle cx="46" cy="41" r="1.8" fill="#e8c45a"/><circle cx="14" cy="16" r="1.2" fill="#ece3cf"/><circle cx="52" cy="14" r="1" fill="#ece3cf"/></svg>
+      <b>Invisible Academy</b>
+    </button>
     <button class="bld" id="b_spiritstones" type="button" aria-pressed="false" hidden>
       <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="55" rx="27" ry="5" fill="#26301f"/><path d="M8 54l4-22 8-4 4 26z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M40 54l3-26 9 2 3 24z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M14 40l4-2M45 38l6 1" stroke="#9fd0ff" stroke-width="2"/><path d="M22 30a10 10 0 0 1 20 0v14l-3-3-3 3-4-3-3 3-4-3-3 3z" fill="#e6edff" stroke="#2a1f2e" stroke-width="2"/><circle cx="28" cy="29" r="2.4" fill="#6fa8ff"/><circle cx="36" cy="29" r="1.8" fill="#b8f07a"/><path d="M30 10c2-3 6-3 6 0" stroke="#9fd0ff" stroke-width="1.5" fill="none"/></svg>
       <b>Spirit Stones</b>
@@ -475,6 +489,22 @@ div.mapbtn { cursor: default; }
     <p class="quote">“Come for the ale, stay because the door sticks.”</p>
     <p>Villagers, rumours and suspiciously cheap ale. If anyone in town needs something done, this is where they'll ask. Finished jobs are paid here too.</p>
     <div id="tavernList"></div>
+  </section>
+
+  <section class="panel" id="p_blacksmith" hidden>
+    <h2>Blacksmith</h2>
+    <p class="quote">“Strike while the iron is hot. Or lukewarm. I'm not fussy.”</p>
+    <p>Order what you need and the smith works through the list one job at a time, even while you're out on the battlefield. You can order things made from what earlier jobs will produce. Materials are taken one piece at a time as work starts; pausing or removing a job hands back whatever was on the anvil.</p>
+    <div id="smithRecipes"></div>
+    <h3>Work queue</h3>
+    <div id="smithQueue"></div>
+  </section>
+
+  <section class="panel" id="p_academy" hidden>
+    <h2>Invisible Academy</h2>
+    <p class="quote">“Attendance is mandatory. Visibility is optional.”</p>
+    <p>Summons learn new skills here, once, and choose which ones they use. Every summon has one skill slot to start with; their own buildings can add more, at a price. Skills are improved in each summon's own building.</p>
+    <div id="academyList"></div>
   </section>
 
   <section class="panel" id="p_spiritstones" hidden>
@@ -601,6 +631,15 @@ div.mapbtn { cursor: default; }
 </div>
 
  <div id="talkDim" hidden></div>
+ <div class="overlay" id="confirmBox" hidden>
+  <div class="overlay-inner" style="max-width:520px;margin-top:20vh">
+    <section class="panel">
+      <h2>Are you sure?</h2>
+      <p id="confirmText"></p>
+      <div class="row"><button class="btn primary" id="confirmYes" type="button">Spend it anyway</button><button class="btn" id="confirmNo" type="button">Keep it</button></div>
+    </section>
+  </div>
+</div>
  <div class="overlay" id="gearOverlay" hidden>
   <div class="overlay-inner">
     <button class="mini close" id="gearClose" type="button">Close</button>
@@ -659,6 +698,8 @@ const DATA = {
     library:      { name: "The Overdue Library",     cost: 60,  about: "Research for Command and Nemesis: longer, cheaper and nastier." },
     stones:       { name: "Protective Stone Circle", cost: 50,  about: "A sturdier ward, a Shove that pushes enemies away and stones that mend themselves." },
     archivus:     { name: "Archivus Arcanus",        cost: 150, about: "Forbidden tomes on modifying summons. Allegedly." },
+    blacksmith:   { name: "Blacksmith",              cost: { gold: 150, stone: 30, wood: 20 }, about: "Turns what you find into what you need: charcoal, iron ingots and steel. Keeps working while you're away." },
+    academy:      { name: "Invisible Academy",       cost: { gold: 300, stone: 200, ingot: 20 }, after: "blacksmith", about: "Where summons learn new skills and choose which ones to use. You can't see it. That's the curriculum." },
     spiritstones: { name: "Spirit Stones",           cost: { gold: 150, stone: 20, crystal: 10 }, needs: "spirit", after: "well", about: "An extension of the Wisping Well: humming stones that make spirits sturdier, quicker and harder to hit." }
   },
   // binding a new kind of summon at the Septagram, once
@@ -678,7 +719,10 @@ const DATA = {
       { key: "hp",    name: "Extra Ribs",         max: 10, gold: 10, fx: lv => "+" + lv * 10 + " % health" },
       { key: "range", name: "Keen Sockets",       max: 10, gold: 15, fx: lv => "archers shoot " + fmt(DATA.units.skeleton_archer.range * (1 + 0.1 * lv)) + " tiles" },
       { key: "pierce", name: "Piercing Arrows",   max: 5,  gold: 20, fx: lv => lv ? lv * 10 + " % chance an arrow goes through and hits the next enemy behind" : "arrows stop at the first enemy" },
-      { key: "flame",  name: "Flaming Arrows",    max: 3,  gold: 30, fx: lv => lv ? "every 5th arrow is on fire: " + (20 + 20 * lv) + " % chance to set the enemy ablaze" : "no fire arrows" }
+      { key: "flame",  name: "Flaming Arrows",    max: 3,  gold: 30, needsSkill: "flame", fx: lv => "every 5th arrow is on fire: " + (20 + 20 * lv) + " % chance to set the enemy ablaze" },
+      { key: "frostLv", name: "Biting Frost",     max: 5,  gold: 25, needsSkill: "frost", fx: lv => "every 5th arrow slows its target " + (60 + 5 * lv) + " % for 6 s" },
+      { key: "rapidLv", name: "Bone Frenzy",      max: 3,  gold: 30, needsSkill: "rapid", fx: lv => (3 + lv) + " quick slashes after every 5th hit" },
+      { key: "skillSlot", name: "Smarter Skeletons", max: 1, costs: [{ gold: 1000, bones: 1000, skulls: 100 }], fx: lv => (1 + lv) + " skill slot" + (lv ? "s" : "") + " for skeletons and archers" }
     ],
     well: [
       { key: "charm", name: "Swamp Resolve",  max: 8,  gold: 8,  fx: lv => "swamp daydreams last " + Math.max(2, 10 - lv) + " s" },
@@ -691,10 +735,11 @@ const DATA = {
     golematorium: [
       { key: "quarry",   name: "Living Quarry",     max: 8, gold: 15, fx: lv => "+" + lv * 15 + " % health, " + lv * 4 + " % bigger" },
       { key: "granite",  name: "Granite Skin",      max: 8, gold: 15, fx: lv => "blocks " + fmt(lv * 0.4) + " damage per hit" },
-      { key: "slam",     name: "Ground Slam",       max: 8, gold: 12, fx: lv => "+" + lv * 15 + " % damage, the slam shoves " + fmt(0.5 + lv * 0.08) + " tiles" },
-      { key: "tempo",    name: "Seismic Tempo",     max: 2, costs: [{ gold: 500 }, { gold: 2000 }], fx: lv => "ground slam on every " + ["4th", "3rd", "2nd"][lv] + " attack" },
+      { key: "slam",     name: "Ground Slam",       max: 8, gold: 12, needsSkill: "slam", fx: lv => "+" + lv * 15 + " % damage, the slam shoves " + fmt(0.5 + lv * 0.08) + " tiles" },
+      { key: "tempo",    name: "Seismic Tempo",     max: 2, needsSkill: "slam", costs: [{ gold: 500 }, { gold: 2000 }], fx: lv => "ground slam on every " + ["4th", "3rd", "2nd"][lv] + " attack" },
       { key: "presence", name: "Rumbling Presence", max: 6, gold: 12, fx: lv => "draws in enemies within " + fmt(2.2 + lv * 0.3) + " tiles" },
-      { key: "pebble",   name: "Pebble Legs",       max: 8, gold: 10, fx: lv => "+" + lv * 6 + " % move speed" }
+      { key: "pebble",   name: "Pebble Legs",       max: 8, gold: 10, fx: lv => "+" + lv * 6 + " % move speed" },
+      { key: "skillSlot", name: "Deeper Thoughts",  max: 1, costs: [{ gold: 1000, stone: 100, iron: 100, crystal: 50 }], fx: lv => (1 + lv) + " skill slot" + (lv ? "s" : "") + " for golems" }
     ],
     library: [
       { key: "cmdDur",  name: "Extended Loan",   max: 6, gold: 10, fx: lv => "Command lasts " + fmt(1 + lv * 0.25) + " s" },
@@ -760,7 +805,10 @@ const DATA = {
     crystal: { name: "Crystal shards", lot: 1,  sellFor: 5, buyFor: 50 },
     stone:   { name: "Smooth stone",   lot: 5,  sellFor: 1, buyFor: 10 },
     iron:    { name: "Scrap iron",     lot: 5,  sellFor: 1, buyFor: 10 },
-    wood:    { name: "Wood",           lot: 5,  sellFor: 1, buyFor: 10 }
+    wood:    { name: "Wood",           lot: 5,  sellFor: 1, buyFor: 10 },
+    charcoal: { name: "Charcoal",      lot: 5,  sellFor: 1, buyFor: 3 },
+    ingot:   { name: "Iron ingots",    lot: 1,  sellFor: 3, buyFor: 25 },
+    steel:   { name: "Steel ingots",   lot: 1,  sellFor: 10, buyFor: 80 }
   },
   exp: {
     perKill: { kobold: 0.5, bog_goblin: 1, orc: 2, ogre: 4, troll: 4 },
@@ -961,6 +1009,22 @@ const DATA = {
     hard:   { name: "Hard",   kills: 100, gap: 3.0, strength: 1.6, vw: 15, reward: { exp: 100, gold: 100 } },
     perStage: { kills: 1.15, strength: 0.15, vw: 3, reward: 0.25, wardBack: 0.5 }
   },
+  // skills summons learn at the Invisible Academy; their upgrades live in each summon's own building
+  skills: {
+    rapid: { name: "Rapid Slash",    unit: "skeleton_warrior", cost: { gold: 200, crystal: 5 }, about: "Every 5th hit the skeleton attacks 75 % faster for the next 3 hits. The count starts again once the frenzy is over." },
+    flame: { name: "Flaming Arrows", unit: "skeleton_archer",  cost: { gold: 100 },             about: "Every 5th arrow is on fire and may set its target ablaze." },
+    frost: { name: "Frost Arrows",   unit: "skeleton_archer",  cost: { gold: 200, crystal: 5 }, about: "Every 5th arrow is ice-cold and slows its target 60 % for 6 seconds." },
+    slam:  { name: "Ground Slam",    unit: "golem",            cost: { gold: 100, stone: 20 },  about: "Every 4th attack is a two-fisted slam that hits everything in front and shoves it back." }
+  },
+  // the Blacksmith: what goes in, what comes out and how long one takes
+  smith: {
+    lines: 1,
+    recipes: {
+      charcoal: { name: "Charcoal",    in: { wood: 1 },                          time: 1 },
+      ingot:    { name: "Iron ingot",  in: { iron: 5, wood: 1 },                 time: 2 },
+      steel:    { name: "Steel ingot", in: { ingot: 1, wood: 1, charcoal: 5 },   time: 5 }
+    }
+  },
   // equipment: dropped by Raid chiefs, worn by the wizard. Each chief's hall drops pieces of its own set.
   gear: {
     slots: [["head", "Head"], ["torso", "Torso"], ["cloak", "Cloak"], ["arms", "Arms"], ["hands", "Hands"], ["feet", "Feet"], ["staff", "Staff"], ["neck", "Neck"], ["ring1", "Ring"], ["ring2", "Ring"]],
@@ -992,7 +1056,7 @@ const DATA = {
       frost:   { name: "Frostbound Attire", word: "Frostbound", 2: "cold spells cost 20 % less", 3: "the chill lasts 2 s longer", 5: "Freeze covers 1 more tile in every direction" },
       necro:   { name: "Definitely Not a Necromancer's Outfit", word: "Not-At-All-Necromantic", 2: "skeletons have 15 % more health and damage", 3: "skeletons attack 15 % faster, archers reach 1 tile further", 5: "a fallen skeleton sometimes (25 %) pulls itself back together at half health, once, without taking a summon slot" },
       stone:   { name: "Stonewarden's Garb", word: "Stonewarden's", 2: "golems block 1 more damage, earth spells cost 20 % less", 3: "summons on guard move 20 % faster", 5: "the ward holds 1 more hit" },
-      warlord: { name: "Warlord's Hand-Me-Downs", word: "Warlord's", 2: "Nemesis costs 20 % less and lasts 2 s longer", 3: "summons deal 10 % more damage", 5: "the Nemesis target takes 25 % more damage" }
+      warlord: { name: "Warlord's Hand-Me-Downs", word: "Warlord's", 2: "Nemesis costs 20 % less and lasts 2 s longer", 3: "summons deal 10 % more damage", 5: "summons move 50 % faster while the Nemesis target lives" }
     }
   },
   // the Raid: whose hall, their colours, what guards it and the chief at the end of the carpet
@@ -1040,7 +1104,13 @@ let META = freshMeta(), oldSave = false;
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const saved = JSON.parse(raw); oldSave = !saved.v2; META = Object.assign(META, saved); } } catch (e) {}
 // older saves kept bought bones separately; they now live in the warehouse
 META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {};
-for (const k of ["stone", "iron", "wood", "crystal"]) META.warehouse[k] = META.warehouse[k] || 0;
+for (const k of ["stone", "iron", "wood", "crystal", "charcoal", "ingot", "steel"]) META.warehouse[k] = META.warehouse[k] || 0;
+if (!META.skills) {          // skills came later: what older saves already had carries over
+  META.skills = { unlocked: {}, equip: {} };
+  if (((META.research || {}).lab || {}).flame) { META.skills.unlocked.flame = true; META.skills.equip.skeleton_archer = ["flame"]; }
+  if ((META.unlocked || {}).golem) { META.skills.unlocked.slam = true; META.skills.equip.golem = ["slam"]; }
+}
+META.smith = META.smith || { queue: [], last: Date.now(), next: 1 };
 META.quests = META.quests || {}; META.spells = META.spells || {};
 META.spellSlots = META.spellSlots || 0;
 // Saina's ledger: everything since the very first battle (kills, summons, best waves and wins are kept elsewhere already)
@@ -1052,7 +1122,7 @@ if (!META.loadout) {          // the spells taken into battle: Command and Nemes
   for (const k of ["firebolt", "freeze", "nurture", "guardstone"]) if (META.spells[k] && META.loadout.length < DATA.spellSlots.start) META.loadout.push(k);
 }
 // Wider Frost now stops at 5 x 5: levels bought beyond 2 are refunded
-(() => { const lv = META.research.library.frRadius || 0; if (lv <= 2) return;
+(() => { const lv = ((META.research || {}).library || {}).frRadius || 0; if (lv <= 2) return;
   const r = DATA.research.library.find(x => x.key === "frRadius");
   for (let l = 2; l < lv; l++) { const c = DATA.research.cost(r, l); META.gold += c.gold; META.warehouse.bones += c.bones; META.warehouse.skulls += c.skulls; }
   META.research.library.frRadius = 2; })(); META.research = META.research || {};
@@ -1076,6 +1146,9 @@ const setOn = (set, n) => setCount(set) >= n;
 const wizManaMax = () => DATA.wizard.manaMax + META.manaLv * DATA.tower.mana.per + gearStat("mana");
 const wizRegen = () => DATA.wizard.manaRegen + META.regenLv * DATA.tower.regen.per + gearStat("regen");
 const wizSlots = () => DATA.wizard.summonSlots + META.slotLv * DATA.tower.slots.per + gearStat("slots");
+// skills: how many a summon may use, and whether one is in use
+const skillSlots = kind => 1 + (kind === "golem" ? rlv("golematorium", "skillSlot") : kind === "skeleton_warrior" || kind === "skeleton_archer" ? rlv("lab", "skillSlot") : 0);
+const skillOn = (kind, sk) => !!(META.skills.unlocked[sk] && (META.skills.equip[kind] || []).includes(sk));
 const wardHits = () => DATA.wizard.ward + rlv("stones", "ward") + gearStat("ward") + (setOn("stone", 5) ? 1 : 0);
 // make a new piece of equipment from a set, its rarity rolled by the difficulty
 function makeGear(set, diff) {
@@ -1131,7 +1204,7 @@ const shoveCooldown = lv => Math.max(30, 60 - 6 * (lv - 1));
 function spellsNow() {
   return {
     command: { name: "Command", mana: spellMana("command", 10 - rlv("library", "cmdCost")), duration: 1 + 0.25 * rlv("library", "cmdDur") },
-    nemesis: { name: "Nemesis", mana: spellMana("nemesis", 20 - 2 * rlv("library", "nemCost")), duration: 5 + rlv("library", "nemDur") + (setOn("warlord", 2) ? 2 : 0), exposed: 0.1 * rlv("library", "exposed") + (setOn("warlord", 5) ? 0.25 : 0) },
+    nemesis: { name: "Nemesis", mana: spellMana("nemesis", 20 - 2 * rlv("library", "nemCost")), duration: 5 + rlv("library", "nemDur") + (setOn("warlord", 2) ? 2 : 0), exposed: 0.1 * rlv("library", "exposed") },
     firebolt: Object.assign({}, DATA.spells.firebolt, { mana: spellMana("firebolt", DATA.spells.firebolt.mana) }),
     nurture: Object.assign({}, DATA.spells.nurture, { mana: spellMana("nurture", DATA.spells.nurture.mana) }),
     freeze: Object.assign({}, DATA.spells.freeze, { radius: 1.5 + 0.5 * rlv("library", "frRadius") + (setOn("frost", 5) ? 1 : 0), slow: 0.6 + 0.05 * rlv("library", "frSlow"),
@@ -1709,7 +1782,8 @@ function unitDef(kind) {
     const g = k => lv("golematorium", k);
     d.hp = Math.round(b.hp * (1 + 0.15 * g("quarry"))); d.size = 1 + 0.04 * g("quarry");
     d.armor = 0.4 * g("granite");
-    d.damage = b.damage * (1 + 0.15 * g("slam")); d.slam = { radius: b.slam.radius, knock: b.slam.knock + 0.08 * g("slam"), every: b.slam.every - g("tempo") };
+    d.damage = b.damage * (1 + 0.15 * g("slam"));
+    d.slam = skillOn("golem", "slam") ? { radius: b.slam.radius, knock: b.slam.knock + 0.08 * g("slam"), every: b.slam.every - g("tempo") } : null;   // Ground Slam is a skill now
     d.taunt = b.taunt + 0.3 * g("presence");
     d.speed = b.speed * (1 + 0.06 * g("pebble"));
     if (setOn("stone", 2)) d.armor += 1;
@@ -1719,12 +1793,14 @@ function unitDef(kind) {
     d.speed = b.speed * (1 + 0.05 * lv("lab", "speed"));
     d.armor = 0.3 * lv("lab", "armor");
     d.hp = Math.round(b.hp * (1 + 0.1 * lv("lab", "hp")));
+    if (kind === "skeleton_warrior" && skillOn(kind, "rapid")) d.rapid = { hits: 3 + lv("lab", "rapidLv"), boost: 0.75, every: 5 };
     if (setOn("necro", 2)) { d.hp = Math.round(d.hp * 1.15); d.damage *= 1.15; }          // Definitely Not a Necromancer's Outfit
     if (setOn("necro", 3)) d.attackEvery /= 1.15;
     if (kind === "skeleton_archer") {
       d.range = b.range * (1 + 0.1 * lv("lab", "range")) + (setOn("necro", 3) ? 1 : 0);    // Keen Sockets: twice the reach at level 10
       d.pierce = 0.1 * lv("lab", "pierce");                  // Piercing Arrows
-      d.flame = lv("lab", "flame") ? 0.2 + 0.2 * lv("lab", "flame") : 0;   // Flaming Arrows: every 5th arrow
+      d.flame = skillOn(kind, "flame") ? 0.2 + 0.2 * lv("lab", "flame") : 0;   // Flaming Arrows: every 5th arrow
+      d.frostArrow = skillOn(kind, "frost") ? { slow: 0.6 + 0.05 * lv("lab", "frostLv"), dur: 6 } : null;   // Frost Arrows: every 5th arrow
     }
   }
   // equipment: summon health and damage
@@ -1949,7 +2025,7 @@ function nearest(from, list, maxD, filter) {
 }
 
 function speedAt(a) {
-  const c = cellOf(a), chill = (a.chill > 0 ? 1 - a.chillSlow : 1) * (a.guard && a.side === "ally" && setOn("stone", 3) ? 1.2 : 1);       // Freeze slows, it doesn't stop
+  const c = cellOf(a), chill = (a.chill > 0 ? 1 - a.chillSlow : 1) * (a.guard && a.side === "ally" && setOn("stone", 3) ? 1.2 : 1) * (a.side === "ally" && S && S.nemesis && S.nemesis.target.hp > 0 && setOn("warlord", 5) ? 1.5 : 1);       // Freeze slows, it doesn't stop
   if (a.d.ignoresTerrain || !inGrid(c.x, c.y)) return a.d.speed * chill;
   const t = terr(c.x, c.y);
   if (t.slowsOnly && t.slowsOnly !== a.side) return a.d.speed * chill;
@@ -2032,14 +2108,20 @@ function strike(a, target) {
       float(a.x, a.y - 0.6, "SLAM!", "#e0904a"); return;
     }
     a.lastMove = "punch"; SFX.play("attack", a.kind);
-  } else SFX.play("attack", a.kind);
+  } else SFX.play("attack", a.kind === "golem" ? "golemPunch" : a.kind);
+  if (a.d.rapid) {               // Rapid Slash: every 5th hit, the next few come 75 % faster; the count waits until they're done
+    const Rp = a.d.rapid;
+    if (a.rapidLeft > 0) { a.rapidLeft--; a.cd = a.d.attackEvery / (1 + Rp.boost); }
+    else if ((a.rapidN = (a.rapidN || 0) + 1) >= Rp.every) { a.rapidN = 0; a.rapidLeft = Rp.hits; float(a.x, a.y - 0.5, "rapid slash!", "#ece3cf"); }
+  }
   if (a.d.aura && !target.isWard) {          // a spirit hurts everything underneath it at once
     for (const e of S.enemies) if (e.hp > 0 && !e.enter && (e === target || dist(a, e) <= a.d.aura)) hurt(e, a.d.damage, "#cfe0ff");
     return;
   }
   if (a.d.ranged) {
     a.shotN = (a.shotN || 0) + 1;
-    S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage, pierce: a.d.pierce || 0, fire: a.d.flame && a.shotN % 5 === 0 ? a.d.flame : 0 });
+    const special = a.shotN % 5 === 0;
+    S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage, pierce: a.d.pierce || 0, fire: a.d.flame && special ? a.d.flame : 0, frost: special ? a.d.frostArrow : null });
     return;
   }
   if (a.d.slam) {           // the ground slam: everything close in front takes the blow and gets shoved back
@@ -2295,6 +2377,7 @@ function update(dt) {
       if (t.hp > 0) {
         hurt(t, s.dmg, "#ece3cf"); SFX.play("thunk");
         if (s.fire && !t.isWard && chance(s.fire)) ignite(t);
+        if (s.frost && !t.isWard && !t.d.freezeImmune && t.hp > 0) { t.chill = s.frost.dur; t.chillSlow = s.frost.slow; if (t.burn > 0) { t.burn = 0; t.burnT = 0; } float(t.x, t.y - 0.3, "chilled!", "#9fd0ff"); }
         // a piercing arrow carries on and hits the next enemy behind, if there is one
         if (s.pierce && !t.isWard && chance(s.pierce)) {
           const ux = Math.cos(s.ang), uy = Math.sin(s.ang);
@@ -2304,7 +2387,7 @@ function update(dt) {
             const ax = e.x - t.x, ay = e.y - t.y, along = ax * ux + ay * uy, side = Math.abs(ax * uy - ay * ux);
             if (along > 0.1 && along < best && side < 0.6) { best = along; next = e; }
           }
-          if (next) { S.shots.push({ x: t.x, y: t.y, target: next, dmg: s.dmg, pierce: s.pierce, fire: s.fire, hit: (s.hit || []).concat(t) }); float(t.x, t.y - 0.5, "pierce!", "#ece3cf"); }
+          if (next) { S.shots.push({ x: t.x, y: t.y, target: next, dmg: s.dmg, pierce: s.pierce, fire: s.fire, frost: s.frost, hit: (s.hit || []).concat(t) }); float(t.x, t.y - 0.5, "pierce!", "#ece3cf"); }
         }
       }
       s.done = true;
@@ -2930,7 +3013,7 @@ function draw() {
   ctx.strokeStyle = "#ece3cf"; ctx.lineWidth = 2;
   for (const s of S.shots) {
     const px = s.x * T + T / 2, py = s.y * T + T / 2, l = T * .25, a = s.ang || 0;
-    ctx.strokeStyle = s.fire ? "#ff9a3c" : "#ece3cf";
+    ctx.strokeStyle = s.fire ? "#ff9a3c" : s.frost ? "#9fd0ff" : "#ece3cf";
     ctx.beginPath(); ctx.moveTo(px - Math.cos(a) * l, py - Math.sin(a) * l); ctx.lineTo(px, py); ctx.stroke();
     if (s.fire) { ctx.fillStyle = "rgba(255,200,90,.9)"; ctx.beginPath(); ctx.arc(px, py, T * 0.07, 0, Math.PI * 2); ctx.fill(); }
   }
@@ -3005,7 +3088,7 @@ function showBest() {
 }
 
 // ---------- Town ----------
-const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "wagon", "spellbook", "market", "lab", "well", "spiritstones", "septagram", "golematorium", "library", "stones", "archivus"];
+const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "wagon", "spellbook", "market", "blacksmith", "academy", "lab", "well", "spiritstones", "septagram", "golematorium", "library", "stones", "archivus"];
 function openBuilding(k) {
   for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
   if (k === "grimoire") renderGrimoire();
@@ -3383,7 +3466,7 @@ function goBattle(k, diff) {
 function renderTown() {
   $("tGold").textContent = META.gold; $("tExp").textContent = META.exp;
   const W = META.warehouse;
-  $("goods").innerHTML = [["gold", META.gold], ["bones", W.bones], ["skulls", W.skulls]].concat(Object.keys(DATA.materials).map(k => [k, W[k] || 0]))
+  $("goods").innerHTML = [["gold", META.gold], ["bones", W.bones], ["skulls", W.skulls]].concat(Object.keys(DATA.materials).concat(Object.keys(DATA.smith.recipes)).map(k => [k, W[k] || 0]))
     .map(([k, v]) => "<span class='good' title='" + RES_LABEL[k] + "' aria-label='" + v + " " + RES_LABEL[k] + "'>" + ICONS[k] + "<b aria-hidden='true'>" + v + "</b></span>").join("");
   for (const k in DATA.builder) $("b_" + k).hidden = !META.built[k];
   const alive = META.builder === "alive";
@@ -3394,7 +3477,7 @@ function renderTown() {
   $("b_septagram").classList.toggle("glow", META.stage === "septagram");
   renderBuilder(); renderSeptagram();
   for (const w of ["lab", "well", "golematorium", "library", "stones", "spiritstones"]) renderResearch(w);
-  renderMarket(); renderSpellBook(); renderLoadout(); renderLedger();
+  renderMarket(); renderSpellBook(); renderLoadout(); renderLedger(); renderAcademy(); renderSmithRecipes(); renderSmithQueue();
   $("b_wagon").hidden = !META.sainaMet;
   renderUnits(); renderQuests(); if (!TALK) showTalk();
   $("b_tavern").classList.toggle("glow", META.stage === "done" && !META.quests.hero || anyQuestReady());
@@ -3428,7 +3511,7 @@ $("upRegen").addEventListener("click", () => upgrade("regen", "regenLv"));
 $("upSlot").addEventListener("click", () => upgrade("slots", "slotLv"));
 $("upSpell").addEventListener("click", () => {
   const c = DATA.spellSlots.extra[META.spellSlots]; if (!c || !canPay(c)) return;
-  pay(c); META.spellSlots++; SFX.play("coins"); saveMeta(); renderTown();
+  guardSpend(c, () => { pay(c); META.spellSlots++; SFX.play("coins"); saveMeta(); renderTown(); });
 });
 // ---------- Builder, Cryptic Laboratory, Wisping Well ----------
 function renderBuilder() {
@@ -3442,12 +3525,149 @@ function renderBuilder() {
   for (const btn of $("buildList").querySelectorAll("[data-build]")) btn.addEventListener("click", () => {
     const k = btn.dataset.build, b = DATA.builder[k], c = asCost(b.cost);
     if (!canPay(c) || META.built[k]) return;
+    guardSpend(c, () => {
     pay(c); META.built[k] = true;
     if (c.gold) SFX.play("coins"); else SFX.play("appear");
     if (k === "septagram" && META.stage === "builder") META.stage = "septagram";
     saveMeta(); renderTown();
     if (WIZ_SAYS[k]) talk(wizSays(WIZ_SAYS[k]));
+    });
   });
+}
+// ---------- Invisible Academy: learn skills once, choose which ones each summon uses ----------
+function renderAcademy() {
+  const kinds = ["skeleton_warrior", "skeleton_archer", "golem", "wisp", "spirit"].filter(k => META.unlocked[k]);
+  $("academyList").innerHTML = kinds.map(k => {
+    const sks = Object.keys(DATA.skills).filter(x => DATA.skills[x].unit === k), eq = (META.skills.equip[k] || []).filter(x => META.skills.unlocked[x]), slots = skillSlots(k);
+    return "<h3>" + DATA.units[k].name + "s <small style='color:var(--dim)'>· skills in use " + eq.length + " / " + slots + "</small></h3>" +
+      (sks.length ? sks.map(x => { const S0 = DATA.skills[x], on = eq.includes(x);
+        const btn = !META.skills.unlocked[x] ? "<button class='btn' type='button' data-learnskill='" + x + "'" + (canPay(S0.cost) ? "" : " disabled") + ">Learn · " + costText(S0.cost) + "</button>"
+          : "<button class='btn" + (on ? " primary" : "") + "' type='button' data-useskill='" + x + "'" + (!on && eq.length >= slots ? " disabled title='All skill slots are in use'" : "") + ">" + (on ? "In use" : "Not in use") + "</button>";
+        return "<div class='opt'><div class='what'><b>" + S0.name + "</b><span>" + S0.about + "</span></div>" + btn + "</div>"; }).join("")
+        : "<p class='blank'>No skills to learn yet. The professors are working on it.</p>");
+  }).join("") || "<p class='blank'>Bind summons at the Septagram first.</p>";
+  for (const b of $("academyList").querySelectorAll("[data-learnskill]")) b.addEventListener("click", () => {
+    const x = b.dataset.learnskill, S0 = DATA.skills[x]; if (META.skills.unlocked[x] || !canPay(S0.cost)) return;
+    guardSpend(S0.cost, () => {
+      pay(S0.cost); META.skills.unlocked[x] = true; SFX.play("coins");
+      const eq = META.skills.equip[S0.unit] = (META.skills.equip[S0.unit] || []).filter(y => META.skills.unlocked[y]);
+      if (eq.length < skillSlots(S0.unit)) eq.push(x);                   // a free slot takes it straight away
+      saveMeta(); renderTown();
+      talk(wizSays(S0.name + "! They learned it at the Academy. I've never seen the Academy. Nobody has. That's how you know it's a good school."));
+    });
+  });
+  for (const b of $("academyList").querySelectorAll("[data-useskill]")) b.addEventListener("click", () => {
+    const x = b.dataset.useskill, unit = DATA.skills[x].unit, eq = META.skills.equip[unit] = (META.skills.equip[unit] || []).filter(y => META.skills.unlocked[y]), i = eq.indexOf(x);
+    if (i >= 0) eq.splice(i, 1); else if (eq.length < skillSlots(unit)) eq.push(x);
+    saveMeta(); renderTown();
+  });
+}
+// ---------- Blacksmith: a queue of jobs worked through one at a time, in real time ----------
+const RECIPES = DATA.smith.recipes;
+const jobLeft = j => j.n - j.done;
+// what the warehouse will hold once every running (not paused) job ahead has finished, piece by piece
+function smithProject(stock) {
+  const st = Object.assign({}, stock), stalls = [];
+  for (const j of META.smith.queue) {
+    if (j.paused) continue;
+    const R0 = RECIPES[j.r]; let left = jobLeft(j);
+    if (j.cur) { st[j.r] = (st[j.r] || 0) + 1; left--; }
+    for (let i = 0; i < left; i++) {
+      if (!Object.keys(R0.in).every(k => (st[k] || 0) >= R0.in[k])) { stalls.push(j); break; }
+      for (const k in R0.in) st[k] -= R0.in[k]; st[j.r] = (st[j.r] || 0) + 1;
+    }
+  }
+  return { st, stalls };
+}
+const stockNow = () => Object.assign({}, META.warehouse);
+// how much of each material the queue still needs from the warehouse to finish
+function smithNeeds() {
+  const need = {}, run = {};
+  for (const j of META.smith.queue) {
+    if (j.paused) continue;
+    const R0 = RECIPES[j.r]; let left = jobLeft(j);
+    if (j.cur) { run[j.r] = (run[j.r] || 0) + 1; left--; }
+    for (let i = 0; i < left; i++) { for (const k in R0.in) { run[k] = (run[k] || 0) - R0.in[k]; need[k] = Math.max(need[k] || 0, -run[k]); } run[j.r] = (run[j.r] || 0) + 1; }
+  }
+  return need;
+}
+// spending something the Blacksmith's queue is counting on asks first
+function guardSpend(cost, go) {
+  const need = smithNeeds(), short = Object.keys(cost).filter(k => k !== "gold" && cost[k] && need[k] && have(k) - cost[k] < need[k]);
+  if (!short.length) { go(); return; }
+  const after = stockNow(); for (const k in cost) if (k !== "gold") after[k] = (after[k] || 0) - cost[k];
+  const stall = smithProject(after).stalls[0];
+  $("confirmText").innerHTML = "The Blacksmith's queue still needs " + short.map(k => ri(k, need[k]) + " " + RES_LABEL[k].toLowerCase()).join(" and ") + ". After this you'd have " + short.map(k => Math.max(0, have(k) - cost[k])).join(" and ") + "." +
+    (stall ? " '" + RECIPES[stall.r].name + " ×" + jobLeft(stall) + "' would stop and wait." : "");
+  $("confirmBox").hidden = false;
+  $("confirmYes").onclick = () => { $("confirmBox").hidden = true; go(); };
+  $("confirmNo").onclick = () => { $("confirmBox").hidden = true; };
+}
+function smithMax(r) { const st = smithProject(stockNow()).st, R0 = RECIPES[r]; return Math.max(0, Math.min(...Object.keys(R0.in).map(k => Math.floor(Math.max(0, st[k] || 0) / R0.in[k])))); }
+function renderSmithRecipes() {
+  if (!$("smithRecipes")) return;
+  $("smithRecipes").innerHTML = Object.entries(RECIPES).map(([k, R0]) => "<div class='opt'><div class='what'><b>" + ri(k) + " " + R0.name + "</b><span>" + costText(R0.in) + " → " + ri(k, 1) + " · " + R0.time + " s each</span></div>" +
+    "<input class='num small' type='number' min='1' step='1' inputmode='numeric' value='10' id='smithN_" + k + "' aria-label='How many " + R0.name.toLowerCase() + "'>" +
+    "<button class='btn' type='button' data-smithmax='" + k + "'>Max</button><button class='btn primary' type='button' data-order='" + k + "'>Order</button></div>").join("") + "<p class='req' id='smithMsg'></p>";
+  for (const b of $("smithRecipes").querySelectorAll("[data-smithmax]")) b.addEventListener("click", () => { $("smithN_" + b.dataset.smithmax).value = smithMax(b.dataset.smithmax); });
+  for (const b of $("smithRecipes").querySelectorAll("[data-order]")) b.addEventListener("click", () => {
+    const r = b.dataset.order, n = Math.floor(+$("smithN_" + r).value || 0), mx = smithMax(r);
+    if (n < 1) { $("smithMsg").textContent = "Order at least one."; return; }
+    if (n > mx) { $("smithMsg").textContent = "Not enough materials for " + n + ", counting what the queue will make: at most " + mx + "."; return; }
+    if (!META.smith.queue.length) META.smith.last = Date.now();
+    META.smith.queue.push({ id: META.smith.next++, r, n, done: 0, paused: false, cur: null });
+    $("smithMsg").textContent = n + " × " + RECIPES[r].name.toLowerCase() + " added to the queue."; SFX.play("clink"); saveMeta(); renderSmithQueue();
+  });
+}
+let smithShown = "";
+function renderSmithQueue() {
+  if (!$("smithQueue")) return;
+  const Q = META.smith.queue, active = smithActive(), stalls = smithProject(stockNow()).stalls;
+  const html = Q.length ? Q.map((j, i) => {
+    const R0 = RECIPES[j.r], waiting = j === active && !j.cur && !Object.keys(R0.in).every(k => have(k) >= R0.in[k]);
+    const missing = waiting ? Object.keys(R0.in).filter(k => have(k) < R0.in[k]).map(k => RES_LABEL[k].toLowerCase()).join(", ") : "";
+    const state = j.paused ? "paused" : waiting ? "waiting for " + missing : j === active ? "working" : stalls.includes(j) ? "queued · will run short" : "queued";
+    const pct = j.cur ? Math.min(100, j.cur.p / R0.time * 100) : 0;
+    return "<div class='smithjob'><div><b>" + ri(j.r) + " " + R0.name + "</b> " + j.done + " / " + j.n + " <small style='color:var(--dim)'>· " + state + "</small></div><div class='acts'>" +
+      "<button class='btn' type='button' data-jp='" + j.id + "'>" + (j.paused ? "Resume" : "Pause") + "</button>" +
+      "<button class='btn' type='button' data-ju='" + j.id + "'" + (i ? "" : " disabled") + " aria-label='Move up'>↑</button><button class='btn' type='button' data-jd='" + j.id + "'" + (i < Q.length - 1 ? "" : " disabled") + " aria-label='Move down'>↓</button>" +
+      "<button class='btn' type='button' data-jx='" + j.id + "'>Remove</button></div><div class='bar2'><div data-jbar='" + j.id + "' style='width:" + pct + "%'></div></div></div>";
+  }).join("") : "<p class='blank'>Nothing on the anvil. The smith is polishing his hammer, mostly for show.</p>";
+  const key = html.replace(/style='width:[^']*'/g, "");
+  if (key === smithShown) { for (const j of Q) { const el = document.querySelector("[data-jbar='" + j.id + "']"); if (el) el.style.width = (j.cur ? Math.min(100, j.cur.p / RECIPES[j.r].time * 100) : 0) + "%"; } return; }
+  smithShown = key; $("smithQueue").innerHTML = html;
+  const find = id => Q.findIndex(j => j.id === +id);
+  for (const b of $("smithQueue").querySelectorAll("[data-jp]")) b.addEventListener("click", () => { const j = Q[find(b.dataset.jp)]; if (!j) return; j.paused = !j.paused; if (j.paused) unAnvil(j); saveMeta(); smithShown = ""; renderTown(); });
+  for (const b of $("smithQueue").querySelectorAll("[data-jx]")) b.addEventListener("click", () => { const i = find(b.dataset.jx); if (i < 0) return; unAnvil(Q[i]); Q.splice(i, 1); saveMeta(); smithShown = ""; renderTown(); });
+  for (const b of $("smithQueue").querySelectorAll("[data-ju]")) b.addEventListener("click", () => { const i = find(b.dataset.ju); if (i > 0) { const j = Q[i]; if (j.cur && smithActive() === j) unAnvil(j); [Q[i - 1], Q[i]] = [Q[i], Q[i - 1]]; for (const o of Q) if (o.cur && o !== smithActive()) unAnvil(o); saveMeta(); smithShown = ""; renderSmithQueue(); } });
+  for (const b of $("smithQueue").querySelectorAll("[data-jd]")) b.addEventListener("click", () => { const i = find(b.dataset.jd); if (i >= 0 && i < Q.length - 1) { [Q[i + 1], Q[i]] = [Q[i], Q[i + 1]]; for (const o of Q) if (o.cur && o !== smithActive()) unAnvil(o); saveMeta(); smithShown = ""; renderSmithQueue(); } });
+}
+// the piece on the anvil goes back to the warehouse
+function unAnvil(j) { if (!j.cur) return; for (const k in RECIPES[j.r].in) META.warehouse[k] = (META.warehouse[k] || 0) + RECIPES[j.r].in[k]; j.cur = null; }
+const smithActive = () => META.smith.queue.find(j => !j.paused && j.done < j.n) || null;
+// real time, so the smith keeps working in battle and while the game is closed
+function smithTick() {
+  const M0 = META.smith, now = Date.now();
+  let dt = Math.max(0, (now - (M0.last || now)) / 1000); M0.last = now;
+  if (!M0.built && !META.built.blacksmith) return;
+  let changed = false, guard = 0;
+  while (dt > 0 && guard++ < 200000) {
+    const j = smithActive(); if (!j) break;
+    const R0 = RECIPES[j.r];
+    if (!j.cur) {
+      if (!Object.keys(R0.in).every(k => have(k) >= R0.in[k])) break;           // waiting for materials
+      for (const k in R0.in) META.warehouse[k] -= R0.in[k]; j.cur = { p: 0 }; changed = true;
+    }
+    const step = Math.min(dt, R0.time - j.cur.p); j.cur.p += step; dt -= step;
+    if (j.cur.p >= R0.time - 1e-9) { j.cur = null; j.done++; META.warehouse[j.r] = (META.warehouse[j.r] || 0) + 1; changed = true; }
+  }
+  M0.queue = M0.queue.filter(j => j.done < j.n);
+  if (changed) { saveMeta(); if (!inBattle) { smithShown = smithShown && "x"; const W = META.warehouse; renderGoodsOnly(); } }
+}
+function renderGoodsOnly() {
+  const W = META.warehouse;
+  $("goods").innerHTML = [["gold", META.gold], ["bones", W.bones], ["skulls", W.skulls]].concat(Object.keys(DATA.materials).concat(Object.keys(RECIPES)).map(k => [k, W[k] || 0]))
+    .map(([k, v]) => "<span class='good' title='" + RES_LABEL[k] + "' aria-label='" + v + " " + RES_LABEL[k] + "'>" + ICONS[k] + "<b aria-hidden='true'>" + v + "</b></span>").join("");
 }
 // the equipment screen, opened by tapping the wizard in town
 function renderGear() {
@@ -3488,7 +3708,8 @@ function renderMarket() {
     const k = btn.dataset.mk, m = DATA.market[k], act = btn.dataset.act, add = (n) => { if (k === "gold") return; META.warehouse[k] = (META.warehouse[k] || 0) + n; };
     if (act === "sell" || act === "sellAll") {
       const lots = act === "sell" ? Math.min(1, Math.floor(have(k) / m.lot)) : Math.floor(have(k) / m.lot);
-      if (!lots) return; add(-lots * m.lot); META.gold += lots * m.sellFor;
+      if (!lots) return;
+      guardSpend({ [k]: lots * m.lot }, () => { add(-lots * m.lot); META.gold += lots * m.sellFor; SFX.play("coins"); saveMeta(); renderTown(); }); return;
     } else {
       const n = act === "buy" ? 1 : 10; if (META.gold < n * m.buyFor) return;
       META.gold -= n * m.buyFor; add(n);
@@ -3535,10 +3756,12 @@ function renderSpellBook() {
   for (const btn of $("libSpells").querySelectorAll("[data-learn]")) btn.addEventListener("click", () => {
     const k = btn.dataset.learn, b = DATA.spellBook[k];
     if (META.spells[k] || !canPay(b.cost)) return;
+    guardSpend(b.cost, () => {
     pay(b.cost); META.spells[k] = true; SFX.play("coins");
     if (!META.loadout.includes(k) && META.loadout.length < spellSlots()) META.loadout.push(k);      // a free slot takes the new spell straight away
     saveMeta(); renderTown();
     talk(wizSays(k === "guardstone" ? "Guardstone! Finally, a way to make the skeletons stay put. Usually they wander off to find their other leg." : k === "firebolt" ? "Firebolt! Small, cheap and wonderfully irresponsible around dry grass." : k === "freeze" ? "Freeze! For when the grass fire got slightly out of hand. Again." : k === "nurture" ? "Nurture! Grass, bushes, trees... I'm basically a gardener now. A gardener with skeletons." : "A new spell. Lovely."));
+    });
   });
 }
 // the Septagram: bind each kind of summon once
@@ -3553,6 +3776,7 @@ function renderSeptagram() {
   for (const btn of $("septList").querySelectorAll("[data-unlock]")) btn.addEventListener("click", () => {
     const k = btn.dataset.unlock, c = DATA.unlocks[k];
     if (META.unlocked[k] || !canPay(c)) return;
+    guardSpend(c, () => {
     pay(c); META.unlocked[k] = true;
     SFX.play(c.gold ? "coins" : "summon", k); if (c.gold) SFX.play("summon", k);
     if (k === "skeleton_warrior") {
@@ -3561,6 +3785,7 @@ function renderSeptagram() {
       talk(LINES.skeletons);
     } else if (WIZ_SAYS[k]) talk(wizSays(WIZ_SAYS[k]));
     saveMeta(); renderTown();
+    });
   });
 }
 // a summon's animation and current numbers, shown in the building that improves it
@@ -3573,6 +3798,10 @@ function unitPlate(k) {
   if (d.taunt) rows.push(["Draws enemies", "within " + fmt(d.taunt) + " tiles"]);
   if (d.slam) rows.push(["Ground slam", "every " + ["", "", "2nd", "3rd", "4th"][d.slam.every] + " attack, shoves " + fmt(d.slam.knock) + " tiles"]);
   if (d.slots > 1) rows.push(["Summon slots", d.slots]);
+  if (d.rapid) rows.push(["Rapid Slash", d.rapid.hits + " quick slashes after every 5th hit"]);
+  if (d.flame) rows.push(["Flaming Arrows", "every 5th arrow, " + Math.round(d.flame * 100) + " % to ignite"]);
+  if (d.frostArrow) rows.push(["Frost Arrows", "every 5th arrow slows " + Math.round(d.frostArrow.slow * 100) + " % for " + d.frostArrow.dur + " s"]);
+  if (["skeleton_warrior", "skeleton_archer", "golem"].includes(k)) rows.push(["Skill slots", (META.skills.equip[k] || []).filter(x => META.skills.unlocked[x]).length + " / " + skillSlots(k) + " in use"]);
   if (d.aura) rows.push(["Hovering", "hurts everything within " + fmt(d.aura) + " tiles beneath it"]);
   if (d.phasing) rows.push(["Phasing", "untouchable for " + fmt(d.phasing) + " s after a hit"]);
   if (d.regen) rows.push(["Regeneration", d.regen.amount + " HP every " + d.regen.every + " s"]);
@@ -3603,7 +3832,10 @@ const ICON_ART = {
   stone:   { pal: { o: "#2a1f2e", g: "#a8a293", l: "#d4cfc2", d: "#7d7869" }, px: ["........", "..oooo..", ".ollggo.", "olgggggo", "oggggggo", "ogggggdo", ".oddddo.", "..oooo.."] },
   iron:    { pal: { o: "#2a1f2e", s: "#8a8f99", l: "#c3c8d0", r: "#a8572e", b: "#4a4f58" }, px: ["........", "oooooo..", "olllsoo.", "olbsrsso", "osssrbso", ".oosrrso", "..oooooo", "........"] },
   wood:    { pal: { o: "#2a1f2e", b: "#8a5a34", d: "#6a4426", t: "#d9b07a", r: "#b8875a" }, px: ["........", ".oooooo.", "obbbbbto", "oddddtrt", "obbbbbto", ".oooooo.", "........", "........"] },
-  crystal: { pal: { o: "#2a1f2e", p: "#b79cf0", l: "#efe6ff", d: "#7d5fc4" }, px: ["...o....", "..olo...", "..olpo..", ".olppo..", ".oppppo.", ".opppdo.", "..oddo..", "...oo..."] }
+  crystal: { pal: { o: "#2a1f2e", p: "#b79cf0", l: "#efe6ff", d: "#7d5fc4" }, px: ["...o....", "..olo...", "..olpo..", ".olppo..", ".oppppo.", ".opppdo.", "..oddo..", "...oo..."] },
+  charcoal: { pal: { o: "#15121a", k: "#3a3540", l: "#5f5a68", e: "#f08a3c" }, px: ["........", "..ooo...", ".okllo..", ".okkkoo.", "okkekklo", "okkkkkko", ".oooooo.", "........"] },
+  ingot:   { pal: { o: "#2a1f2e", l: "#d0d4dc", s: "#8a8f99", d: "#5a5f68" }, px: ["........", "........", "..oooo..", ".ollllo.", "osssssso", "oddddddo", ".oooooo.", "........"] },
+  steel:   { pal: { o: "#1e2a38", l: "#f2f8ff", s: "#a8bfd6", d: "#6a849e", w: "#ffffff" }, px: ["......w.", ".....www", "..oooow.", ".ollllo.", "osssssso", "oddddddo", ".oooooo.", "........"] }
 };
 const ICONS = {};
 for (const k in ICON_ART) {   // (built once; the battle HUD picks them up below)
@@ -3612,7 +3844,7 @@ for (const k in ICON_ART) {   // (built once; the battle HUD picks them up below
   ICONS[k] = "<svg viewBox='0 0 8 8' shape-rendering='crispEdges' aria-hidden='true'>" + r + "</svg>";
 }
 setTimeout(() => { for (const el of document.querySelectorAll(".hudico")) el.innerHTML = ICONS[el.dataset.ico]; }, 0);
-const RES_LABEL = { gold: "Gold", bones: "Bones", skulls: "Skulls", stone: "Smooth stone", iron: "Scrap iron", wood: "Wood", crystal: "Crystal shards" };
+const RES_LABEL = { gold: "Gold", bones: "Bones", skulls: "Skulls", stone: "Smooth stone", iron: "Scrap iron", wood: "Wood", crystal: "Crystal shards", charcoal: "Charcoal", ingot: "Iron ingots", steel: "Steel ingots" };
 // a resource with its icon; the name rides along as a tooltip and for screen readers
 const ri = (k, n) => "<span class='ri' title='" + RES_LABEL[k] + "' aria-label='" + (n === undefined ? "" : n + " ") + RES_LABEL[k] + "'>" + ICONS[k] + (n === undefined ? "" : "<span aria-hidden='true'>" + n + "</span>") + "</span>";
 // tapping an icon outside a button shows its name for a moment
@@ -3624,7 +3856,7 @@ document.addEventListener("click", e => {
   clearTimeout(tip.timer); tip.timer = setTimeout(() => { tip.hidden = true; }, 1500);
 });
 // prices can include any warehouse goods: gold, bones, skulls, stone, iron, wood, crystal
-const COST_NAMES = { gold: ["gold", "gold"], bones: ["bone", "bones"], skulls: ["skull", "skulls"], stone: ["smooth stone", "smooth stones"], iron: ["scrap iron", "scrap iron"], wood: ["wood", "wood"], crystal: ["crystal shard", "crystal shards"] };
+const COST_NAMES = { gold: ["gold", "gold"], bones: ["bone", "bones"], skulls: ["skull", "skulls"], stone: ["smooth stone", "smooth stones"], iron: ["scrap iron", "scrap iron"], wood: ["wood", "wood"], crystal: ["crystal shard", "crystal shards"], charcoal: ["charcoal", "charcoal"], ingot: ["iron ingot", "iron ingots"], steel: ["steel ingot", "steel ingots"] };
 const asCost = c => typeof c === "number" ? { gold: c } : c;
 const have = k => k === "gold" ? META.gold : (META.warehouse[k] || 0);
 const costText = c => Object.keys(COST_NAMES).filter(k => c[k]).map(k => ri(k, c[k])).join("") || "free";
@@ -3634,6 +3866,7 @@ function renderResearch(where) {
   const list = DATA.research[where], lvs = META.research[where];
   $(where + "List").innerHTML = list.map(r => {
     const lv = lvs[r.key] || 0, maxed = lv >= r.max, c = DATA.research.cost(r, lv);
+    if (r.needsSkill && !META.skills.unlocked[r.needsSkill]) return "<div class='opt'><div class='what'><b>" + r.name + "</b><span>" + r.fx(0) + "</span></div><span class='req'>Learn " + DATA.skills[r.needsSkill].name + " at the Invisible Academy first</span></div>";
     if (r.needsSpell && !META.spells[r.needsSpell]) return "<div class='opt'><div class='what'><b>" + r.name + "</b><span>" + r.fx(1) + "</span></div><span class='req'>Learn " + DATA.spells[r.needsSpell].name + " first</span></div>";
     return "<div class='opt'><div class='what'><b>" + r.name + "</b><span>Level " + lv + "/" + r.max + " · " + r.fx(lv) + (maxed ? "" : " → " + r.fx(lv + 1)) + "</span></div>" +
       (maxed ? "<span class='done'>Mastered</span>" : "<button class='btn' type='button' data-r='" + r.key + "'" + (canPay(c) ? "" : " disabled") + ">" + costText(c) + "</button>") + "</div>";
@@ -3641,9 +3874,7 @@ function renderResearch(where) {
   for (const btn of $(where + "List").querySelectorAll("[data-r]")) btn.addEventListener("click", () => {
     const r = list.find(x => x.key === btn.dataset.r), lv = lvs[r.key] || 0, c = DATA.research.cost(r, lv);
     if (lv >= r.max || !canPay(c)) return;
-    pay(c); lvs[r.key] = lv + 1;
-    if (c.gold) SFX.play("coins");
-    saveMeta(); renderTown();
+    guardSpend(c, () => { pay(c); lvs[r.key] = lv + 1; if (c.gold) SFX.play("coins"); saveMeta(); renderTown(); });
   });
 }
 $("toTown").addEventListener("click", () => { refreshBoard(); TOWN.st = wizLook(); TOWN.seq = { kind: "appear", e: 0 }; showView("town"); });
@@ -5461,7 +5692,7 @@ document.addEventListener("keydown", firstTouch);
 markMusic(); markSfx();
 
 // ---------- Loop ----------
-let frameDt = 0, wizClock = 0, plateT = 0;
+let frameDt = 0, wizClock = 0, plateT = 0, smithT = 0;
 function drawTown(dt) {
   if ($("townView").hidden) return;
   let fx = null;
@@ -5478,6 +5709,7 @@ function drawTown(dt) {
 }
 function loop(t) {
   const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t; frameDt = dt; wizClock += dt;
+  if ((smithT += dt) > 0.2) { smithT = 0; smithTick(); if (!inBattle && !$("p_blacksmith").hidden) renderSmithQueue(); }
   if (inBattle && S) { if (!paused) update(dt); draw(); hud(); }
   else drawTown(dt);
   drawGrimoire(dt);
