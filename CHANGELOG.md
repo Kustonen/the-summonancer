@@ -2,6 +2,10 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.21-alpha
+- Ogre Chieftain's forehead horn is 15 % bigger and always drawn in front of his crown.
+- Kobold King's horns are a bit longer.
+
 ## 0.8.20-alpha
 - Ogre Chieftain wears his crown at a rakish tilt and always has a horn in the middle of his forehead.
 
