@@ -4214,7 +4214,7 @@ function motion(t, speed, st, moves) {
           : 1 - (1 - Math.cos((ph - 0.52) / 0.48 * Math.PI)) / 2;
   const shake = panicking ? Math.sin(t * 47) * 1.6 : 0;
   const cyc = Math.floor(t / PERIOD);
-  if (attacking && st && st.cyc !== cyc) { st.cyc = cyc; st.move = moves[Math.floor(Math.random() * moves.length)]; }
+  if (attacking && st && st.cyc !== cyc) { st.cyc = cyc; st.move = moves.includes(st.fixedMove) ? st.fixedMove : moves[Math.floor(Math.random() * moves.length)]; }   // fixedMove: a style study pinning one move
   const mv = attacking && st ? st.move : null, hit = Math.max(0, k);
   return { charmed, confused, walking, attacking, panicking, p, swing, bob, k, hit, wind: Math.max(0, -k) / 0.4, shake,
            mv, main: mv === "main", kick: mv === "kick", butt: mv === "headbutt",
