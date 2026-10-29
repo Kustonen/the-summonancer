@@ -1,6 +1,6 @@
 # The Summonancer
 
-Version 0.8.10-alpha · see [CHANGELOG.md](CHANGELOG.md)
+Version 0.8.11-alpha · see [CHANGELOG.md](CHANGELOG.md)
 
 An incremental browser game about a wizard who summons skeletons (summons, not raises) to hold back goblins, gathers resources and builds up a city.
 
@@ -83,4 +83,4 @@ The DEV button in the town view sets exp and every resource (as a grid of icons)
 
 ## Character art
 
-`style-studies/newcast.html` studies the four newest characters (ogre, troll, spirit, Saina Lot). `style-studies/bestiary.html` shows every enemy (kobold, goblin, orc, ogre, troll) with all animations, each attack move, randomly rolled looks and the crowned Raid chiefs, using the game's own drawing code. `style-studies/cast.html` is the animated character study (the wizard with beard stages, gear sets, levitation and teleport sequences; skeleton, archer, wisp, golem, goblin, kobold, orc) with walk, stand, attack, panic, charmed and confused animations and per-character random looks. The same drawings are used in the Grimoire and on the battlefield. The "Art" button in battle switches between the new art and the original classic shapes; the choice is remembered.
+`style-studies/ghostwraith.html` shows two future summons, the Ghost and the Wraith. `style-studies/newcast.html` studies the four newest characters (ogre, troll, spirit, Saina Lot). `style-studies/bestiary.html` shows every enemy (kobold, goblin, orc, ogre, troll) with all animations, each attack move, randomly rolled looks and the crowned Raid chiefs, using the game's own drawing code. `style-studies/cast.html` is the animated character study (the wizard with beard stages, gear sets, levitation and teleport sequences; skeleton, archer, wisp, golem, goblin, kobold, orc) with walk, stand, attack, panic, charmed and confused animations and per-character random looks. The same drawings are used in the Grimoire and on the battlefield. The "Art" button in battle switches between the new art and the original classic shapes; the choice is remembered.
