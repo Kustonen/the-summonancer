@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.30-alpha
+- Goblin Boss wears a gold chain necklace with a coin pendant (nose ring stays random).
+
 ## 0.8.29-alpha
 - Ogre Chieftain's drumstick shows a sliver of bone between his fist and the meat.
 

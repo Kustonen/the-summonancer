@@ -381,6 +381,13 @@ function goblin(ctx, cx, gy, s, t, st) {
   // pot belly with a loincloth
   ell(ctx, bx, bodyY, 14 * s, 13 * s, M.tilt * 0.5, GOB);
   ctx.beginPath(); ctx.moveTo(bx - 12 * s, pelY - 4 * s); ctx.lineTo(bx + 12 * s, pelY - 4 * s); ctx.lineTo(bx + 7 * s, pelY + 7 * s); ctx.lineTo(bx - 7 * s, pelY + 7 * s); ctx.closePath(); shape(ctx, CLOTH);
+  if (st.boss) {      // the boss's gold chain with a fat coin pendant, swinging a little as he moves
+    const sw = (M.walking || M.panicking ? Math.sin(M.p) * 2 : 0) * s;
+    for (let i = 0; i <= 8; i++) { const u = i / 8, x = bx - 11 * s + 22 * s * u + sw * Math.sin(u * Math.PI), y = bodyY - 9 * s + Math.sin(u * Math.PI) * 9 * s;
+      ctx.beginPath(); ctx.arc(x, y, 1.9 * s, 0, Math.PI * 2); shape(ctx, "#e8c45a", 1.6); }
+    ctx.beginPath(); ctx.arc(bx + sw, bodyY + 3.5 * s, 4.2 * s, 0, Math.PI * 2); shape(ctx, "#e8c45a", 2.2);
+    ctx.fillStyle = "#e2566a"; ctx.beginPath(); ctx.arc(bx + sw, bodyY + 3.5 * s, 1.6 * s, 0, Math.PI * 2); ctx.fill();
+  }
   // head
   const hx = bx + Math.sin(M.tilt) * 10 * s + (M.main ? M.hit * 4 : 0) * s + M.hdx * s, hy = bodyY - 14 * s - R * 0.8 + M.hdy * s;
   ctx.save(); ctx.translate(hx, hy); ctx.rotate(M.tilt + M.tiltAdd);
