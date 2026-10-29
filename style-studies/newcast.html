@@ -411,7 +411,6 @@ function goblin(ctx, cx, gy, s, t, st) {
   if (M.confused) brows(ctx, eyes, 3.5);
   // big droopy nose
   ell(ctx, R * 0.04, R * 0.12, R * 0.17, R * 0.22, 0.15, GOB, 3.5);
-  if ((st.jewels || []).includes("nose")) goldRing(ctx, R * 0.06, R * 0.36, R * 0.08);
   // grin: wide, a few crooked teeth, opens per step
   const open = M.walking ? Math.pow(Math.abs(Math.sin(M.p)), 3) * 0.6 : M.attacking ? M.hit * 0.8 : M.panicking ? 0.9 + Math.sin(t * 20) * 0.1 : 0.1;
   const my = R * 0.45, mw = R * 0.62, mh = R * (0.12 + open * 0.3);
@@ -422,6 +421,7 @@ function goblin(ctx, cx, gy, s, t, st) {
     const x = tx * R, y = my - R * 0.03 + Math.abs(tx) * R * 0.02;
     ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + tw * R, y - R * 0.01); ctx.lineTo(x + tw * R * 0.5, y + th * R); ctx.closePath(); ctx.fill(); ctx.stroke();
   }
+  if ((st.jewels || []).includes("nose")) goldRing(ctx, R * 0.06, R * 0.36, R * 0.08);     // the nose ring hangs in front of the grin
   if (st.boss) crownAt(ctx, -R * 0.72, R * 0.52);
   ctx.restore();
   // hands; the right one holds a tiny knife and jabs. The boss stabs with the right, the left or both daggers at once
