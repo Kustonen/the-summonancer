@@ -46,7 +46,7 @@ h3 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 4px
 </style>
 <div class="wrap">
   <header>
-    <h1>New Cast <small>The Summonancer · v0.8.6-alpha</small></h1>
+    <h1>New Cast <small>The Summonancer · v0.8.7-alpha</small></h1>
     <p class="note-motion">The four newest characters, drawn by the game's own code: two enemies, one summon and the town's bookkeeper. First versions, here to be picked apart.</p>
     <div class="bar"><button type="button" id="play" aria-pressed="true">Pause</button><button type="button" id="reroll">Roll new looks</button><button type="button" id="flip" aria-pressed="false">Face left</button></div>
   </header>
@@ -710,7 +710,13 @@ function troll(ctx, cx, gy, s0, t, st) {
   // a wide mouth with one tooth poking up
   const open = M.attacking ? M.hit * 0.6 : M.panicking ? 0.8 : M.walking ? Math.abs(Math.sin(M.p)) * 0.15 : 0.05;
   ctx.beginPath(); ctx.moveTo(-R * 0.25, R * 0.55); ctx.quadraticCurveTo(R * 0.3, R * (0.62 + open * 0.3), R * 0.7, R * 0.52); ctx.strokeStyle = INK; ctx.lineWidth = 3.5 * LW; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(R * 0.12, R * 0.6); ctx.lineTo(R * 0.2, R * 0.38); ctx.lineTo(R * 0.28, R * 0.6); ctx.closePath(); shape(ctx, TUSK, 2);
+  // fangs jutting up from the lower jaw: one at each corner of the mouth, or just one
+  const fang = (x, lean) => { const y0 = R * 0.66 + open * R * 0.08;
+    ctx.beginPath(); ctx.moveTo(x - R * 0.14, y0); ctx.quadraticCurveTo(x - R * 0.12 + lean * R * 0.06, y0 - R * 0.4, x + lean * R * 0.18, y0 - R * 0.66);
+    ctx.quadraticCurveTo(x + R * 0.08 + lean * R * 0.05, y0 - R * 0.3, x + R * 0.14, y0); ctx.closePath(); shape(ctx, TUSK, 3); };
+  const fs = st.fangs || "both";
+  if (fs !== "right") fang(-R * 0.1, -1);
+  if (fs !== "left") fang(R * 0.58, 1);
   ctx.restore();
   arm(1);
   if (M.main && M.hit > 0.85) burst(ctx, bx + 46 * s, gy - 14 * s, s * 1.2, M.hit);
@@ -1608,6 +1614,7 @@ function rollCracks() {
     if (kind === "troll") {
       st.hair = ["#3b4a2a", "#5a3a2a", "#2b2a35", "#8a7a5a", "#6a2e2e"][Math.floor(Math.random() * 5)];
       st.earring = Math.random() < 0.45; st.moss = { head: Math.random() < 0.5, back: Math.random() < 0.6 };
+      st.fangs = ["both", "both", "left", "right"][Math.floor(Math.random() * 4)];      // lower fangs: a pair, or a single one
       st.skin = Math.random() < 0.5 ? ["#6f9a86", "#557a69"] : ["#6f8aa0", "#557086"];
     }
     if (kind === "orc") { st.marks = {}; for (const spot of ["left", "right", "forehead"]) { const r = Math.random(); st.marks[spot] = r < 0.35 ? "scar" : r < 0.65 ? "plaster" : null; } }
@@ -1642,7 +1649,7 @@ const CAST = [
     moves: [["main", "Fist"], ["kick", "Stomp"], ["slam", "Ground slam"]], looks: "Rolled: a skull on the belt, a horn on the forehead, nose ring, tusk side, missing tooth" },
   { k: "troll", name: "Troll", tag: "Enemy", stats: [["HP", 70], ["Damage", 5], ["Every", "1.4 s"], ["Speed", 0.6], ["From wave", 20]],
     lore: "Hunched and long-armed, moss-green or bluish, a big knobbly nose and shaggy hair. Mends 1 HP every 5 s unless burning; fire hurts it twice as much and makes it run.",
-    moves: [["main", "Long-arm swipe"], ["kick", "Kick"], ["headbutt", "Nose butt"]], looks: "Rolled: skin tone, hair colour, earring, moss on head and back" },
+    moves: [["main", "Long-arm swipe"], ["kick", "Kick"], ["headbutt", "Nose butt"]], looks: "Rolled: lower fangs (a pair or just one), skin tone, hair colour, earring, moss on head and back" },
   { k: "spirit", name: "Spirit", tag: "Summon", stats: [["HP", 40], ["Damage", "1.5"], ["Every", "0.9 s"], ["Speed", 1.6], ["Mana", 25]],
     lore: "A chibi ghost: a floating sheet with a swishing hem and a tail, glowing mismatched eyes. Hovers on top of enemies and hurts everything beneath; falls back to a wisp at half health. Flickers while Phasing.",
     moves: [["main", "Hover strike"]], extra: [["phase", "Phasing"]], looks: "Rolled: eye colours and sizes, chains, a bow, torn hem" }

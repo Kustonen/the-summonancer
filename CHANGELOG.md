@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.7-alpha – 2026-10-29
+- Trolls: fangs jutting up from the lower jaw, a pair at the corners of the mouth or just one on either side
+
 ## 0.8.6-alpha – 2026-10-29
 - Ogres: no more warts; instead some carry a trophy skull swinging from the rope belt, and some have a single horn in the middle of the forehead
 
