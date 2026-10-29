@@ -375,10 +375,6 @@ div.mapbtn { cursor: default; }
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V28L32 12l24 16v30z" fill="none" stroke="#9fd0ff" stroke-width="2" stroke-dasharray="4 3" opacity=".75"/><path d="M26 58V44h12v14" fill="none" stroke="#9fd0ff" stroke-width="2" stroke-dasharray="3 3" opacity=".6"/><path d="M16 30l16-7 16 7-16 7z" fill="#2a2433" stroke="#e8c45a" stroke-width="1.8"/><path d="M22 33v7c5 3 15 3 20 0v-7" fill="#2a2433" stroke="#e8c45a" stroke-width="1.8"/><path d="M46 31v9" stroke="#e8c45a" stroke-width="1.6"/><circle cx="46" cy="41" r="1.8" fill="#e8c45a"/><circle cx="14" cy="16" r="1.2" fill="#ece3cf"/><circle cx="52" cy="14" r="1" fill="#ece3cf"/></svg>
       <b>Invisible Academy</b>
     </button>
-    <button class="bld" id="b_spiritstones" type="button" aria-pressed="false" hidden>
-      <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="55" rx="27" ry="5" fill="#26301f"/><path d="M8 54l4-22 8-4 4 26z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M40 54l3-26 9 2 3 24z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M14 40l4-2M45 38l6 1" stroke="#9fd0ff" stroke-width="2"/><path d="M22 30a10 10 0 0 1 20 0v14l-3-3-3 3-4-3-3 3-4-3-3 3z" fill="#e6edff" stroke="#2a1f2e" stroke-width="2"/><circle cx="28" cy="29" r="2.4" fill="#6fa8ff"/><circle cx="36" cy="29" r="1.8" fill="#b8f07a"/><path d="M30 10c2-3 6-3 6 0" stroke="#9fd0ff" stroke-width="1.5" fill="none"/></svg>
-      <b>Spirit Stones</b>
-    </button>
     <button class="bld" id="b_archivus" type="button" aria-pressed="false" hidden>
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 58V24a20 20 0 0 1 40 0v34z" fill="#3a3547" stroke="#2a1f2e" stroke-width="2"/><path d="M20 58V28a12 12 0 0 1 24 0v30z" fill="#15131c"/><rect x="24" y="36" width="16" height="12" rx="2" fill="#e8dcbf" stroke="#2a1f2e" stroke-width="2"/><path d="M27 40h10M27 44h7" stroke="#8a5a34" stroke-width="1.5"/><rect x="28" y="30" width="8" height="7" rx="1.5" fill="none" stroke="#e8c45a" stroke-width="2"/><circle cx="32" cy="52" r="2" fill="#e8c45a"/></svg>
       <b>Archivus Arcanus</b>
@@ -427,11 +423,18 @@ div.mapbtn { cursor: default; }
   </section>
 
   <section class="panel" id="p_well" hidden>
-    <h2>Wisping Well</h2>
+    <h2 id="wellTitle">Wisping Well</h2>
     <p class="quote">“Drop a coin in the well and you probably just lose a coin.”</p>
+    <p class="quote" id="wellQuote2" hidden>“With all the spirits hovering about, you could actually lose a lot more than the coin - so if you drop one you better drop several...”</p>
     <p>Wisps gather here between battles. Offerings make them brighter, steadier and a little less easily distracted by swamps.</p>
     <div class="units" id="wellUnits"></div>
     <div id="wellList"></div>
+    <div id="wellSpirit" hidden>
+      <h3>Spirit Stones</h3>
+      <p>A ring of humming stones around the well, where spirits rest between battles. Offerings here make them sturdier, quicker, harder to hit and, eventually, able to mend themselves.</p>
+      <div class="units" id="spiritstonesUnits"></div>
+      <div id="spiritstonesList"></div>
+    </div>
   </section>
 
   <section class="panel" id="p_septagram" hidden>
@@ -508,14 +511,6 @@ div.mapbtn { cursor: default; }
     <p class="quote">“Attendance is mandatory. Visibility is optional.”</p>
     <p>Summons learn new skills here, once, and choose which ones they use. Every summon has one skill slot to start with; their own buildings can add more, at a price. Skills are improved in each summon's own building.</p>
     <div id="academyList"></div>
-  </section>
-
-  <section class="panel" id="p_spiritstones" hidden>
-    <h2>Spirit Stones</h2>
-    <p class="quote">“Do not stand in the circle. Do not sit in the circle. The circle is not a picnic spot.”</p>
-    <p>A ring of humming stones behind the Wisping Well, where spirits rest between battles. Offerings here make them sturdier, quicker, harder to hit and, eventually, able to mend themselves.</p>
-    <div class="units" id="spiritstonesUnits"></div>
-    <div id="spiritstonesList"></div>
   </section>
 
   <section class="panel" id="p_archivus" hidden>
@@ -676,7 +671,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.7.1-alpha";
+const VERSION = "0.7.2-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -705,7 +700,7 @@ const DATA = {
     archivus:     { name: "Archivus Arcanus",        cost: 150, about: "Forbidden tomes on modifying summons. Allegedly." },
     blacksmith:   { name: "Blacksmith",              cost: { gold: 150, stone: 30, wood: 20 }, about: "Turns what you find into what you need: charcoal, iron ingots and steel. Keeps working while you're away." },
     academy:      { name: "Invisible Academy",       cost: { gold: 300, stone: 200, ingot: 20 }, after: "blacksmith", about: "Where summons learn new skills and choose which ones to use. You can't see it. That's the curriculum." },
-    spiritstones: { name: "Spirit Stones",           cost: { gold: 150, stone: 20, crystal: 10 }, needs: "spirit", after: "well", about: "An extension of the Wisping Well: humming stones that make spirits sturdier, quicker and harder to hit." }
+    spiritstones: { name: "Spirit Stones (Wisping Well, tier 2)", cost: { gold: 150, stone: 20, crystal: 10 }, needs: "spirit", after: "well", about: "An extension of the Wisping Well: humming stones that make spirits sturdier, quicker and harder to hit." }
   },
   // binding a new kind of summon at the Septagram, once
   unlocks: {
@@ -3129,7 +3124,7 @@ function showBest() {
 }
 
 // ---------- Town ----------
-const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "wagon", "spellbook", "market", "blacksmith", "academy", "lab", "well", "spiritstones", "septagram", "golematorium", "library", "stones", "archivus"];
+const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "wagon", "spellbook", "market", "blacksmith", "academy", "lab", "well", "septagram", "golematorium", "library", "stones", "archivus"];
 function openBuilding(k) {
   for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
   if (k === "grimoire") renderGrimoire();
@@ -3513,7 +3508,11 @@ function renderTown() {
   $("tGold").textContent = META.gold; $("tExp").textContent = META.exp;
   const W = META.warehouse;
   renderGoodsOnly();
-  for (const k in DATA.builder) $("b_" + k).hidden = !META.built[k];
+  for (const k in DATA.builder) if ($("b_" + k)) $("b_" + k).hidden = !META.built[k];
+  // the Spirit Stones are the Wisping Well's second tier, not a building of their own
+  const tier2 = !!META.built.spiritstones;
+  $("wellTitle").textContent = tier2 ? "Wisping Well with Spirit Stones" : "Wisping Well"; $("wellQuote2").hidden = !tier2; $("wellSpirit").hidden = !tier2;
+  $("b_well").querySelector("b").textContent = tier2 ? "Wisping Well with Spirit Stones" : "Wisping Well";
   const alive = META.builder === "alive";
   $("builderAlive").toggleAttribute("hidden", !alive); $("builderSkel").toggleAttribute("hidden", alive);   // svg elements have no .hidden
   $("builderAbout").textContent = alive ? "Your local engineer: hard hat, overalls, a hammer and boundless optimism. Give him gold and he'll put up whatever you point at."

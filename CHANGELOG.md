@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.7.2-alpha – 2026-10-29
+- The Spirit Stones are now the Wisping Well's second tier instead of a building of their own: once built, the well becomes "Wisping Well with Spirit Stones", gets a second quote and shows the spirit research under the wisp research
+
 ## 0.7.1-alpha – 2026-10-29
 - Fix: when the Blacksmith finished something, prices and Build / Learn / Buy buttons in town didn't notice until the town was redrawn (for example, the Invisible Academy stayed greyed out with enough iron ingots). Typed amounts at the Blacksmith now survive the refresh
 
