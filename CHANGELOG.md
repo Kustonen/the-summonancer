@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.7.1-alpha – 2026-10-29
+- Fix: when the Blacksmith finished something, prices and Build / Learn / Buy buttons in town didn't notice until the town was redrawn (for example, the Invisible Academy stayed greyed out with enough iron ingots). Typed amounts at the Blacksmith now survive the refresh
+
 ## 0.7.0-alpha – 2026-10-29
 - Version number in the game (bottom of the town, and in the battle field notes) and this changelog
 - Pseudo Reality: a skill for wisps and for spirits, learned separately at the Invisible Academy: 10 % of physical attacks aimed at them miss. Barely There (Wisping Well, Spirit Stones) raises it 2 % a level, up to 20 %

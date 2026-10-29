@@ -676,7 +676,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.7.0-alpha";
+const VERSION = "0.7.1-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -3651,9 +3651,14 @@ function guardSpend(cost, go) {
 function smithMax(r) { const st = smithProject(stockNow()).st, R0 = RECIPES[r]; return Math.max(0, Math.min(...Object.keys(R0.in).map(k => Math.floor(Math.max(0, st[k] || 0) / R0.in[k])))); }
 function renderSmithRecipes() {
   if (!$("smithRecipes")) return;
+  // re-drawing keeps whatever amounts were typed, the message and the focus
+  const keep = {}; for (const k in RECIPES) { const el = $("smithN_" + k); if (el) keep[k] = el.value; }
+  const focus = document.activeElement && document.activeElement.id, msg = $("smithMsg") ? $("smithMsg").textContent : "";
   $("smithRecipes").innerHTML = Object.entries(RECIPES).map(([k, R0]) => "<div class='opt'><div class='what'><b>" + ri(k) + " " + R0.name + "</b><span>" + costText(R0.in) + " → " + ri(k, 1) + " · " + R0.time + " s each</span></div>" +
     "<input class='num small' type='number' min='1' step='1' inputmode='numeric' value='10' id='smithN_" + k + "' aria-label='How many " + R0.name.toLowerCase() + "'>" +
     "<button class='btn' type='button' data-smithmax='" + k + "'>Max</button><button class='btn primary' type='button' data-order='" + k + "'>Order</button></div>").join("") + "<p class='req' id='smithMsg'></p>";
+  for (const k in keep) $("smithN_" + k).value = keep[k];
+  $("smithMsg").textContent = msg; if (focus && /^smithN_/.test(focus) && $(focus)) $(focus).focus();
   for (const b of $("smithRecipes").querySelectorAll("[data-smithmax]")) b.addEventListener("click", () => { $("smithN_" + b.dataset.smithmax).value = smithMax(b.dataset.smithmax); });
   for (const b of $("smithRecipes").querySelectorAll("[data-order]")) b.addEventListener("click", () => {
     const r = b.dataset.order, n = Math.floor(+$("smithN_" + r).value || 0), mx = smithMax(r);
@@ -3664,7 +3669,7 @@ function renderSmithRecipes() {
     $("smithMsg").textContent = n + " × " + RECIPES[r].name.toLowerCase() + " added to the queue."; SFX.play("clink"); saveMeta(); renderSmithQueue();
   });
 }
-let smithShown = "";
+let smithShown = "", smithDirty = false, smithDrawn = 0;
 function renderSmithQueue() {
   if (!$("smithQueue")) return;
   const Q = META.smith.queue, active = smithActive(), stalls = smithProject(stockNow()).stalls;
@@ -3707,7 +3712,9 @@ function smithTick() {
     if (j.cur.p >= R0.time - 1e-9) { j.cur = null; j.done++; META.warehouse[j.r] = (META.warehouse[j.r] || 0) + 1; changed = true; }
   }
   M0.queue = M0.queue.filter(j => j.done < j.n);
-  if (changed) { saveMeta(); if (!inBattle) { smithShown = smithShown && "x"; const W = META.warehouse; renderGoodsOnly(); } }
+  if (changed) { saveMeta(); smithDirty = true; }
+  // new goods from the anvil: every price and button in town has to know (at most once a second)
+  if (smithDirty && !inBattle && now - smithDrawn > 1000) { smithDirty = false; smithDrawn = now; renderTown(); }
 }
 // the warehouse in groups; goods that have never turned up stay off the shelf
 function renderGoodsOnly() {
