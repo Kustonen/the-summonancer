@@ -701,7 +701,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.6-alpha";
+const VERSION = "0.9.7-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -3639,7 +3639,7 @@ function tavernTalk() {
   if (!META.quests.hero) talk(DATA.quests.hero.offer, () => { takeQuest("hero"); renderTown(); });
   else if (Math.random() < 0.05) talk(pick([                // now and then the wizard orders like a certain captain
     [{ who: "The Summonancer", text: "Tea. Earl Grey. Hot." }, { who: "Villagers", text: "We've got ale. Lukewarm. Possibly ale." }, { who: "The Summonancer", text: "...Make it so." }],
-    [{ who: "The Summonancer", text: "Tea. Earl Grey. Hot." }, { who: "Villagers", text: "He says that every time. Does he think the barrel is going to change its mind?" }]
+    [{ who: "The Summonancer", text: "Tea. Earl Grey. Hot." }, { who: "Villagers", text: "He says that every time. We don't even own a kettle." }]
   ]));
 }
 const rewardText = r => [r.exp ? r.exp + " exp" : "", costText(Object.assign({}, r.items || {}, r.gold ? { gold: (r.items && r.items.gold || 0) + r.gold } : {}))].filter(x => x && x !== "free").join(" · ");
