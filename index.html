@@ -701,7 +701,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.4-alpha";
+const VERSION = "0.9.5-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -2936,7 +2936,7 @@ function drawArena() {
     g.addColorStop(0, "rgba(255,120,80," + a + ")"); g.addColorStop(1, "rgba(255,120,80,0)"); ctx.fillStyle = g; ctx.fillRect((gx - 1) * T, (gy - 1) * T, T * 3, T * 3);
   }
   // the ward: a 3 x 3 stone platform that slides when it moves
-  const m = wardMid(), o = wardOffset(), x0 = (m.x - 1.5 + o.x) * T, y0 = (m.y - 1.5 + o.y) * T;
+  const m = wardMid(), o = wardOffset(), x0 = (m.x - 1 + o.x) * T, y0 = (m.y - 1 + o.y) * T;      // the 3 x 3 tiles around the middle one, lined up with the grid
   ctx.fillStyle = "rgba(74,69,83,.92)"; ctx.fillRect(x0 + 2, y0 + 2, 3 * T - 4, 3 * T - 4);
   ctx.strokeStyle = "#2c2934"; ctx.lineWidth = 1; for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(x0 + i * T, y0 + 2); ctx.lineTo(x0 + i * T, y0 + 3 * T - 2); ctx.moveTo(x0 + 2, y0 + i * T); ctx.lineTo(x0 + 3 * T - 2, y0 + i * T); ctx.stroke(); }
   ctx.strokeStyle = "rgba(111,168,255,.35)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x0 + 1.5 * T, y0 + 1.5 * T, T * 1.1, 0, Math.PI * 2); ctx.stroke();
