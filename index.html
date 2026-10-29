@@ -39,6 +39,7 @@ body {
 .hud { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
 .brand { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: .02em; line-height: 1; margin-right: auto; }
 .stat { display: flex; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; font-weight: 700; }
+.hudico svg { width: 15px; height: 15px; align-self: center; }
 .stat small { font-weight: 500; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
 .manabar { height: 10px; border-radius: 5px; background: var(--slate); border: 1px solid var(--line); overflow: hidden; }
 .manabar > div { height: 100%; width: 0; background: var(--mana); transition: width .15s linear; }
@@ -121,6 +122,7 @@ canvas { display: block; border-radius: 6px; border: 1px solid var(--line); curs
 div.mapbtn { cursor: default; }
 .diffs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
 .diffs .btn { padding: 5px 12px; font-size: 14px; }
+#raidFactions .btn[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 /* Grimoire */
 .foes { display: flex; gap: 6px; flex-wrap: wrap; }
 .foe { background: var(--night); color: var(--bone); border: 1px solid var(--line); border-radius: 999px; font: inherit; font-weight: 700; font-size: 14px; padding: 6px 12px; cursor: pointer; }
@@ -150,10 +152,17 @@ div.mapbtn { cursor: default; }
 .prog > div { height: 100%; background: var(--exp); }
 .blank { color: var(--dim); font-style: italic; }
 .quote { color: var(--bone) !important; font-family: var(--display); font-size: 20px; }
-.goods { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-.good { background: var(--night); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; }
-.good b { font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.good span { color: var(--dim); font-size: 13px; }
+.goods { display: flex; flex-wrap: wrap; gap: 6px; }
+.good { background: var(--night); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px 4px 7px; display: inline-flex; align-items: center; gap: 6px; cursor: help; }
+.good b { font-size: 16px; font-variant-numeric: tabular-nums; }
+/* pixel-art resource icons; the name shows on hover or tap */
+.ri { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ri + .ri { margin-left: 6px; }
+.opt .what .ri { display: inline-flex; vertical-align: -3px; font-size: inherit; color: inherit; }
+.opt .what .ri span { display: inline; font-size: inherit; color: inherit; }
+.ri svg, .good svg { width: 16px; height: 16px; flex: none; }
+.good svg { width: 20px; height: 20px; }
+.tip { position: fixed; z-index: 40; background: var(--bone); color: var(--night); font-size: 13px; font-weight: 700; padding: 3px 8px; border-radius: 6px; pointer-events: none; }
 .opt .cost { color: var(--dim); font-size: 13px; }
 .done { color: var(--heal); font-weight: 700; }
 .book { display: inline-flex; align-items: center; gap: 5px; }
@@ -216,6 +225,13 @@ div.mapbtn { cursor: default; }
 .quest .qstate.ready { color: var(--gold); }
 .quest .qstate.claimed { color: var(--heal); }
 .quest p { margin: 0; color: var(--dim); }
+#ledger .sec p .ri { margin-right: 10px; }
+.gearslots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.gslot { text-align: left; background: var(--panel2, #24202e); border: 1px solid #3a3547; border-radius: 10px; padding: 6px 8px; color: inherit; font: inherit; cursor: pointer; min-height: 52px; }
+.gslot small { display: block; color: var(--dim); font-size: 12px; }
+.gslot.empty { cursor: default; opacity: .6; }
+.setline { margin: 4px 0; color: var(--dim); } .setline b { color: var(--ink, #ece3cf); } .setline .on { color: var(--heal); }
+#wizCv { cursor: pointer; }
 .qgroup { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 8px 0 0; color: var(--gold); }
 @media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } .bld.glow, .btn.glow { animation: none; box-shadow: 0 0 10px rgba(232, 196, 90, .5); } }
 </style>
@@ -306,6 +322,14 @@ div.mapbtn { cursor: default; }
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 58V28h48v30z" fill="#6b4f33"/><path d="M4 30 32 10l28 20z" fill="#8a3329"/><path d="M8 40h48M8 50h48" stroke="#4a3523" stroke-width="1.5"/><rect x="26" y="40" width="12" height="18" fill="#15131c"/><rect x="12" y="34" width="9" height="8" fill="#ffcf6a"/><rect x="43" y="34" width="9" height="8" fill="#ffcf6a"/><path d="M50 14v8" stroke="#2a1f2e" stroke-width="2"/><rect x="42" y="22" width="16" height="12" rx="2" fill="#e8dcbf" stroke="#2a1f2e" stroke-width="2"/><path d="M47 25h5v6h-5z" fill="#e8c45a" stroke="#2a1f2e" stroke-width="1.2"/><path d="M52 26.5c2 0 2 3 0 3" stroke="#2a1f2e" stroke-width="1.2" fill="none"/><path d="M47 25c1-1.5 4-1.5 5 0" stroke="#fff" stroke-width="1.5"/></svg>
       <b>Tavern</b>
     </button>
+    <button class="bld" id="b_wagon" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 40h40v8H8z" fill="#8a5a34" stroke="#2a1f2e" stroke-width="2"/><path d="M10 40V24c0-8 8-12 18-12s18 4 18 12v16z" fill="#b0473f" stroke="#2a1f2e" stroke-width="2"/><path d="M18 40V18M28 40V13M38 40V18" stroke="#8a3329" stroke-width="2"/><circle cx="16" cy="50" r="7" fill="#4a3523" stroke="#2a1f2e" stroke-width="2"/><circle cx="16" cy="50" r="2" fill="#e8c45a"/><circle cx="40" cy="50" r="7" fill="#4a3523" stroke="#2a1f2e" stroke-width="2"/><circle cx="40" cy="50" r="2" fill="#e8c45a"/><path d="M46 40l8-4" stroke="#8a5a34" stroke-width="3"/><ellipse cx="52" cy="32" rx="4" ry="5" fill="#d9a35a" stroke="#2a1f2e" stroke-width="1.5"/><path d="M49 30l-7-9" stroke="#6b4f33" stroke-width="2"/><rect x="52" y="44" width="8" height="10" rx="2" fill="#c0503a" stroke="#2a1f2e" stroke-width="1.5"/><path d="M52 47h8" stroke="#e8dcbf" stroke-width="1"/><path d="M6 14v7a2.5 2.5 0 1 1-1-2V11l6-2v8a2.5 2.5 0 1 1-1-2" fill="#e8c45a"/><path d="M53 10v7a2.5 2.5 0 1 1-1-2V9" fill="#e8c45a"/><path d="M28 4v6a2 2 0 1 1-1-1.7V4" fill="#e8c45a"/></svg>
+      <b>Saina's Wagon</b>
+    </button>
+    <button class="bld" id="b_spellbook" type="button" aria-pressed="false">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 14c8-4 16-4 24 2v40c-8-6-16-6-24-2z" fill="#2f5f8a" stroke="#2a1f2e" stroke-width="2"/><path d="M56 14c-8-4-16-4-24 2v40c8-6 16-6 24-2z" fill="#234a6c" stroke="#2a1f2e" stroke-width="2"/><circle cx="20" cy="32" r="7" fill="none" stroke="#9fd0ff" stroke-width="1.8"/><path d="M20 25l2 5 5 1-4 3 1 5-4-3-4 3 1-5-4-3 5-1z" fill="#9fd0ff"/><path d="M38 24h12M38 30h12M38 36h9M38 42h11" stroke="#9fd0ff" stroke-width="1.6" opacity=".7"/><path d="M48 6l2 8" stroke="#e8c45a" stroke-width="3" stroke-linecap="round"/></svg>
+      <b>Spellbook</b>
+    </button>
     <button class="bld" id="b_market" type="button" aria-pressed="false" hidden>
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 58V30h44v28z" fill="#6b4f33"/><path d="M6 30l6-14h40l6 14z" fill="#e8dcbf"/><path d="M12 16l-6 14h8l4-14zM28 16l-2 14h8l-2-14zM44 16l2 14h8l-6-14z" fill="#b0473f"/><path d="M6 30c2 4 6 4 8 0 2 4 6 4 8 0 2 4 6 4 8 0 2 4 6 4 8 0 2 4 6 4 8 0 2 4 6 4 8 0" fill="none" stroke="#2a1f2e" stroke-width="1.5"/><rect x="16" y="40" width="32" height="8" rx="2" fill="#4a3523"/><circle cx="22" cy="40" r="3.5" fill="#e8c45a" stroke="#2a1f2e" stroke-width="1.2"/><circle cx="30" cy="39" r="3.5" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="1.2"/><path d="M38 41l3-5 3 5z" fill="#b79cf0" stroke="#2a1f2e" stroke-width="1.2"/></svg>
       <b>Marketplace</b>
@@ -334,6 +358,10 @@ div.mapbtn { cursor: default; }
       <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="54" rx="28" ry="6" fill="#26301f"/><rect x="8" y="26" width="9" height="28" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><rect x="25" y="26" width="9" height="28" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><rect x="5" y="19" width="32" height="8" rx="2" fill="#a8a293" stroke="#2a1f2e" stroke-width="2"/><rect x="44" y="30" width="10" height="24" rx="2" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><ellipse cx="42" cy="50" rx="7" ry="5" fill="#f1e8d4" stroke="#2a1f2e" stroke-width="2"/><circle cx="48" cy="47" r="3" fill="#2a1f2e"/></svg>
       <b>Stone Circle</b>
     </button>
+    <button class="bld" id="b_spiritstones" type="button" aria-pressed="false" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="55" rx="27" ry="5" fill="#26301f"/><path d="M8 54l4-22 8-4 4 26z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M40 54l3-26 9 2 3 24z" fill="#8a8495" stroke="#2a1f2e" stroke-width="2"/><path d="M14 40l4-2M45 38l6 1" stroke="#9fd0ff" stroke-width="2"/><path d="M22 30a10 10 0 0 1 20 0v14l-3-3-3 3-4-3-3 3-4-3-3 3z" fill="#e6edff" stroke="#2a1f2e" stroke-width="2"/><circle cx="28" cy="29" r="2.4" fill="#6fa8ff"/><circle cx="36" cy="29" r="1.8" fill="#b8f07a"/><path d="M30 10c2-3 6-3 6 0" stroke="#9fd0ff" stroke-width="1.5" fill="none"/></svg>
+      <b>Spirit Stones</b>
+    </button>
     <button class="bld" id="b_archivus" type="button" aria-pressed="false" hidden>
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 58V24a20 20 0 0 1 40 0v34z" fill="#3a3547" stroke="#2a1f2e" stroke-width="2"/><path d="M20 58V28a12 12 0 0 1 24 0v30z" fill="#15131c"/><rect x="24" y="36" width="16" height="12" rx="2" fill="#e8dcbf" stroke="#2a1f2e" stroke-width="2"/><path d="M27 40h10M27 44h7" stroke="#8a5a34" stroke-width="1.5"/><rect x="28" y="30" width="8" height="7" rx="1.5" fill="none" stroke="#e8c45a" stroke-width="2"/><circle cx="32" cy="52" r="2" fill="#e8c45a"/></svg>
       <b>Archivus Arcanus</b>
@@ -360,6 +388,10 @@ div.mapbtn { cursor: default; }
     <div class="opt">
       <div class="what"><b>Summon Slots</b><span id="upSlotInfo"></span></div>
       <button class="btn" id="upSlot" type="button"></button>
+    </div>
+    <div class="opt">
+      <div class="what"><b>Spell Slots</b><span id="upSpellInfo"></span></div>
+      <button class="btn" id="upSpell" type="button"></button>
     </div>
   </section>
 
@@ -401,6 +433,21 @@ div.mapbtn { cursor: default; }
     <div id="golematoriumList"></div>
   </section>
 
+  <section class="panel" id="p_wagon" hidden>
+    <h2>Saina's Wagon</h2>
+    <p class="quote">“Every coin a verse, every kobold a chorus.”</p>
+    <p>Saina Lot keeps the ledger of everything you have done since your very first battle in this town. When the time comes to move on, this is the tally she will sing.</p>
+    <div id="ledger"></div>
+  </section>
+
+  <section class="panel" id="p_spellbook" hidden>
+    <h2>Spellbook</h2>
+    <p class="quote">“Pack light. Pack spells.”</p>
+    <p>Choose which of your spells come along to the battlefield. Every spell takes a slot, Command and Nemesis included; the Spelltower can add more slots, for a price. Move and Shove don't need one.</p>
+    <p id="slotLine"></p>
+    <div id="bookList"></div>
+  </section>
+
   <section class="panel" id="p_market" hidden>
     <h2>Marketplace</h2>
     <p class="quote">“Everything has a price. Mostly a bad one.”</p>
@@ -428,6 +475,14 @@ div.mapbtn { cursor: default; }
     <p class="quote">“Come for the ale, stay because the door sticks.”</p>
     <p>Villagers, rumours and suspiciously cheap ale. If anyone in town needs something done, this is where they'll ask. Finished jobs are paid here too.</p>
     <div id="tavernList"></div>
+  </section>
+
+  <section class="panel" id="p_spiritstones" hidden>
+    <h2>Spirit Stones</h2>
+    <p class="quote">“Do not stand in the circle. Do not sit in the circle. The circle is not a picnic spot.”</p>
+    <p>A ring of humming stones behind the Wisping Well, where spirits rest between battles. Offerings here make them sturdier, quicker, harder to hit and, eventually, able to mend themselves.</p>
+    <div class="units" id="spiritstonesUnits"></div>
+    <div id="spiritstonesList"></div>
   </section>
 
   <section class="panel" id="p_archivus" hidden>
@@ -458,13 +513,14 @@ div.mapbtn { cursor: default; }
   <div class="hud">
     <div class="brand">The Summonancer</div>
     <div class="stat" title="Mana"><span id="mana" style="color:var(--mana)">0</span><small>mana</small></div>
-    <div class="stat" title="Bones"><span id="bones">0</span><small>bones</small></div>
-    <div class="stat" title="Gold"><span id="gold" style="color:var(--gold)">0</span><small>gold</small></div>
-    <div class="stat" title="Skulls" id="skullStat" hidden><span id="skulls">0</span><small>skulls</small></div>
+    <div class="stat" title="Bones"><span class="hudico" data-ico="bones"></span><span id="bones">0</span></div>
+    <div class="stat" title="Gold"><span class="hudico" data-ico="gold"></span><span id="gold" style="color:var(--gold)">0</span></div>
+    <div class="stat" title="Skulls" id="skullStat" hidden><span class="hudico" data-ico="skulls"></span><span id="skulls">0</span></div>
     <div class="stat" title="Summons on the field"><span id="slots">0</span><small>summons</small></div>
     <div class="stat" title="Ward"><span id="ward" style="color:var(--ember)">0</span><small>ward</small></div>
     <div class="stat" title="Enemy ward" id="foeWardStat" hidden><span id="foeWard" style="color:var(--nemesis)">0</span><small>enemy ward</small></div>
-    <div class="stat" title="Wave"><span id="wave">1</span><small>wave</small></div>
+    <div class="stat" title="Wave" id="waveStat"><span id="wave">1</span><small id="waveLbl">wave</small></div>
+    <div class="stat" title="Enemies defeated / needed to open the great gate" id="killStat" hidden><span id="killsHud">0/0</span><small>kills</small></div>
   </div>
   <div class="manabar" aria-hidden="true"><div id="manafill"></div></div>
   <div class="row">
@@ -492,13 +548,15 @@ div.mapbtn { cursor: default; }
       <p>Pick a summon below and tap a lit tile near the ward. The ward holds as long as nothing reaches it.</p>
       <h3>Summons</h3>
       <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
-      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow, very tough and takes two summon slots: nearby enemies can't help attacking it, and every fourth blow is a ground slam that shoves them back. New summons are bound at the Summoning Septagram in town.</p>
+      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow, very tough and takes two summon slots: nearby enemies can't help attacking it, and every fourth blow is a ground slam that shoves them back. A <b>Spirit</b> drifts through anything and hovers right on top of enemies, hurting everything beneath it; badly hurt, it falls back to a wisp to mend. New summons are bound at the Summoning Septagram in town.</p>
       <h3>Spells</h3>
       <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward. A <b>Guardstone</b> keeps the first summons to step into its circle on guard there. <b>Freeze</b> chills an area and slows everything in it; <b>Nurture</b> grows bare earth into grass, grass into bushes and bushes into trees.</p>
       <h3>Assault</h3>
       <p>On the Assault field the enemies pour out of a <b>red ward</b> at the top. Summons with nothing to fight nearby march up and attack it. It is armoured (wisps barely scratch it; wards are built to keep spirits out), it pulses to hurt summons right next to it, and every third of its health lost it spits out a squad of defenders. Break it to win; spells that hit a tile can't touch it.</p>
+      <h3>Gauntlet and Raid</h3>
+      <p>In the <b>Gauntlet</b> enemies pour in through the side gates (a light warns which one). Defeat enough and the great gate opens to the next, harder cave; your summons, mana and loot come along and the ward recovers some strength. In the <b>Raid</b> the chief walks down the carpet once its guards are beaten. In both, <b>Move</b> shuffles the ward a tile a second; no summoning while it moves.</p>
       <h3>Enemies</h3>
-      <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. From wave 10, they arrive in tight packs, and from wave 40 every wave makes them a little tougher and harder-hitting.</p>
+      <p><b>Kobolds</b> scatter whenever one of their own drops. <b>Goblins</b> lose their nerve when four fall in quick succession, unless an <b>Orc</b> is nearby to shout at them. <b>Ogres</b> (from wave 17) never panic and every sixth or seventh blow slams every summon around them. <b>Trolls</b> (from wave 20) mend themselves unless they burn, and fire hurts them twice as much. From wave 10, they arrive in tight packs, and from wave 40 every wave makes them a little tougher and harder-hitting.</p>
       <h3>Terrain</h3>
       <p><b>Sand</b> and <b>puddles</b> slow everyone a little, <b>swamp</b> a lot. <b>Bushes</b> slow enemies only. <b>Boulders</b>, <b>trees</b>, <b>lakes</b> and <b>rivers</b> stop anyone on foot; cross rivers by the <b>bridges</b>.</p>
       <p>Bones and skulls you collect here go to the warehouse in town when the battle ends.</p>
@@ -509,6 +567,7 @@ div.mapbtn { cursor: default; }
   </div>
   <div class="toast" id="toast"></div>
   <div class="spells">
+    <button class="spell" id="spell_move" type="button" aria-pressed="false" hidden><b>Move</b><span>free</span></button>
     <button class="spell" id="spell_command" type="button" aria-pressed="false"><b>Command</b><span>10 mana</span></button>
     <button class="spell" id="spell_nemesis" type="button" aria-pressed="false"><b>Nemesis</b><span>20 mana</span></button>
     <button class="spell" id="spell_firebolt" type="button" aria-pressed="false" hidden><b>Firebolt</b><span>2 mana</span></button>
@@ -534,10 +593,28 @@ div.mapbtn { cursor: default; }
       <b>Golem</b><span class="d">Takes 2 slots. He's a big guy and needs the legroom.</span>
       <span class="cost"><span class="m">20</span> · <span class="b">3 bones</span></span>
     </button>
+    <button class="card" id="card_spirit" type="button" aria-pressed="false" hidden>
+      <b>Spirit</b><span class="d">Hovers over foes.</span>
+      <span class="cost"><span class="m">25 mana</span></span>
+    </button>
   </div>
 </div>
 
  <div id="talkDim" hidden></div>
+ <div class="overlay" id="gearOverlay" hidden>
+  <div class="overlay-inner">
+    <button class="mini close" id="gearClose" type="button">Close</button>
+    <section class="panel">
+      <h2>Equipment</h2>
+      <p class="quote">“Dress for the job you want. The job you want is 'not dead'.”</p>
+      <p>What the wizard wears. Chiefs in the Raid drop pieces of their hall's set; wear two, three or five pieces of the same set for its bonuses. Tap a worn piece to take it off. Spare pieces can be sold at the Marketplace.</p>
+      <div class="gearslots" id="gearSlots"></div>
+      <div id="gearSets"></div>
+      <h3>Bag</h3>
+      <div id="gearBag"></div>
+    </section>
+  </div>
+</div>
  <div class="overlay" id="questOverlay" hidden>
   <div class="overlay-inner">
     <button class="mini close" id="questClose" type="button">Close</button>
@@ -581,14 +658,16 @@ const DATA = {
     market:       { name: "Marketplace",             cost: 30,  about: "Trade bones, skulls and materials for gold and back again. The merchant always wins." },
     library:      { name: "The Overdue Library",     cost: 60,  about: "Research for Command and Nemesis: longer, cheaper and nastier." },
     stones:       { name: "Protective Stone Circle", cost: 50,  about: "A sturdier ward, a Shove that pushes enemies away and stones that mend themselves." },
-    archivus:     { name: "Archivus Arcanus",        cost: 150, about: "Forbidden tomes on modifying summons. Allegedly." }
+    archivus:     { name: "Archivus Arcanus",        cost: 150, about: "Forbidden tomes on modifying summons. Allegedly." },
+    spiritstones: { name: "Spirit Stones",           cost: { gold: 150, stone: 20, crystal: 10 }, needs: "spirit", after: "well", about: "An extension of the Wisping Well: humming stones that make spirits sturdier, quicker and harder to hit." }
   },
   // binding a new kind of summon at the Septagram, once
   unlocks: {
     wisp:             { gold: 0,  bones: 0,  skulls: 0, about: "Floats over anything, pokes enemies, mends other summons." },
     skeleton_warrior: { gold: 0,  bones: 5,  skulls: 0, about: "Walks around obstacles and hits hard. Cheap and cheerful." },
     skeleton_archer:  { gold: 15, bones: 15, skulls: 0, about: "Shoots from two tiles away. Slow and fragile." },
-    golem:            { gold: 60, bones: 0,  skulls: 1, about: "A slow, very tough defender that takes two summon slots. Enemies close by can't resist attacking it." }
+    golem:            { gold: 60, bones: 0,  skulls: 1, about: "A slow, very tough defender that takes two summon slots. Enemies close by can't resist attacking it." },
+    spirit:           { gold: 200, bones: 0, skulls: 10, crystal: 10, about: "Drifts through anything and hovers over enemies, hurting everything beneath it. When badly hurt it falls back to the nearest wisp to mend, then returns." }
   },
   research: {
     lab: [
@@ -623,7 +702,7 @@ const DATA = {
       { key: "nemDur",  name: "Grudge Ledger",   max: 6, gold: 10, fx: lv => "Nemesis lasts " + (5 + lv) + " s" },
       { key: "nemCost", name: "Bulk Borrowing",  max: 5, gold: 12, fx: lv => "Nemesis costs " + (20 - 2 * lv) + " mana" },
       { key: "exposed", name: "Exposed",         max: 8, gold: 14, fx: lv => lv ? "the marked enemy takes +" + lv * 10 + " % damage" : "no extra damage" },
-      { key: "frRadius", name: "Wider Frost",     max: 4, gold: 25, needsSpell: "freeze", fx: lv => { const n = 3 + 2 * Math.floor(lv / 2); return lv % 2 ? "a " + n + " x " + n + " area, a little more" : "a " + n + " x " + n + " area"; } },
+      { key: "frRadius", name: "Wider Frost",     max: 2, gold: 25, needsSpell: "freeze", fx: lv => lv === 0 ? "a 3 x 3 area" : lv === 1 ? "a 3 x 3 area, reaching a little further" : "a 5 x 5 area" },
       { key: "frSlow",   name: "Deep Chill",      max: 5, gold: 20, needsSpell: "freeze", fx: lv => (60 + 5 * lv) + " % slower" },
       { key: "frCost",   name: "Cold Efficiency", max: 5, gold: 20, needsSpell: "freeze", fx: lv => "Freeze costs " + (25 - 3 * lv) + " mana" },
       { key: "frDur",    name: "Lasting Frost",   max: 5, gold: 20, needsSpell: "freeze", fx: lv => "the chill lasts " + (5 + lv) + " s" },
@@ -633,6 +712,16 @@ const DATA = {
       { key: "gsArmor",  name: "Stoneskin Aura",  max: 5, gold: 20, needsSpell: "guardstone", fx: lv => lv ? "guards inside the circle block " + fmt(lv * 0.3) + " damage per hit" : "no armour" },
       { key: "gsHeal",   name: "Soothing Stone",  max: 4, gold: 25, needsSpell: "guardstone", fx: lv => lv ? "guards inside the circle mend 1 HP every " + (6 - lv) + " s" : "no mending" }
     ],
+    spiritstones: [
+      { key: "hp",    name: "Heavier Sheet",   max: 10, gold: 20, fx: lv => "+" + lv * 10 + " % health" },
+      { key: "armor", name: "Starched Hem",    max: 6,  gold: 25, fx: lv => "blocks " + fmt(lv * 0.3) + " damage per hit" },
+      { key: "speed", name: "Draughty Halls",  max: 8,  gold: 15, fx: lv => "+" + lv * 5 + " % move speed" },
+      { key: "dmg",   name: "Chilling Touch",  max: 10, gold: 20, fx: lv => "+" + lv * 10 + " % damage" },
+      { key: "phase", name: "Phasing",         max: 10, costs: [{ gold: 30 }, { gold: 60 }, { gold: 100 }, { gold: 150 }, { gold: 400, crystal: 5, skulls: 2 }, { gold: 800, crystal: 10, skulls: 4 },
+        { gold: 1500, crystal: 20, skulls: 6 }, { gold: 2500, crystal: 35, skulls: 10 }, { gold: 4000, crystal: 50, skulls: 15 }, { gold: 6000, crystal: 80, skulls: 20 }],
+        fx: lv => lv ? "can't be hurt for " + fmt(lv * 0.1) + " s after taking damage" : "no phasing" },
+      { key: "regen", name: "Regeneration",    max: 3, costs: [{ gold: 300, crystal: 10 }, { gold: 900, crystal: 25 }, { gold: 2500, crystal: 50, skulls: 5 }], fx: lv => lv ? "mends " + lv + " HP every 5 s" : "no mending" }
+    ],
     stones: [
       { key: "ward",  name: "Thicker Stones",  max: 5, gold: 15, fx: lv => "the ward holds " + (DATA.wizard.ward + lv) + " hits" },
       { key: "shove", name: "Shove",           max: 6, gold: 20, fx: lv => lv ? "pushes nearby enemies back, every " + shoveCooldown(lv) + " s" : "not learned yet" },
@@ -640,21 +729,23 @@ const DATA = {
     ],
     // price of the next level: gold grows, bones from level 2, skulls from level 6
     // ("costs" lists fixed prices per level instead)
-    cost: (r, lv) => r.costs ? Object.assign({ gold: 0, bones: 0, skulls: 0 }, r.costs[lv])
+    cost: (r, lv) => r.costs ? Object.assign({ gold: 0, bones: 0, skulls: 0 }, r.costs[Math.min(lv, r.costs.length - 1)])
       : ({ gold: Math.round(r.gold * (lv + 1) * (1 + lv * 0.25)), bones: lv >= 2 ? lv * 2 : 0, skulls: lv >= 6 ? lv - 5 : 0 })
   },
   spells: {
-    command:  { name: "Command",  mana: 10, duration: 1 },
-    nemesis:  { name: "Nemesis",  mana: 20, duration: 5 },
+    command:  { name: "Command",  mana: 10, duration: 1, about: "Calls every summon to a tile for a moment." },
+    nemesis:  { name: "Nemesis",  mana: 20, duration: 5, about: "Marks one enemy; every summon goes after it." },
     // hits one tile for 1 damage and sets flammable ground alight: anyone walking on it burns for 5 s (1 damage a second) and panics
-    firebolt: { name: "Firebolt", mana: 2, damage: 1, tileBurn: 8, burn: 5, burnDps: 1 },
+    firebolt: { name: "Firebolt", school: "fire", about: "Hits a tile and sets grass, bushes and trees on fire.", mana: 2, damage: 1, tileBurn: 8, burn: 5, burnDps: 1 },
     // a ring of cold spreads over 3 x 3 tiles: everything it touches freezes for 8 s and stops burning (trees keep burning)
-    freeze:   { name: "Freeze", mana: 25, duration: 5, radius: 1.5, slow: 0.6, spread: 0.45 },
+    freeze:   { name: "Freeze", school: "cold", about: "Chills an area: everything in it slows right down.", mana: 25, duration: 5, radius: 1.5, slow: 0.6, spread: 0.45 },
     // a crystal on one tile with a glowing circle around it: the first summons to step inside stay and guard it
     // grows one tile a step: bare earth (or burnt ground) to grass, grass to bush, bush to tree
-    nurture:  { name: "Nurture", mana: 10, grows: { dirt: "grass", grass: "bush", bush: "tree" } },
-    guardstone: { name: "Guardstone", mana: 10, radius: 2, keepers: 1, stones: 1, aggro: 3, leash: 4 }
+    nurture:  { name: "Nurture", school: "earth", about: "Grows bare earth to grass, grass to a bush, a bush to a tree.", mana: 10, grows: { dirt: "grass", grass: "bush", bush: "tree" } },
+    guardstone: { name: "Guardstone", school: "earth", about: "A crystal whose circle keeps the first summons inside on guard.", mana: 10, radius: 2, keepers: 1, stones: 1, aggro: 3, leash: 4 }
   },
+  // spell slots: how many spells the wizard can take into a battle (Spellbook), and the price of each extra one (Spelltower)
+  spellSlots: { start: 3, extra: [{ gold: 1000, crystal: 50 }, { gold: 3000, crystal: 150 }, { gold: 8000, crystal: 400 }] },
   // spells the Overdue Library can teach
   spellBook: {
     freeze:   { cost: { gold: 100, crystal: 5 }, about: "25 mana. A ring of blue cold spreads over a 3 x 3 area and chills everything it touches: 60 % slower for 5 seconds. It also puts out fires, except burning trees. Skeletons and wisps are immune. The Library can improve it further." },
@@ -672,7 +763,7 @@ const DATA = {
     wood:    { name: "Wood",           lot: 5,  sellFor: 1, buyFor: 10 }
   },
   exp: {
-    perKill: { kobold: 0.5, bog_goblin: 1, orc: 2 },
+    perKill: { kobold: 0.5, bog_goblin: 1, orc: 2, ogre: 4, troll: 4 },
     perUnusedBone: 0.01,
     waveMult: [ { upTo: 3, m: 0.5 }, { upTo: 6, m: 0.75 }, { upTo: 9, m: 0.9 }, { upTo: 19, m: 1.0 }, { upTo: 39, m: 1.1 }, { upTo: 59, m: 1.2 } ],
     beyondStep: 0.2
@@ -685,6 +776,9 @@ const DATA = {
     skeleton_archer: { name: "Skeleton Archer", freezeImmune: true, cost: { mana: 10, bone: 2 }, hp: 13, damage: 3, attackEvery: 1.0, speed: 1.1, range: 2.1, move: "ground", ranged: true },
     golem: { name: "Golem", cost: { mana: 20, bone: 3 }, hp: 110, damage: 4, attackEvery: 1.5, speed: 0.7, range: 1.2, move: "ground",
              taunt: 2.2, slam: { radius: 1.3, knock: 0.5, every: 4 }, slots: 2, fireImmune: true },
+    // drifts over enemies and hurts everything underneath; at half health it falls back to a wisp (or the ward) and returns at 80 %
+    spirit: { name: "Spirit", freezeImmune: true, fireImmune: true, wardMult: 0.5, cost: { mana: 25, bone: 0 }, hp: 40, damage: 1.5, attackEvery: 0.9, speed: 1.6, range: 0.5,
+              move: "incorporeal", ignoresTerrain: true, aura: 0.55, retreat: { at: 0.5, back: 0.8 } },
   },
   enemies: {
     kobold: { name: "Kobold", hp: 7, damage: 1, attackEvery: 0.9, speed: 1.15, range: 1.15, aggro: 2.4, move: "ground",
@@ -693,10 +787,19 @@ const DATA = {
     bog_goblin: { name: "Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.15, aggro: 2.6, move: "ground",
                   drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.35, min: 1, max: 3 },
                           { res: "iron", chance: 0.10, min: 1, max: 1 }, { res: "wood", chance: 0.08, min: 1, max: 2 }, { res: "crystal", chance: 0.02, min: 1, max: 1 }], skullChance: 0.02,
-                  panic: { deaths: 4, window: 5, min: 1, max: 5, steadiedBy: "orc", steadyRange: 3 } },
+                  panic: { deaths: 4, window: 5, min: 1, max: 5, steadiedBy: ["orc", "ogre"], steadyRange: 3 } },
     orc: { name: "Orc", hp: 32, damage: 4, attackEvery: 1.3, speed: 0.65, range: 1.15, aggro: 2.8, move: "ground",
            drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.5, min: 3, max: 6 },
-                   { res: "iron", chance: 0.15, min: 1, max: 2 }, { res: "stone", chance: 0.10, min: 1, max: 2 }, { res: "crystal", chance: 0.03, min: 1, max: 1 }], skullChance: 0.03 }
+                   { res: "iron", chance: 0.15, min: 1, max: 2 }, { res: "stone", chance: 0.10, min: 1, max: 2 }, { res: "crystal", chance: 0.03, min: 1, max: 1 }], skullChance: 0.03 },
+    // big, slow and never scared; every 6th or 7th blow is a ground slam that hits every summon around and shoves them back
+    ogre: { name: "Ogre", hp: 70, damage: 6, attackEvery: 1.7, speed: 0.5, range: 1.2, aggro: 2.8, move: "ground", panicImmune: true,
+            ogreSlam: { radius: 1.3, knock: 0.7, every: [6, 7] },
+            drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.6, min: 5, max: 10 },
+                    { res: "iron", chance: 0.25, min: 1, max: 3 }, { res: "stone", chance: 0.25, min: 1, max: 3 }, { res: "crystal", chance: 0.04, min: 1, max: 1 }], skullChance: 0.08 },
+    // mends itself unless it is burning, and fire hurts it twice as much
+    troll: { name: "Troll", hp: 70, damage: 5, attackEvery: 1.4, speed: 0.6, range: 1.25, aggro: 2.8, move: "ground", regen: { amount: 1, every: 5 }, fireWeak: 2,
+             drops: [{ res: "bone", chance: 0.6, min: 2, max: 4 }, { res: "wood", chance: 0.3, min: 1, max: 3 }, { res: "gold", chance: 0.5, min: 3, max: 7 },
+                     { res: "crystal", chance: 0.02, min: 1, max: 1 }], skullChance: 0.033 }
   },
   // The Grand Grimoire of Everything: what each page reveals, and after how many defeats
   grimoire: {
@@ -709,8 +812,8 @@ const DATA = {
       { at: 300, allyAt: 15, key: "loot",      anims: [],                    label: "Drops and rewards" }
     ],
     animNames: { walk: "Walk", idle: "Stand", attack: "Attack", panic: "Panic", charm: "Charmed", confused: "Confused" },
-    order: ["kobold", "bog_goblin", "orc"],
-    allyOrder: ["wisp", "skeleton_warrior", "skeleton_archer", "golem"],
+    order: ["kobold", "bog_goblin", "orc", "ogre", "troll"],
+    allyOrder: ["wisp", "skeleton_warrior", "skeleton_archer", "golem", "spirit"],
     allyTierLabels: { intro: "Appearance and walk", stats: "Combat stats, standing and attacking", loot: "Costs", behaviour: "Behaviour", notes: "Field notes, charmed and confused" },
     allyPages: {
       wisp: {
@@ -736,6 +839,12 @@ const DATA = {
         attacks: "Three single-fist punches, then a double-fist ground slam that shoves enemies back",
         behaviour: "Slow and enormously tough. Enemies near a golem can't resist attacking it, which is exactly the point. Immune to panic, though it can look alarmed.",
         notes: "Golems don't sleep; they just stop moving for a while. Pigeons have noticed."
+      },
+      spirit: {
+        lore: "Somebody's old bedsheet with opinions, or so it claims. A spirit was bound, not raised; it is very particular about that, and about its hem.",
+        attacks: "A chill that hurts everything beneath it",
+        behaviour: "Drifts over walls, water and enemies alike and hovers right on top of them, hurting everything underneath. At half health it falls back to the nearest wisp to mend (or to the ward, if there are no wisps) and returns once it is at 80 %. It doesn't burn or freeze, and wards only take half the damage from it.",
+        notes: "It rattles its chains when it's bored. The chains aren't attached to anything. Nobody knows where it got them."
       }
     },
     pages: {
@@ -756,6 +865,18 @@ const DATA = {
         attacks: "Double-fist smash, kick or headbutt",
         behaviour: "Goblins within three tiles of an orc don't panic, out of fear of the orc rather than courage. Nothing has made an orc panic yet, except being set on fire, which doesn't count.",
         notes: "Orcs collect scars the way goblins collect rings. The plasters are for the ones they are less proud of."
+      },
+      ogre: {
+        lore: "Mostly belly, with a small head on top for decoration. An ogre has one big tusk, one good idea a year and absolutely no sense of personal space.",
+        attacks: "A huge fist, a stomp, and every sixth or seventh blow a two-handed ground slam that hits every summon around it and shoves them back",
+        behaviour: "Nothing scares an ogre. Set one on fire and it keeps walking, slightly warmer. Goblins near an ogre don't panic either; they're too busy not being sat on.",
+        notes: "The rope belt is load-bearing. Please don't ask what happens if it snaps."
+      },
+      troll: {
+        lore: "Long arms, a nose like a sack of potatoes and moss in places moss shouldn't be. Trolls live under bridges, mostly to complain about the people walking over them.",
+        attacks: "A long-armed swipe, a kick or a headbutt with that nose",
+        behaviour: "Wounds close on their own: a troll mends 1 health every 5 seconds, unless it is on fire. And fire is the one thing it truly fears: flames hurt a troll twice as much and send it running.",
+        notes: "Every troll swears the bridge was theirs first. Nobody has ever checked the paperwork."
       }
     }
   },
@@ -775,7 +896,16 @@ const DATA = {
     river:     { name: "River",   blocks: ["ground"], moveCost: 1, water: true },
     bridge:    { name: "Bridge",  moveCost: 1 },
     structure: { name: "Ward",    blocks: ["ground", "incorporeal"], moveCost: 1 },
-    foeward:   { name: "Enemy ward", blocks: ["ground", "incorporeal"], moveCost: 1 }
+    foeward:   { name: "Enemy ward", blocks: ["ground", "incorporeal"], moveCost: 1 },
+    stalagmite: { name: "Stalagmite", blocks: ["ground"], moveCost: 1 },
+    cavewall:  { name: "Cave wall",  blocks: ["ground", "incorporeal"], moveCost: 1 },
+    brick:     { name: "Brick wall", blocks: ["ground", "incorporeal"], moveCost: 1 },
+    gate:      { name: "Great gate", blocks: ["ground", "incorporeal"], moveCost: 1 },
+    gateopen:  { name: "Open gate",  moveCost: 1 },
+    sidegate:  { name: "Side gate",  blocks: ["ground", "incorporeal"], moveCost: 1 },
+    stonefloor: { name: "Stone floor", moveCost: 1 },
+    carpet:    { name: "Carpet",     moveCost: 1 },
+    pillar:    { name: "Pillar",     blocks: ["ground"], moveCost: 1 }
   },
   // jobs from the Tavern; "kills" counts defeats from the moment the quest is taken
   quests: {
@@ -800,6 +930,8 @@ const DATA = {
     sizes: [2, 3, 4], growthAfter: 2,
     goblinsFrom: 3, goblinShare: 0.4,
     orcsFrom: 5, orcEvery: 3,
+    ogresFrom: 17, ogreEvery: 4,
+    trollsFrom: 20, trollEvery: 4,
     packsFrom: 10
   },
   // Each battle generates a fresh field. "river" lists the rows a river may wander through.
@@ -815,7 +947,73 @@ const DATA = {
       note: "A small outpost on the southern edge. Enemies come from three sides." },
     assault: { name: "Assault", spawn: ["foeward"], summonRange: 3, structs: [], foeWard: [2, 6],
       river: { chance: 0.5, rows: [5, 8] },
-      note: "A red enemy ward up the hill. Enemies pour out of it; break it with your summons before they break yours. Spells that hit a tile can't touch it." }
+      note: "A red enemy ward up the hill. Enemies pour out of it; break it with your summons before they break yours. Spells that hit a tile can't touch it." },
+    gauntlet: { name: "Gauntlet", arena: "gauntlet", spawn: ["gates"], summonRange: 2, structs: [[3, 11], [4, 11], [5, 11], [3, 12], [4, 12], [5, 12], [3, 13], [4, 13], [5, 13]], river: { chance: 0 },
+      note: "Caves, gates and more caves. Defeat enough enemies and the great gate opens to the next, harder cave. Rewards for every cave cleared are paid when the run ends." },
+    raid: { name: "Raid", arena: "raid", spawn: ["gates"], summonRange: 2, structs: [[3, 11], [4, 11], [5, 11], [3, 12], [4, 12], [5, 12], [3, 13], [4, 13], [5, 13]], river: { chance: 0 },
+      note: "A chief's hall. Beat its guards and the chief walks down the carpet to meet you. Chiefs carry wearable things." }
+  },
+  // the Gauntlet: kills needed, seconds between groups, enemy strength and the mix of enemies ("vw" picks it like a wave would) for the first cave;
+  // every cave cleared makes the next one harder
+  gauntlet: {
+    easy:   { name: "Easy",   kills: 30,  gap: 4.5, strength: 1.0, vw: 4,  reward: { exp: 20,  gold: 20 } },
+    normal: { name: "Normal", kills: 60,  gap: 3.6, strength: 1.25, vw: 9, reward: { exp: 45,  gold: 45 } },
+    hard:   { name: "Hard",   kills: 100, gap: 3.0, strength: 1.6, vw: 15, reward: { exp: 100, gold: 100 } },
+    perStage: { kills: 1.15, strength: 0.15, vw: 3, reward: 0.25, wardBack: 0.5 }
+  },
+  // equipment: dropped by Raid chiefs, worn by the wizard. Each chief's hall drops pieces of its own set.
+  gear: {
+    slots: [["head", "Head"], ["torso", "Torso"], ["cloak", "Cloak"], ["arms", "Arms"], ["hands", "Hands"], ["feet", "Feet"], ["staff", "Staff"], ["neck", "Neck"], ["ring1", "Ring"], ["ring2", "Ring"]],
+    kinds: ["head", "torso", "cloak", "arms", "hands", "feet", "staff", "neck", "ring"],
+    nouns: { head: ["Hat", "Hood", "Pointy Hat"], torso: ["Robe", "Vestments", "Tunic"], cloak: ["Cloak", "Cape", "Mantle"], arms: ["Bracers", "Sleeves", "Armguards"],
+             hands: ["Gloves", "Mittens", "Gauntlets"], feet: ["Boots", "Slippers", "Sandals"], staff: ["Staff", "Rod", "Walking Stick"], neck: ["Amulet", "Pendant", "Locket"], ring: ["Ring", "Band", "Signet"] },
+    rarity: {
+      common:    { name: "Common",    n: [1, 1], mult: 1,   sell: 20,  color: "#c9c1b1", adj: ["Slightly Used", "Lightly Dented", "Second-Hand", "Budget"] },
+      uncommon:  { name: "Uncommon",  n: [1, 2], mult: 1.5, sell: 60,  color: "#8fd06a", adj: ["Respectable", "Freshly Laundered", "Almost Fashionable", "Lightly Enchanted"] },
+      rare:      { name: "Rare",      n: [2, 2], mult: 2.2, sell: 200, color: "#6fa8ff", adj: ["Gleaming", "Rather Impressive", "Suspiciously Shiny", "Well-Loved"] },
+      legendary: { name: "Legendary", n: [3, 3], mult: 3.2, sell: 600, color: "#e8a040", adj: ["Legendary", "Unreasonably Glorious", "Mythic", "Absurdly Expensive"] }
+    },
+    odds: { easy: [0.6, 0.3, 0.09, 0.01], normal: [0.4, 0.38, 0.18, 0.04], hard: [0.2, 0.4, 0.3, 0.1] },
+    // bonuses an item can roll; "base" is the common-quality amount
+    bonus: {
+      mana:  { base: 3,    text: v => "+" + v + " max mana" },
+      regen: { base: 0.05, text: v => "+" + fmt(v) + " mana per second" },
+      slots: { base: 1,    text: v => "+" + v + " summon slot" + (v > 1 ? "s" : ""), rareOnly: true },
+      sdmg:  { base: 4,    text: v => "+" + v + " % summon damage" },
+      shp:   { base: 5,    text: v => "+" + v + " % summon health" },
+      spell: { base: 4,    text: v => v + " % cheaper spells" },
+      ward:  { base: 1,    text: v => "+" + v + " ward", rareOnly: true },
+      bgold: { base: 5,    text: v => "+" + v + " % gold from battles" },
+      bexp:  { base: 5,    text: v => "+" + v + " % experience from battles" },
+      drop:  { base: 10,   text: v => "+" + v + " % chance of crystals and skulls" }
+    },
+    sets: {
+      ember:   { name: "Ember Regalia", word: "Smouldering", 2: "Firebolt costs 1 less mana, fire spells 20 % less", 3: "burning lasts 2 s longer", 5: "burning deals double damage (trolls take four times as much)" },
+      frost:   { name: "Frostbound Attire", word: "Frostbound", 2: "cold spells cost 20 % less", 3: "the chill lasts 2 s longer", 5: "Freeze covers 1 more tile in every direction" },
+      necro:   { name: "Definitely Not a Necromancer's Outfit", word: "Not-At-All-Necromantic", 2: "skeletons have 15 % more health and damage", 3: "skeletons attack 15 % faster, archers reach 1 tile further", 5: "a fallen skeleton sometimes (25 %) pulls itself back together at half health, once, without taking a summon slot" },
+      stone:   { name: "Stonewarden's Garb", word: "Stonewarden's", 2: "golems block 1 more damage, earth spells cost 20 % less", 3: "summons on guard move 20 % faster", 5: "the ward holds 1 more hit" },
+      warlord: { name: "Warlord's Hand-Me-Downs", word: "Warlord's", 2: "Nemesis costs 20 % less and lasts 2 s longer", 3: "summons deal 10 % more damage", 5: "the Nemesis target takes 25 % more damage" }
+    }
+  },
+  // the Raid: whose hall, their colours, what guards it and the chief at the end of the carpet
+  raid: {
+    factions: {
+      kobold: { name: "Kobolds", kinds: ["kobold"], share: 1, carpet: ["#c0703f", "#e8a46e"], symbol: "claw", set: "ember",
+                boss: { name: "Kobold King", kind: "kobold", hp: 140, damage: 3, attackEvery: 0.8, speed: 0.9, scale: 1.8 } },
+      goblin: { name: "Goblins", kinds: ["bog_goblin", "bog_goblin", "kobold"], share: 0.8, carpet: ["#4f7f35", "#8fbf6a"], symbol: "coin", set: "necro",
+                boss: { name: "Goblin Boss", kind: "bog_goblin", hp: 220, damage: 4, attackEvery: 0.9, speed: 0.8, scale: 1.8 } },
+      orc:    { name: "Orcs", kinds: ["orc", "orc", "bog_goblin"], share: 0.5, carpet: ["#8f2a2a", "#d0605a"], symbol: "fist", set: "warlord",
+                boss: { name: "Orc Warlord", kind: "orc", hp: 380, damage: 7, attackEvery: 1.3, speed: 0.6, scale: 1.6 } },
+      ogre:   { name: "Ogres", kinds: ["ogre", "orc", "orc"], share: 0.35, carpet: ["#9a7a48", "#d6b67a"], symbol: "club", set: "stone",
+                boss: { name: "Ogre Chieftain", kind: "ogre", hp: 600, damage: 9, attackEvery: 1.7, speed: 0.45, scale: 1.5 } },
+      troll:  { name: "Trolls", kinds: ["troll", "troll", "bog_goblin"], share: 0.35, carpet: ["#3f6f55", "#7fae96"], symbol: "bridge", set: "frost",
+                boss: { name: "Troll Elder", kind: "troll", hp: 600, damage: 7, attackEvery: 1.3, speed: 0.55, scale: 1.55, regen: { amount: 3, every: 5 } } }
+    },
+    diffs: {
+      easy:   { name: "Easy",   kills: 25, gap: 5,   strength: 1.0, boss: 1.0, reward: { exp: 60,  gold: 60 },  second: 0.1 },
+      normal: { name: "Normal", kills: 45, gap: 4,   strength: 1.3, boss: 1.4, reward: { exp: 150, gold: 150 }, second: 0.2 },
+      hard:   { name: "Hard",   kills: 70, gap: 3.2, strength: 1.7, boss: 2.0, reward: { exp: 350, gold: 350 }, second: 0.35 }
+    }
   },
   // Assault difficulty: the enemy ward's health, seconds between waves, and how much tougher the enemies are
   // armor: blocked from every hit (at least a quarter always gets through); pulse: damage to summons right next to it, every few seconds;
@@ -830,20 +1028,35 @@ const QUIPS = {
   skeleton_warrior: ["Skeleton summoned. Not raised. Summoned.", "A fine pile of bones, assembled with care.", "Rattle rattle. That means 'ready'."],
   skeleton_archer: ["An archer. It has no eyes, yet somehow it aims.", "Bow, arrows, ribcage. Ready.", "It insists the quiver was always part of the skeleton."],
   wisp: ["A wisp drifts in, faintly judging everyone.", "Wisp summoned. It refuses to touch the ground on principle.", "Glowing, hovering, mildly helpful."],
+  spirit: ["A spirit drifts in. It insists it was summoned, not haunted.", "Spirit bound. Mind the chains, they're decorative.", "Oooooh. That's the spirit."],
   golem: ["A golem rumbles into place. It seems unimpressed.", "Rocks, assembled. Please do not climb the golem.", "The golem has arrived. Slowly. Very slowly."]
 };
 
 // ---------- Saved progress (this browser only) ----------
 const SAVE_KEY = "summonancer_save_v1";
 const freshMeta = () => ({ gold: 0, exp: 0, bones: 0, manaLv: 0, regenLv: 0, slotLv: 0, best: {}, kills: {}, summoned: {}, warehouse: { bones: 0, skulls: 0 }, built: {},
-  research: { lab: {}, well: {}, golematorium: {}, library: {}, stones: {} }, unlocked: { wisp: true }, stage: "intro", builder: "alive", v2: true });
+  research: { lab: {}, well: {}, golematorium: {}, library: {}, stones: {}, spiritstones: {} }, unlocked: { wisp: true }, stage: "intro", builder: "alive", v2: true });
 let META = freshMeta(), oldSave = false;
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const saved = JSON.parse(raw); oldSave = !saved.v2; META = Object.assign(META, saved); } } catch (e) {}
 // older saves kept bought bones separately; they now live in the warehouse
 META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {};
 for (const k of ["stone", "iron", "wood", "crystal"]) META.warehouse[k] = META.warehouse[k] || 0;
-META.quests = META.quests || {}; META.spells = META.spells || {}; META.research = META.research || {};
-for (const k of ["lab", "well", "golematorium", "library", "stones"]) META.research[k] = META.research[k] || {};
+META.quests = META.quests || {}; META.spells = META.spells || {};
+META.spellSlots = META.spellSlots || 0;
+// Saina's ledger: everything since the very first battle (kills, summons, best waves and wins are kept elsewhere already)
+META.battles = META.battles || 0;
+META.gear = META.gear || { bag: [], eq: {}, next: 1 };
+META.ledger = META.ledger || { gold: 0, exp: 0, res: {} };
+if (!META.loadout) {          // the spells taken into battle: Command and Nemesis, then whatever was learned first
+  META.loadout = ["command", "nemesis"];
+  for (const k of ["firebolt", "freeze", "nurture", "guardstone"]) if (META.spells[k] && META.loadout.length < DATA.spellSlots.start) META.loadout.push(k);
+}
+// Wider Frost now stops at 5 x 5: levels bought beyond 2 are refunded
+(() => { const lv = META.research.library.frRadius || 0; if (lv <= 2) return;
+  const r = DATA.research.library.find(x => x.key === "frRadius");
+  for (let l = 2; l < lv; l++) { const c = DATA.research.cost(r, l); META.gold += c.gold; META.warehouse.bones += c.bones; META.warehouse.skulls += c.skulls; }
+  META.research.library.frRadius = 2; })(); META.research = META.research || {};
+for (const k of ["lab", "well", "golematorium", "library", "stones", "spiritstones"]) META.research[k] = META.research[k] || {};
 META.summoned = META.summoned || {}; META.kills = META.kills || {};
 if (META.bones) { META.warehouse.bones += META.bones; META.bones = 0; }
 // saves from before the Septagram: a returning wizard keeps the summons he already had and skips the introduction
@@ -855,32 +1068,86 @@ if (oldSave) {
 }
 META.unlocked = META.unlocked || { wisp: true };
 function saveMeta() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(META)); } catch (e) {} }
-const wizManaMax = () => DATA.wizard.manaMax + META.manaLv * DATA.tower.mana.per;
-const wizRegen = () => DATA.wizard.manaRegen + META.regenLv * DATA.tower.regen.per;
-const wizSlots = () => DATA.wizard.summonSlots + META.slotLv * DATA.tower.slots.per;
+// ---------- Equipment ----------
+function worn() { return Object.values(META.gear.eq).filter(Boolean); }
+function gearStat(k) { let n = 0; for (const it of worn()) for (const b of it.bonus) if (b.k === k) n += b.v; return Math.round(n * 1000) / 1000; }
+function setCount(set) { return worn().filter(it => it.set === set).length; }
+const setOn = (set, n) => setCount(set) >= n;
+const wizManaMax = () => DATA.wizard.manaMax + META.manaLv * DATA.tower.mana.per + gearStat("mana");
+const wizRegen = () => DATA.wizard.manaRegen + META.regenLv * DATA.tower.regen.per + gearStat("regen");
+const wizSlots = () => DATA.wizard.summonSlots + META.slotLv * DATA.tower.slots.per + gearStat("slots");
+const wardHits = () => DATA.wizard.ward + rlv("stones", "ward") + gearStat("ward") + (setOn("stone", 5) ? 1 : 0);
+// make a new piece of equipment from a set, its rarity rolled by the difficulty
+function makeGear(set, diff) {
+  const G = DATA.gear, odds = G.odds[diff] || G.odds.easy, keys = Object.keys(G.rarity);
+  let r = Math.random(), ri = 0; while (ri < odds.length - 1 && r > odds[ri]) { r -= odds[ri]; ri++; }
+  const rar = keys[ri], RA = G.rarity[rar], kind = G.kinds[rnd(G.kinds.length)];
+  const n = RA.n[0] + rnd(RA.n[1] - RA.n[0] + 1), pool = Object.keys(G.bonus).filter(k => !G.bonus[k].rareOnly || ri >= 2).sort(() => Math.random() - 0.5);
+  const bonus = pool.slice(0, n).map(k => { const B = G.bonus[k], raw = B.base * RA.mult * (0.8 + Math.random() * 0.4);
+    return { k, v: k === "slots" || k === "ward" ? (ri >= 3 && Math.random() < 0.3 ? 2 : 1) : k === "regen" ? Math.round(raw * 100) / 100 : Math.max(1, Math.round(raw)) }; });
+  const name = RA.adj[rnd(RA.adj.length)] + " " + G.sets[set].word + " " + G.nouns[kind][rnd(G.nouns[kind].length)];
+  return { id: META.gear.next++, name, kind, set, rar, bonus };
+}
+const gearLine = it => it.bonus.map(b => DATA.gear.bonus[b.k].text(b.v)).join(", ");
+// what the wizard looks like in what he wears: each worn piece colours its part of him in its set's colours
+const SET_LOOK = {
+  ember:   { hat: ["#8a3329", "#6a261f"], band: "#2b1512", buckle: "#f0a040", feather: "#ff9a3c", robe: ["#7c3a2c", "#5e2a20"], trim: "#f0a040", orb: [255, 140, 60], head: "claw", amulet: "#e0403a", cloak: ["#5e2a20", "#3e1a14"], glove: "#6a2a1a", boot: "#3a1a12", cuff: "#f0a040" },
+  frost:   { hat: ["#2f5f8a", "#234a6c"], band: "#e8f2ff", buckle: "#9fd8ff", feather: null, robe: ["#35648f", "#284e72"], trim: "#cfe3f5", orb: [150, 230, 255], head: "crystal", amulet: "#7fd0ff", cloak: ["#cfe3f5", "#9fbcd8"], glove: "#9fbcd8", boot: "#2f4f6a", cuff: "#e8f2ff" },
+  necro:   { hat: ["#2e3a2a", "#222c20"], band: "#e8dcbf", buckle: "#b8f07a", feather: "#2a2a30", robe: ["#33402e", "#262f22"], trim: "#b8f07a", orb: [180, 240, 120], head: "claw", amulet: "#b8f07a", cloak: ["#1e221c", "#121510"], glove: "#e8dcbf", boot: "#1e221c", cuff: "#e8dcbf" },
+  stone:   { hat: ["#7d7869", "#625e52"], band: "#4a4553", buckle: "#c4beaf", feather: null, robe: ["#6c6676", "#555060"], trim: "#c4beaf", orb: [232, 196, 90], head: "crystal", amulet: "#e8c45a", cloak: ["#5a4a3a", "#40342a"], glove: "#878171", boot: "#4a4553", cuff: "#a8a293" },
+  warlord: { hat: ["#7a2222", "#5a1818"], band: "#3a3540", buckle: "#c0c4cc", feather: "#e8dcbf", robe: ["#4a4553", "#3a3540"], trim: "#c0503a", orb: [255, 90, 80], head: "claw", amulet: "#c0c4cc", cloak: ["#8f2a2a", "#5a1818"], glove: "#5a4a3a", boot: "#2a2228", cuff: "#c0c4cc" }
+};
+function gearLook() {
+  const E = META.gear.eq, L0 = SET_LOOK, g = { name: "Worn gear", hat: ["#4b3780", "#3a2a66"], band: "#2a1d40", buckle: "#d9b45a", patch: true, feather: null,
+    robe: ["#5a3e8e", "#45306e"], trim: "#d9b45a", orb: [111, 168, 255], head: "claw", amulet: null, cloak: null, glove: null, boot: null, cuff: null, ring: null };
+  const pick = (slot, f) => { const it = E[slot]; if (it) f(L0[it.set]); };
+  pick("head", c => Object.assign(g, { hat: c.hat, band: c.band, buckle: c.buckle, feather: c.feather, patch: false }));   // the patched starter hat finally retires
+  pick("torso", c => Object.assign(g, { robe: c.robe, trim: c.trim }));
+  pick("staff", c => Object.assign(g, { orb: c.orb, head: c.head }));
+  pick("neck", c => { g.amulet = c.amulet; }); pick("cloak", c => { g.cloak = c.cloak; }); pick("hands", c => { g.glove = c.glove; });
+  pick("feet", c => { g.boot = c.boot; }); pick("arms", c => { g.cuff = c.cuff; });
+  pick("ring1", c => { g.ring = c.orb; }); pick("ring2", c => { g.ring = c.orb; });
+  return g;
+}
 const rlv = (where, key) => (META.research[where] && META.research[where][key]) || 0;
+const spellSlots = () => DATA.spellSlots.start + META.spellSlots;
+const knowsSpell = k => k === "command" || k === "nemesis" || !!META.spells[k];
+const SPELL_ORDER = ["command", "nemesis", "firebolt", "freeze", "nurture", "guardstone"];
+// mana cost after school discounts (equipment sets); never below 1
+function spellMana(k, base) { const d = spellDiscount(k); return Math.max(1, Math.ceil(base * (1 - d.pct) - d.flat)); }
+// cheaper spells: the gear's own bonus plus the 2-piece bonus of the set that matches the spell's school
+function spellDiscount(k) {
+  const school = (DATA.spells[k] || {}).school;
+  let pct = gearStat("spell") / 100, flat = 0;
+  if (school === "fire" && setOn("ember", 2)) pct += 0.2;
+  if (k === "firebolt" && setOn("ember", 2)) flat += 1;
+  if (school === "cold" && setOn("frost", 2)) pct += 0.2;
+  if (school === "earth" && setOn("stone", 2)) pct += 0.2;
+  if (k === "nemesis" && setOn("warlord", 2)) pct += 0.2;
+  return { pct: Math.min(0.8, pct), flat };
+}
 const shoveCooldown = lv => Math.max(30, 60 - 6 * (lv - 1));
 // spell costs and durations for this battle, with the Overdue Library applied
 function spellsNow() {
   return {
-    command: { name: "Command", mana: 10 - rlv("library", "cmdCost"), duration: 1 + 0.25 * rlv("library", "cmdDur") },
-    nemesis: { name: "Nemesis", mana: 20 - 2 * rlv("library", "nemCost"), duration: 5 + rlv("library", "nemDur"), exposed: 0.1 * rlv("library", "exposed") },
-    firebolt: Object.assign({}, DATA.spells.firebolt),
-    nurture: Object.assign({}, DATA.spells.nurture),
-    freeze: Object.assign({}, DATA.spells.freeze, { radius: 1.5 + 0.5 * rlv("library", "frRadius"), slow: 0.6 + 0.05 * rlv("library", "frSlow"),
-      mana: 25 - 3 * rlv("library", "frCost"), duration: 5 + rlv("library", "frDur") }),
-    guardstone: Object.assign({}, DATA.spells.guardstone, { radius: 2 + 0.5 * rlv("library", "gsRadius"), keepers: 1 + rlv("library", "gsKeep"),
+    command: { name: "Command", mana: spellMana("command", 10 - rlv("library", "cmdCost")), duration: 1 + 0.25 * rlv("library", "cmdDur") },
+    nemesis: { name: "Nemesis", mana: spellMana("nemesis", 20 - 2 * rlv("library", "nemCost")), duration: 5 + rlv("library", "nemDur") + (setOn("warlord", 2) ? 2 : 0), exposed: 0.1 * rlv("library", "exposed") + (setOn("warlord", 5) ? 0.25 : 0) },
+    firebolt: Object.assign({}, DATA.spells.firebolt, { mana: spellMana("firebolt", DATA.spells.firebolt.mana) }),
+    nurture: Object.assign({}, DATA.spells.nurture, { mana: spellMana("nurture", DATA.spells.nurture.mana) }),
+    freeze: Object.assign({}, DATA.spells.freeze, { radius: 1.5 + 0.5 * rlv("library", "frRadius") + (setOn("frost", 5) ? 1 : 0), slow: 0.6 + 0.05 * rlv("library", "frSlow"),
+      mana: spellMana("freeze", 25 - 3 * rlv("library", "frCost")), duration: 5 + rlv("library", "frDur") + (setOn("frost", 3) ? 2 : 0) }),
+    guardstone: Object.assign({}, DATA.spells.guardstone, { mana: spellMana("guardstone", DATA.spells.guardstone.mana), radius: 2 + 0.5 * rlv("library", "gsRadius"), keepers: 1 + rlv("library", "gsKeep"),
       stones: 1 + rlv("library", "gsStones"), armor: 0.3 * rlv("library", "gsArmor"), healEvery: rlv("library", "gsHeal") ? 6 - rlv("library", "gsHeal") : 0 })
   };
 }
 // how the wizard looks: beard and levitation will follow the prestige abilities once those exist
-const wizLook = () => ({ wmode: "idle", beard: 0, gear: "starter", lev: 0, oneT: null });
+const wizLook = () => ({ wmode: "idle", beard: 0, gear: gearLook(), lev: 0, oneT: null });
 
 // ---------- Sound effects: synthesised on the fly with Web Audio, so no sound files are needed ----------
 const SFX = (() => {
   let ac = null, master = null, noiseBuf = null, on = true, active = [];
   try { on = localStorage.getItem("summonancer_sfx") !== "off"; } catch (e) {}
-  const last = {}, IMPORTANT = ["gong", "thunder", "puff", "appear", "coins", "shove", "fanfare"], LONG = { gong: 2.8, thunder: 1.9, choir: 1.5, slam: 0.5, krak: 0.5 };
+  const last = {}, IMPORTANT = ["gong", "thunder", "puff", "appear", "coins", "shove", "fanfare"], LONG = { gong: 2.8, thunder: 1.9, choir: 1.5, slam: 0.5, krak: 0.5, ogreSlam: 0.7, groan: 1.4, gurgle: 0.9 };
   function init() {
     if (ac) { if (ac.state === "suspended") ac.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
@@ -931,6 +1198,19 @@ const SFX = (() => {
     orcPunch(t) { tone("sine", vary(110), 40, t, 0.003, 0.2, 0.75); noise(t, 0.002, 0.09, 0.45, "lowpass", 600); },
     golemPunch(t) { tone("sine", vary(95), 35, t, 0.003, 0.24, 0.8); noise(t, 0.002, 0.11, 0.5, "lowpass", 450); },
     slam(t) { tone("sine", vary(75), 28, t, 0.005, 0.45, 0.9); noise(t, 0.004, 0.35, 0.6, "lowpass", 350, 1, 120); tone("triangle", vary(55), 30, t, 0.01, 0.5, 0.3); },
+    ogrePunch(t) { tone("sine", vary(80), 30, t, 0.004, 0.28, 0.85); noise(t, 0.003, 0.12, 0.5, "lowpass", 380); },
+    ogreSlam(t) { tone("sine", vary(55), 22, t, 0.006, 0.6, 1); noise(t, 0.005, 0.5, 0.7, "lowpass", 260, 1, 80); tone("triangle", vary(40), 22, t + 0.02, 0.01, 0.6, 0.35); for (let i = 0; i < 5; i++) noise(t + 0.08 + Math.random() * 0.3, 0.001, 0.04, 0.2, "bandpass", 900 + Math.random() * 800, 1.2); },
+    trollSwipe(t) { noise(t, 0.01, 0.12, 0.35, "bandpass", vary(900), 1.2, 400); tone("sine", vary(130), 55, t + 0.05, 0.003, 0.18, 0.6); },
+    groan(t) {            // an ogre's long, deep, offended groan
+      const o = tone("sawtooth", vary(70), 38, t, 0.08, 1.3, 0.38, ["lowpass", 450, 3]); vibrato(o, t, 1.4, 6, 4);
+      tone("sawtooth", vary(52), 30, t + 0.3, 0.05, 1.0, 0.22, ["lowpass", 350, 2]);
+    },
+    gurgle(t) { const o = tone("sawtooth", vary(160), 70, t, 0.02, 0.7, 0.26, ["bandpass", 700, 4]); vibrato(o, t, 0.8, 24, 30); noise(t + 0.1, 0.05, 0.4, 0.2, "lowpass", 600); },
+    phase(t) { tone("sine", vary(1600), 600, t, 0.005, 0.25, 0.08); tone("sine", vary(2400), 900, t, 0.005, 0.2, 0.05); },
+    wail(t) {            // a spirit's sigh as it fades
+      const o = tone("sine", vary(620), 300, t, 0.1, 1.0, 0.16); vibrato(o, t, 1.1, 6, 18); tone("sine", vary(930), 450, t + 0.05, 0.1, 0.9, 0.07);
+    },
+    hum(t) { const o = tone("triangle", vary(220), 180, t, 0.03, 0.35, 0.12, ["lowpass", 900, 1]); vibrato(o, t, 0.4, 9, 6); },
     zap(t) {
       tone("sawtooth", vary(1100), 180, t, 0.002, 0.14, 0.16, ["bandpass", 1800, 2]); tone("square", vary(90), 60, t, 0.002, 0.12, 0.07);
       noise(t, 0.001, 0.08, 0.22, "highpass", 3000);
@@ -940,7 +1220,7 @@ const SFX = (() => {
     wardHit(t) { tone("sine", 90, 50, t, 0.003, 0.22, 0.4); noise(t, 0.002, 0.15, 0.3, "lowpass", 400); },
     // summoning: a little rising chime, pitched and coloured per summon
     summon(t, kind) {
-      const base = { wisp: 880, skeleton_warrior: 440, skeleton_archer: 523, golem: 220 }[kind] || 440;
+      const base = { wisp: 880, skeleton_warrior: 440, skeleton_archer: 523, golem: 220, spirit: 660 }[kind] || 440;
       [1, 1.25, 1.5, 2].forEach((m, i) => tone("sine", base * m, null, t + i * 0.05, 0.005, 0.35, 0.1));
       noise(t, 0.02, 0.3, 0.07, "highpass", 6000);
       if (kind === "skeleton_warrior" || kind === "skeleton_archer") for (let i = 0; i < 4; i++) tone("triangle", vary(1200, 0.2), null, t + 0.08 + i * 0.04, 0.001, 0.03, 0.08);
@@ -1004,8 +1284,8 @@ const SFX = (() => {
       }
     }
   };
-  const ATTACK = { kobold: "slap", wisp: "zap", skeleton_archer: "bow", orc: "orcPunch", golem: "slam", golemPunch: "golemPunch" };
-  const DEATH = { wisp: "choir", skeleton_warrior: "bones", skeleton_archer: "bones", golem: "krak", kobold: "squeak", bog_goblin: "screech", orc: "grunt" };
+  const ATTACK = { kobold: "slap", wisp: "zap", skeleton_archer: "bow", orc: "orcPunch", golem: "slam", golemPunch: "golemPunch", ogre: "ogrePunch", ogreSlam: "ogreSlam", troll: "trollSwipe", spirit: "hum" };
+  const DEATH = { wisp: "choir", skeleton_warrior: "bones", skeleton_archer: "bones", golem: "krak", kobold: "squeak", bog_goblin: "screech", orc: "grunt", ogre: "groan", troll: "gurgle", spirit: "wail" };
   function play(name, arg) {
     if (!on || !ac) return;
     let r = name, gap = 0.05;
@@ -1040,7 +1320,50 @@ function wardDistFn(structs) {
     : (x, y) => R - 1 - y;
 }
 
+// the Gauntlet and the Raid: walls on three sides, the great gate at the top, four side gates and a 3 x 3 ward at the bottom
+const SIDE_GATES = [[0, 2], [C - 1, 2], [0, 7], [C - 1, 7]];
+function footOkIn(g, cx, cy, under) {
+  for (let y = cy - 1; y <= cy + 1; y++) for (let x = cx - 1; x <= cx + 1; x++) {
+    if (!inGrid(x, y)) return false;
+    let t = g[y][x]; if (t === "structure" && under) t = under[y * C + x];
+    if ((DATA.terrain[t].blocks || []).includes("ground") || t === "gateopen") return false;
+  }
+  return true;
+}
+// breadth-first over the ward's middle tile: the 3 x 3 ward has to fit at every step
+function footPath(g, from, goal, under) {
+  const key = (x, y) => y * C + x, came = new Map([[key(from.x, from.y), -1]]), q = [from];
+  while (q.length) {
+    const c = q.shift();
+    if (goal(c.x, c.y)) { const path = []; let k = key(c.x, c.y); while (k !== key(from.x, from.y)) { path.unshift({ x: k % C, y: Math.floor(k / C) }); k = came.get(k); } return path; }
+    for (const [dx, dy] of DIRS4) { const nx = c.x + dx, ny = c.y + dy; if (came.has(key(nx, ny)) || !footOkIn(g, nx, ny, under)) continue; came.set(key(nx, ny), key(c.x, c.y)); q.push({ x: nx, y: ny }); }
+  }
+  return null;
+}
+function generateArena(d) {
+  const raid = d.arena === "raid", wd = wardDistFn(d.structs);
+  for (let attempt = 0; attempt < 120; attempt++) {
+    const g = Array.from({ length: R }, () => Array(C).fill(raid ? "stonefloor" : "rock"));
+    if (!raid) for (let i = 4 + rnd(4); i > 0; i--) { let x = rnd(C), y = rnd(R); for (let k = 0; k < 6; k++) { if (inGrid(x, y)) g[y][x] = "dirt"; const [dx, dy] = DIRS4[rnd(4)]; x += dx; y += dy; } }
+    const wall = raid ? "brick" : "cavewall";
+    for (let y = 0; y < R; y++) { g[y][0] = wall; g[y][C - 1] = wall; }
+    for (let x = 0; x < C; x++) g[0][x] = wall;
+    for (let x = 3; x <= 5; x++) g[0][x] = "gate";
+    for (const [x, y] of SIDE_GATES) g[y][x] = "sidegate";
+    if (raid) for (let y = 1; y <= 6; y++) for (let x = 2; x <= 6; x++) g[y][x] = "carpet";
+    const free = (x, y) => x > 0 && x < C - 1 && y > 1 && y < 10 && !(raid && x >= 2 && x <= 6 && y <= 6) && !SIDE_GATES.some(([gx, gy]) => Math.abs(gx - x) <= 1 && Math.abs(gy - y) <= 1);
+    const scatter = (type, n) => { for (let i = 0; i < n; i++) { const x = 1 + rnd(C - 2), y = 2 + rnd(8); if (free(x, y)) g[y][x] = type; } };
+    if (raid) scatter("pillar", 2 + rnd(3)); else { scatter("boulder", 1 + rnd(3)); scatter("stalagmite", 1 + rnd(3)); }
+    const under = {};
+    for (const [x, y] of d.structs) { under[y * C + x] = g[y][x]; g[y][x] = "structure"; }
+    if (!connected(g, d, wd)) continue;
+    if (!footPath(g, { x: 4, y: 12 }, (x, y) => y === 2 && x === 4, under)) continue;      // a 3-wide way from the ward up to the great gate
+    g.under = under; return g;
+  }
+  return null;
+}
 function generateField(d) {
+  if (d.arena) { const g = generateArena(d); if (g) return g; }
   const wd = wardDistFn(d.structs);
   const safe = (x, y) => wd(x, y) <= d.summonRange;           // summoning area stays open and dry
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -1138,30 +1461,39 @@ function buildLevel(key) {
   terrain.forEach((row, y) => row.forEach((t, x) => { if (t === "swamp") swamps.push({ x, y }); }));
   const foeWard = [];
   terrain.forEach((row, y) => row.forEach((t, x) => { if (t === "foeward") foeWard.push({ x, y }); }));
-  return { key, d, terrain, structs, wardDist, swamps, foeWard: foeWard.length ? foeWard : null,
-    reach: (x, y) => terrain[y][x] !== "structure" && wardDist(x, y) <= reachAt,
-    summon: (x, y) => terrain[y][x] !== "structure" && wardDist(x, y) <= d.summonRange };
+  // in the Gauntlet and the Raid the ward can move: distances follow wherever it stands now
+  const wdist = d.arena ? (x, y) => Math.min(...structs.map(s => Math.max(Math.abs(s.x - x), Math.abs(s.y - y)))) : wardDist;
+  return { key, d, terrain, structs, wardDist: wdist, swamps, foeWard: foeWard.length ? foeWard : null, under: terrain.under || {}, arena: d.arena || null,
+    reach: (x, y) => terrain[y][x] !== "structure" && wdist(x, y) <= reachAt,
+    summon: (x, y) => terrain[y][x] !== "structure" && wdist(x, y) <= d.summonRange };
 }
 
 function startBattle(key, diff) {
   levelKey = key;
+  let faction = null;
+  if (key === "raid") { [faction, diff] = (diff || "kobold:easy").split(":"); }
   L = buildLevel(levelKey);
   const carried = 0;
   S = {
     mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(), slots: wizSlots(),
     bones: 0, carried, skulls: 0, gold: 0, loot: { stone: 0, iron: 0, wood: 0, crystal: 0 }, foeDefs: {},
-    gathered: { bones: 0, skulls: 0, gold: 0, stone: 0, iron: 0, wood: 0, crystal: 0 }, ward: DATA.wizard.ward + rlv("stones", "ward"), wardMax: DATA.wizard.ward + rlv("stones", "ward"),
+    gathered: { bones: 0, skulls: 0, gold: 0, stone: 0, iron: 0, wood: 0, crystal: 0 }, ward: wardHits(), wardMax: wardHits(),
     sp: spellsNow(), shoveLv: rlv("stones", "shove"), shoveCd: 0, mendLv: rlv("stones", "mend"), mendT: 0, shoveFx: 0,
     tutorial: META.stage === "intro", fire: {}, bolts: [], freezes: [], stones: [], grows: [], hinted: {}, cheered: true, overShown: false,
     wiz: { st: wizLook(), seq: { kind: "appear", e: 0 }, until: 0 },
     assault: L.foeWard ? DATA.assault[diff || "easy"] : null, diff: L.foeWard ? diff || "easy" : null, wardFlash: 0,
     wave: 0, nextWave: DATA.waves.firstDelay, kills: 0, time: 0,
-    slain: { kobold: 0, bog_goblin: 0, orc: 0 },
+    slain: { kobold: 0, bog_goblin: 0, orc: 0, ogre: 0, troll: 0 },
     units: [], enemies: [], shots: [], floaters: [], goblinDeaths: [], over: false,
     command: null, nemesis: null
   };
   S.defs = {}; for (const k in DATA.units) S.defs[k] = unitDef(k);
+  S.burnDur = DATA.spells.firebolt.burn + (setOn("ember", 3) ? 2 : 0); S.burnMult = setOn("ember", 5) ? 2 : 1;
+  S.dropMult = 1 + gearStat("drop") / 100; S.reassemble = []; S.summonedNow = {};
   S.waveGap = S.assault ? S.assault.gap : DATA.waves.gap;
+  if (L.arena) setupArena(diff || "easy", faction);
+  $("spell_move").hidden = !L.arena; $("killStat").hidden = !L.arena; $("waveLbl").textContent = L.arena === "gauntlet" ? "cave" : "wave";
+  $("waveStat").hidden = L.arena === "raid";
   if (S.assault) {
     // every tile of the enemy ward shares one pool of health
     S.foeWardHp = S.foeWardMax = S.assault.wardHp;
@@ -1179,12 +1511,143 @@ function startBattle(key, diff) {
   document.querySelector(".bar").style.setProperty("--n", open.length);
   select("wisp");
   for (const k of ["command", "nemesis", "firebolt", "freeze", "nurture", "guardstone"]) $("spell_" + k).querySelector("span").textContent = S.sp[k].mana + " mana";
-  for (const k of ["firebolt", "freeze", "nurture", "guardstone"]) $("spell_" + k).hidden = !META.spells[k];
+  for (const k of SPELL_ORDER) $("spell_" + k).hidden = !(knowsSpell(k) && META.loadout.includes(k));
   $("spell_shove").hidden = !S.shoveLv;
-  document.querySelector(".spells").style.setProperty("--n", 2 + (S.shoveLv ? 1 : 0) + (META.spells.firebolt ? 1 : 0) + (META.spells.freeze ? 1 : 0));
-  say(S.tutorial ? "You wake up mid-battle on a strange hillside. Tap a lit tile near the bottom to summon a wisp!" : L.d.note + " Start with a wisp.");
+  document.querySelector(".spells").style.setProperty("--n", [...document.querySelectorAll(".spells .spell")].filter(b => !b.hidden).length);
+  say(S.tutorial ? "You wake up mid-battle on a strange hillside. Tap a lit tile near the bottom to summon a wisp!" : L.arena === "raid" ? "The hall of the " + S.raid.f.name.toLowerCase() + ". Beat " + S.arenaTarget + " guards and the " + S.raid.f.boss.name + " will come for you. Move shifts the ward." : L.arena ? "The Gauntlet. " + S.arenaTarget + " enemies stand between you and the great gate. Move shifts the ward." : L.d.note + " Start with a wisp.");
   showView("battle");
   showBest();
+}
+
+// ---------- Gauntlet and Raid ----------
+function setupArena(diff, faction) {
+  S.diff = diff; S.cheered = true; S.stage = 1; S.stageRewards = { exp: 0, gold: 0 }; S.pending = []; S.wave = 1;
+  if (L.arena === "gauntlet") { S.gaunt = DATA.gauntlet[diff]; applyStage(); }
+  else {
+    const f = DATA.raid.factions[faction] || DATA.raid.factions.kobold, D = DATA.raid.diffs[diff];
+    S.raid = { key: faction, f, D }; L.carpet = f.carpet; S.strength = D.strength; S.arenaTarget = Math.max(8, Math.round(D.kills * f.share)); S.arenaKills = 0; S.waveGap = D.gap;
+  }
+  S.nextWave = 3;
+}
+function applyStage() {
+  const G = S.gaunt, P = DATA.gauntlet.perStage, n = S.stage - 1;
+  S.arenaTarget = Math.round(G.kills * Math.pow(P.kills, n)); S.arenaKills = 0;
+  S.strength = G.strength * (1 + P.strength * n); S.vw = G.vw + P.vw * n; S.waveGap = Math.max(1.6, G.gap * Math.pow(0.94, n)); S.wave = S.stage;
+}
+// a group of enemies is announced by a light over one of the side gates, then walks in
+function arenaSpawn() {
+  if (S.gateOpen) return;
+  const alive = S.enemies.filter(e => !e.boss).length + S.pending.reduce((n, p) => n + p.kinds.length, 0);
+  const left = S.arenaTarget - S.arenaKills - alive;
+  if (left <= 0) return;
+  const n = Math.min(left, 2 + rnd(2) + (L.arena === "gauntlet" ? Math.floor((S.stage - 1) / 3) : 0)), kinds = [];
+  const pool = L.arena === "raid" ? S.raid.f.kinds : waveRoster(S.vw);
+  for (let i = 0; i < n; i++) kinds.push(pool[rnd(pool.length)]);
+  S.pending.push({ gate: rnd(SIDE_GATES.length), t: 1.6, kinds });
+}
+function updateArena(dt) {
+  for (const p of S.pending) {
+    if ((p.t -= dt) > 0) continue;
+    const [gx, gy] = SIDE_GATES[p.gate], ix = gx === 0 ? 1 : C - 2;
+    p.kinds.forEach((kind, i) => {
+      const e = makeActor("foe", kind, gx === 0 ? 0.55 : C - 1.55, gy + (i % 2 ? 0.25 : -0.25)); e.d = foeDef(kind); e.hp = e.d.hp;
+      e.enter = { x: ix, y: gy }; S.enemies.push(e);
+    });
+    p.done = true; SFX.play("gong");
+  }
+  S.pending = S.pending.filter(p => !p.done);
+  if (!S.gateOpen && S.arenaKills >= S.arenaTarget) openGreatGate();
+  if (S.stageClear && (S.stageClear.t += dt) > 0) {
+    const t = S.stageClear.t;
+    if (t > 0.9 && !S.stageClear.vanish) { S.stageClear.vanish = true; S.wiz.seq = { kind: "vanish", e: 0 }; }
+    if (t > 2.6 && !S.stageClear.built) { S.stageClear.built = true; nextCave(); }
+    if (t > 3.4) S.stageClear = null;
+  }
+}
+function openGreatGate() {
+  S.gateOpen = true;
+  for (let x = 3; x <= 5; x++) L.terrain[0][x] = "gateopen";
+  for (const a of S.units.concat(S.enemies)) a.repath = 0;
+  SFX.play("fanfare"); wizDo("cheer", 1.8);
+  if (L.arena === "gauntlet") {
+    S.stageClear = { t: 0 };
+    say("The great gate grinds open! Everyone through, quickly. Cave " + S.stage + " cleared.");
+  } else {
+    const B = S.raid.f.boss, D = S.raid.D, base = DATA.enemies[B.kind];
+    const d = Object.assign({}, base, B, { hp: Math.round(B.hp * D.boss), damage: B.damage * D.boss, panicImmune: true, boss: true, aggro: 3.5,
+      drops: [{ res: "gold", chance: 1, min: 40, max: 80 }, { res: "bone", chance: 1, min: 5, max: 10 }, { res: "crystal", chance: 1, min: 2, max: 5 }], skullChance: 0.3 });
+    const e = makeActor("foe", B.kind, 4, 0.6); e.d = d; e.hp = d.hp; e.boss = true; e.enter = { x: 4, y: 2 };
+    S.enemies.push(e); S.boss = e;
+    say("The great gate opens. The " + B.name + " walks down the carpet. It looks very offended.");
+  }
+}
+// on to the next cave: summons (with the health they had), mana and loot come along; the ward gets some of its strength back
+function nextCave() {
+  const P = DATA.gauntlet.perStage, R0 = S.gaunt.reward, k = 1 + P.reward * (S.stage - 1);
+  S.stageRewards.exp += Math.round(R0.exp * k); S.stageRewards.gold += Math.round(R0.gold * k);
+  S.stage++; S.gateOpen = false; applyStage();
+  S.ward = Math.min(S.wardMax, S.ward + Math.ceil(S.wardMax * P.wardBack));
+  L = buildLevel("gauntlet");
+  S.enemies = []; S.shots = []; S.bolts = []; S.freezes = []; S.grows = []; S.fire = {}; S.pending = []; S.move = null; S.wardAnim = null;
+  S.command = null; S.nemesis = null; S.flash = null;
+  for (const g of S.stones.slice()) dropStone(g);
+  const spots = []; for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) if (L.summon(x, y)) spots.push({ x, y });
+  spots.sort(() => Math.random() - 0.5);
+  S.units.forEach((u, i) => { const p = spots.find(q => passable(q.x, q.y, u.d.move)) || spots[i % spots.length]; spots.splice(spots.indexOf(p), 1); u.x = p.x; u.y = p.y; u.path = []; u.kb = null; u.guard = null; u.burn = 0; u.chill = 0; });
+  S.wiz.seq = { kind: "appear", e: 0 }; S.wizHidden = false; S.nextWave = 3;
+  $("mapname").innerHTML = "<b>Gauntlet</b> · cave " + S.stage;
+  say("Cave " + S.stage + ". " + S.arenaTarget + " enemies this time, and they hit a little harder. The ward feels better already.");
+}
+// Move: the ward and the wizard shuffle a tile a second toward a spot; summons don't follow on their own
+function wardMid() { const xs = L.structs.map(p => p.x), ys = L.structs.map(p => p.y); return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 }; }
+function moveWardTo(fx, fy) {
+  const tx = Math.floor(fx), ty = Math.floor(fy), m = wardMid(), from = { x: m.x, y: m.y };
+  let goal = null, best = 9;
+  for (let y = 1; y < R - 1; y++) for (let x = 1; x < C - 1; x++) {
+    const d = Math.hypot(x - tx, y - ty);
+    if (d < best && d <= 2.5 && footOkIn(L.terrain, x, y, L.under)) { best = d; goal = { x, y }; }
+  }
+  if (!goal) { say("The ward can't stand there. It needs a clear 3 x 3 spot."); return; }
+  if (goal.x === from.x && goal.y === from.y) { say("The ward is already there."); setSpell(null); return; }
+  const path = footPath(L.terrain, from, (x, y) => x === goal.x && y === goal.y, L.under);
+  if (!path) { say("There's no way for the ward to get there."); return; }
+  S.move = { path, t: 0, goal }; setSpell(null);
+  wizDo("cast", 1.0, true); SFX.play("shove");
+  say("The ward shuffles off. No summoning until it stops.");
+}
+function stepWard(n) {
+  const m = wardMid(), old = new Set(L.structs.map(p => p.y * C + p.x)), cells = [];
+  for (let y = n.y - 1; y <= n.y + 1; y++) for (let x = n.x - 1; x <= n.x + 1; x++) cells.push({ x, y });
+  const now = new Set(cells.map(p => p.y * C + p.x));
+  for (const k of old) if (!now.has(k)) { L.terrain[Math.floor(k / C)][k % C] = L.under[k]; delete L.under[k]; }
+  for (const p of cells) { const k = p.y * C + p.x; if (!old.has(k)) { L.under[k] = L.terrain[p.y][p.x]; L.terrain[p.y][p.x] = "structure"; delete S.fire[k]; } }
+  L.structs.length = 0; for (const p of cells) L.structs.push(p);
+  S.wardAnim = { dx: n.x - m.x, dy: n.y - m.y, t: 0 };
+  // whoever stood there gets shoved out of the way; an enemy in the way dents the ward
+  for (const a of S.units.concat(S.enemies)) {
+    if (a.hp <= 0 || a.enter || !now.has(Math.round(a.y) * C + Math.round(a.x))) continue;
+    knock(a, n.x, n.y, 2); a.noReach = 1;
+    if (a.side === "foe") { S.ward -= 1; float(a.x, a.y, "ward -1", "#e0904a"); SFX.play("wardHit"); wizDo("flinch", 1.0); }
+  }
+  for (const a of S.units.concat(S.enemies)) a.repath = 0;
+}
+function updateMove(dt) {
+  if (S.wardAnim && (S.wardAnim.t += dt) >= 0.35) S.wardAnim = null;
+  if (!S.move) return;
+  if ((S.move.t += dt) < 1) return;
+  S.move.t = 0;
+  const n = S.move.path.shift();
+  if (!n || !footOkIn(L.terrain, n.x, n.y, L.under)) { S.move = null; say("Something's in the way. The ward stops."); return; }
+  stepWard(n);
+  if (!S.move.path.length) { S.move = null; say("The ward settles down. Summon away."); }
+}
+const wardOffset = () => S && S.wardAnim ? { x: -S.wardAnim.dx * (1 - ease01(S.wardAnim.t / 0.35)), y: -S.wardAnim.dy * (1 - ease01(S.wardAnim.t / 0.35)) } : { x: 0, y: 0 };
+const ease01 = x => x <= 0 ? 0 : x >= 1 ? 1 : (1 - Math.cos(x * Math.PI)) / 2;
+// a defeated chief always drops one piece of its hall's set, and sometimes a second
+function raidLoot() {
+  const out = [makeGear(S.raid.f.set, S.diff)];
+  if (chance(S.raid.D.second)) out.push(makeGear(S.raid.f.set, S.diff));
+  META.gear.bag.push(...out); return out;
 }
 
 // ---------- Grid helpers ----------
@@ -1237,6 +1700,11 @@ function unitDef(kind) {
     d.damage = b.damage * (1 + 0.5 * lv("well", "dmg"));
     d.hp = Math.round(b.hp * (1 + 0.1 * lv("well", "hp")));
     d.speed = b.speed * (1 + 0.05 * lv("well", "speed"));
+  } else if (kind === "spirit") {
+    const g = k => lv("spiritstones", k);
+    d.hp = Math.round(b.hp * (1 + 0.1 * g("hp"))); d.armor = 0.3 * g("armor");
+    d.speed = b.speed * (1 + 0.05 * g("speed")); d.damage = b.damage * (1 + 0.1 * g("dmg"));
+    d.phasing = 0.1 * g("phase"); if (g("regen")) d.regen = { amount: g("regen"), every: 5 };
   } else if (kind === "golem") {
     const g = k => lv("golematorium", k);
     d.hp = Math.round(b.hp * (1 + 0.15 * g("quarry"))); d.size = 1 + 0.04 * g("quarry");
@@ -1244,18 +1712,24 @@ function unitDef(kind) {
     d.damage = b.damage * (1 + 0.15 * g("slam")); d.slam = { radius: b.slam.radius, knock: b.slam.knock + 0.08 * g("slam"), every: b.slam.every - g("tempo") };
     d.taunt = b.taunt + 0.3 * g("presence");
     d.speed = b.speed * (1 + 0.06 * g("pebble"));
+    if (setOn("stone", 2)) d.armor += 1;
   } else {
     d.damage = b.damage * (1 + 0.1 * lv("lab", "dmg"));
     d.attackEvery = b.attackEvery * Math.pow(0.95, lv("lab", "rate"));
     d.speed = b.speed * (1 + 0.05 * lv("lab", "speed"));
     d.armor = 0.3 * lv("lab", "armor");
     d.hp = Math.round(b.hp * (1 + 0.1 * lv("lab", "hp")));
+    if (setOn("necro", 2)) { d.hp = Math.round(d.hp * 1.15); d.damage *= 1.15; }          // Definitely Not a Necromancer's Outfit
+    if (setOn("necro", 3)) d.attackEvery /= 1.15;
     if (kind === "skeleton_archer") {
-      d.range = b.range * (1 + 0.1 * lv("lab", "range"));    // Keen Sockets: twice the reach at level 10
+      d.range = b.range * (1 + 0.1 * lv("lab", "range")) + (setOn("necro", 3) ? 1 : 0);    // Keen Sockets: twice the reach at level 10
       d.pierce = 0.1 * lv("lab", "pierce");                  // Piercing Arrows
       d.flame = lv("lab", "flame") ? 0.2 + 0.2 * lv("lab", "flame") : 0;   // Flaming Arrows: every 5th arrow
     }
   }
+  // equipment: summon health and damage
+  d.hp = Math.round(d.hp * (1 + gearStat("shp") / 100));
+  d.damage = d.damage * (1 + gearStat("sdmg") / 100 + (setOn("warlord", 3) ? 0.1 : 0));
   return d;
 }
 function makeActor(side, kind, x, y) {
@@ -1267,6 +1741,8 @@ function makeActor(side, kind, x, y) {
 function summonAt(cx, cy) {
   const d = DATA.units[selected];
   if (!META.unlocked[selected]) return say("That summon hasn't been bound at the Septagram yet.");
+  if (S.move) return say("Not while the ward is moving. Summoning needs a steady floor.");
+  if (S.stageClear) return say("Everyone's heading for the gate. No time for new friends.");
   if (!L.summon(cx, cy)) return say("You can only summon on the lit tiles near your ward.");
   if (!passable(cx, cy, d.move)) return say("Something's in the way there. Skeletons respect obstacles. Wisps don't.");
   const need = d.slots || 1;
@@ -1277,6 +1753,7 @@ function summonAt(cx, cy) {
   const fromField = Math.min(S.bones, d.cost.bone);           // found bones first, bought bones after
   S.bones -= fromField; S.carried -= d.cost.bone - fromField;
   S.units.push(makeActor("ally", selected, cx, cy));
+  S.summonedNow[selected] = (S.summonedNow[selected] || 0) + 1;
   META.summoned[selected] = (META.summoned[selected] || 0) + 1;
   if (d.cost.bone) float(cx, cy, "-" + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : ""), "#ece3cf");
   SFX.play("summon", selected); wizDo("cast", 1.0, true);
@@ -1284,9 +1761,10 @@ function summonAt(cx, cy) {
   const q = QUIPS[selected]; say(q[rnd(q.length)]);
 }
 
-const slotsUsed = () => S.units.reduce((n, u) => n + (u.d.slots || 1), 0);   // a golem takes two slots
+const slotsUsed = () => S.units.reduce((n, u) => n + (u.free ? 0 : u.d.slots || 1), 0);   // a golem takes two slots
 // ---------- Spells ----------
 function castAt(fx, fy) {
+  if (spellMode === "move") { moveWardTo(fx, fy); return; }
   const sp = S.sp[spellMode];
   if (S.mana < sp.mana) { say("Not enough mana for " + sp.name + "."); return; }
   if (spellMode === "nurture") {
@@ -1350,7 +1828,7 @@ function castAt(fx, fy) {
   setSpell(null);
 }
 function setSpell(k) {
-  spellMode = k;
+  spellMode = k; $("spell_move").setAttribute("aria-pressed", k === "move" ? "true" : "false");
   for (const s in DATA.spells) $("spell_" + s).setAttribute("aria-pressed", s === k ? "true" : "false");
 }
 // Shove (Stone Circle): push every enemy near the ward back a couple of tiles
@@ -1369,11 +1847,17 @@ function shove() {
   say(n ? "Shove! The stones push back." : "Shove! Nobody was close enough to notice.");
 }
 $("spell_shove").addEventListener("click", shove);
+$("spell_move").addEventListener("click", () => {
+  if (!S || S.over || paused || !L.arena) return;
+  if (spellMode === "move") { setSpell(null); say("Move cancelled."); return; }
+  setSpell("move"); say(S.move ? "Move: tap a new spot for the ward." : "Move: tap where the ward should go. It shuffles a tile a second and can't stop on rocks.");
+});
 function knock(e, fromX, fromY, d) {
   const dx = e.x - fromX, dy = e.y - fromY, l = Math.hypot(dx, dy) || 1;
   e.kb = { vx: dx / l * d / 0.3, vy: dy / l * d / 0.3, t: 0.3 }; e.path = []; e.fleeTo = null;
 }
 for (const s in DATA.spells) $("spell_" + s).addEventListener("click", () => {
+  if ($("spell_" + s).hidden) return;                 // not taken along this time
   if (spellMode === s) { setSpell(null); say("Spell cancelled."); return; }
   setSpell(s);
   say(s === "command" ? "Command: tap any tile to call your summons there." : s === "nurture" ? "Nurture: tap bare earth, grass or a bush to grow it a step. Tap the button again to stop." : s === "guardstone" ? "Guardstone: tap a tile for the crystal. Summons that step into its circle stay and guard it." : s === "freeze" ? "Freeze: tap the middle of the area to chill." : s === "firebolt" ? "Firebolt: tap a tile. Grass, bushes and trees catch fire. Tap the button again to stop." : "Nemesis: tap the enemy you want hunted down.");
@@ -1398,8 +1882,12 @@ function waveRoster(w) {
   const total = w <= W.sizes.length ? W.sizes[w - 1] : W.sizes[W.sizes.length - 1] + (w - W.sizes.length) * W.growthAfter;
   const orcs = w >= W.orcsFrom ? 1 + Math.floor((w - W.orcsFrom) / W.orcEvery) : 0;
   const goblins = w >= W.goblinsFrom ? Math.max(1, Math.floor(total * W.goblinShare)) : 0;
-  const kobolds = Math.max(0, total - orcs - goblins);
+  const ogres = w >= W.ogresFrom ? 1 + Math.floor((w - W.ogresFrom) / W.ogreEvery) : 0;
+  const trolls = w >= W.trollsFrom ? 1 + Math.floor((w - W.trollsFrom) / W.trollEvery) : 0;
+  const kobolds = Math.max(0, total - orcs - goblins - ogres - trolls);
   const list = [];
+  for (let i = 0; i < ogres; i++) list.push("ogre");
+  for (let i = 0; i < trolls; i++) list.push("troll");
   for (let i = 0; i < kobolds; i++) list.push("kobold");
   for (let i = 0; i < goblins; i++) list.push("bog_goblin");
   for (let i = 0; i < orcs; i++) list.push("orc");
@@ -1408,7 +1896,7 @@ function waveRoster(w) {
 
 // enemies grow tougher and hit harder from wave 40 on
 function foeDef(kind) {
-  const W = DATA.waves, m = (1 + Math.max(0, S.wave - W.toughFrom + 1) * W.toughPerWave) * (S.assault ? S.assault.strength : 1);
+  const W = DATA.waves, m = (1 + Math.max(0, S.wave - W.toughFrom + 1) * W.toughPerWave) * (S.assault ? S.assault.strength : S.strength || 1);
   if (m === 1) return DATA.enemies[kind];
   const key = kind + "@" + S.wave;
   if (!S.foeDefs[key]) { const d = Object.assign({}, DATA.enemies[kind]); d.hp = Math.round(d.hp * m); d.damage = d.damage * m; S.foeDefs[key] = d; }
@@ -1444,10 +1932,10 @@ function spawnWave() {
     e.enter = spot;
     S.enemies.push(e);
   });
-  const orcs = roster.filter(k => k === "orc").length;
+  const big = ["orc", "ogre", "troll"].map(k => [k, roster.filter(x => x === k).length]).filter(x => x[1]).map(([k, n]) => n > 1 ? n + " " + k + "s" : (k === "orc" || k === "ogre" ? "an " : "a ") + k);
   say(S.wave === 1 ? "Kobolds! Small, loud and full of bones." :
-      (S.wave === DATA.waves.packsFrom ? "They're coming in packs now. " : "") +
-      "Wave " + S.wave + ": " + roster.length + " enemies" + (orcs ? ", including " + (orcs > 1 ? orcs + " orcs" : "an orc") : "") + ".");
+      (S.wave === DATA.waves.ogresFrom ? "Something big is coming. Something with a belly. " : S.wave === DATA.waves.trollsFrom ? "Trolls! Keep the firebolts handy. " : S.wave === DATA.waves.packsFrom ? "They're coming in packs now. " : "") +
+      "Wave " + S.wave + ": " + roster.length + " enemies" + (big.length ? ", including " + big.join(" and ") : "") + ".");
 }
 
 // ---------- Movement ----------
@@ -1461,7 +1949,7 @@ function nearest(from, list, maxD, filter) {
 }
 
 function speedAt(a) {
-  const c = cellOf(a), chill = a.chill > 0 ? 1 - a.chillSlow : 1;       // Freeze slows, it doesn't stop
+  const c = cellOf(a), chill = (a.chill > 0 ? 1 - a.chillSlow : 1) * (a.guard && a.side === "ally" && setOn("stone", 3) ? 1.2 : 1);       // Freeze slows, it doesn't stop
   if (a.d.ignoresTerrain || !inGrid(c.x, c.y)) return a.d.speed * chill;
   const t = terr(c.x, c.y);
   if (t.slowsOnly && t.slowsOnly !== a.side) return a.d.speed * chill;
@@ -1534,7 +2022,21 @@ function strike(a, target) {
     SFX.play("attack", a.lastMove === "slam" ? "golem" : "golemPunch");
     if (a.lastMove === "punch" || target.isWard) { hurt(target, a.d.damage, "#ece3cf"); if (target.isWard) return; }
     if (a.lastMove === "punch") return;
+  } else if (a.d.ogreSlam) {    // ogres: plain blows, and every 6th or 7th a ground slam that hits every summon around
+    const O = a.d.ogreSlam;
+    a.atkN = (a.atkN || 0) + 1; if (!a.slamAt) a.slamAt = O.every[rnd(O.every.length)];
+    if (a.atkN >= a.slamAt && !target.isWard) {
+      a.atkN = 0; a.slamAt = O.every[rnd(O.every.length)]; a.lastMove = "slam"; SFX.play("attack", "ogreSlam");
+      const fx = (a.x + target.x) / 2, fy = (a.y + target.y) / 2;
+      for (const u of S.units) { if (u.hp <= 0 || (u !== target && Math.hypot(u.x - fx, u.y - fy) > O.radius)) continue; hurt(u, a.d.damage, "#e0904a"); knock(u, a.x, a.y, O.knock); }
+      float(a.x, a.y - 0.6, "SLAM!", "#e0904a"); return;
+    }
+    a.lastMove = "punch"; SFX.play("attack", a.kind);
   } else SFX.play("attack", a.kind);
+  if (a.d.aura && !target.isWard) {          // a spirit hurts everything underneath it at once
+    for (const e of S.enemies) if (e.hp > 0 && !e.enter && (e === target || dist(a, e) <= a.d.aura)) hurt(e, a.d.damage, "#cfe0ff");
+    return;
+  }
   if (a.d.ranged) {
     a.shotN = (a.shotN || 0) + 1;
     S.shots.push({ x: a.x, y: a.y, target, dmg: a.d.damage, pierce: a.d.pierce || 0, fire: a.d.flame && a.shotN % 5 === 0 ? a.d.flame : 0 });
@@ -1558,10 +2060,12 @@ function hurt(t, dmg, color) {
     if (S.foeWardHp > 0 && Math.floor(before / step) > Math.floor(S.foeWardHp / step)) wardAlarm();
     return;
   }
+  if (t.phaseT > 0) return;                                                   // a phasing spirit: nothing to hit
   if (S.nemesis && S.nemesis.target === t && S.sp.nemesis.exposed) dmg *= 1 + S.sp.nemesis.exposed;   // Exposed
   const aura = t.guard && S.sp.guardstone.armor && Math.hypot(t.x - t.guard.x, t.y - t.guard.y) <= t.guard.r ? S.sp.guardstone.armor : 0;   // Stoneskin Aura
   if (t.d.armor || aura) dmg = Math.max(dmg * 0.25, dmg - (t.d.armor || 0) - aura);            // Calcium Plating, Granite Skin
   t.hp -= dmg; t.hit = 0.15; float(t.x, t.y, "-" + fmt(Math.round(dmg * 10) / 10), color);
+  if (t.d.phasing && t.hp > 0) { t.phaseT = t.d.phasing; SFX.play("phase"); }
 }
 
 // ---------- Behaviour ----------
@@ -1637,6 +2141,8 @@ function updateAlly(a, dt) {
       }
     }
   }
+  if (S.stageClear) { goToTile(a, 4, 0, dt); return; }
+  if (a.d.retreat && spiritRetreat(a, dt)) return;
   if (S.command) { goToTile(a, S.command.x, S.command.y, dt); return; }
   const nem = S.nemesis && S.nemesis.target.hp > 0 ? S.nemesis.target : null;
   if (nem) {
@@ -1672,6 +2178,24 @@ function updateAlly(a, dt) {
   approach(a, target, dt);
 }
 
+// a hurt spirit falls back to the nearest wisp (or the ward) and keeps hurting whatever comes underneath
+function spiritRetreat(a, dt) {
+  const T = a.d.retreat;
+  if (a.hp < a.d.hp * T.at) { if (!a.fading) float(a.x, a.y - 0.4, "fading...", "#cfe0ff"); a.fading = true; }
+  else if (a.hp >= a.d.hp * T.back) a.fading = false;
+  if (!a.fading || S.command) return false;
+  const w = nearest(a, S.units, 99, u => u.kind === "wisp");
+  if (w) { if (dist(a, w) > 0.6) moveDirect(a, w.x, w.y, dt, true, 0.5); }
+  else { const c = wardCentre(); goToTile(a, c.x, c.y, dt); }
+  if (a.cd === 0) { const under = nearest(a, S.enemies, a.d.range + 0.1); if (under) strike(a, under); }
+  return true;
+}
+// the middle of the wizard's ward (the bottom edge on the Hillside)
+function wardCentre() {
+  if (!L.structs.length) return { x: Math.floor(C / 2), y: R - 1 };
+  const xs = L.structs.map(p => p.x), ys = L.structs.map(p => p.y);
+  return { x: Math.round((Math.min(...xs) + Math.max(...xs)) / 2), y: Math.round((Math.min(...ys) + Math.max(...ys)) / 2) };
+}
 function updateFoe(e, dt) {
   if (e.panic > 0) { flee(e, dt); return; }
   const golem = nearest(e, S.units, 99, u => u.d.taunt && dist(u, e) <= u.d.taunt);
@@ -1710,7 +2234,7 @@ function flee(e, dt) {
 
 function panicGoblins() {
   const P = DATA.enemies.bog_goblin.panic;
-  const orcs = S.enemies.filter(o => o.kind === P.steadiedBy && o.hp > 0);
+  const orcs = S.enemies.filter(o => P.steadiedBy.includes(o.kind) && o.hp > 0);
   let n = 0;
   for (const g of S.enemies) {
     if (g.kind !== "bog_goblin" || g.hp <= 0 || g.enter) continue;
@@ -1727,7 +2251,8 @@ function update(dt) {
   S.time += dt;
   S.mana = Math.min(S.manaMax, S.mana + S.regen * dt);
   S.nextWave -= dt;
-  if (S.nextWave <= 0) { spawnWave(); S.nextWave = S.waveGap; }
+  if (S.nextWave <= 0) { if (L.arena) arenaSpawn(); else spawnWave(); S.nextWave = S.waveGap; }
+  if (L.arena) { updateArena(dt); updateMove(dt); if (S.stageClear && S.stageClear.built) return; }
   S.wardFlash = Math.max(0, S.wardFlash - dt);
   if (S.assault) {                                 // the enemy ward pulses: summons right next to it get hurt
     S.pulseFx = Math.max(0, (S.pulseFx || 0) - dt);
@@ -1746,6 +2271,8 @@ function update(dt) {
     a.cd = Math.max(0, a.cd - dt); a.hit = Math.max(0, a.hit - dt); a.panic = Math.max(0, a.panic - dt); a.charm = Math.max(0, a.charm - dt);
     a.moved = false;
     if (a.chill > 0) a.chill = Math.max(0, a.chill - dt);
+    if (a.phaseT > 0) a.phaseT = Math.max(0, a.phaseT - dt);
+    if (a.noReach > 0) a.noReach -= dt;
     if (a.kb) {            // being shoved: slide back, stopping at anything solid
       const nx = a.x + a.kb.vx * dt, ny = a.y + a.kb.vy * dt;
       if (passable(Math.round(nx), Math.round(ny), a.d.move)) { a.x = nx; a.y = ny; }
@@ -1753,6 +2280,7 @@ function update(dt) {
     }
     else if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false, 0.2)) a.enter = null; }
     else if (a.side === "ally") updateAlly(a, dt); else updateFoe(a, dt);
+    if (a.d.regen && a.hp > 0 && a.hp < a.d.hp && !(a.burn > 0) && (a.regT = (a.regT || 0) + dt) >= a.d.regen.every) { a.regT = 0; a.hp = Math.min(a.d.hp, a.hp + a.d.regen.amount); float(a.x, a.y, "+" + a.d.regen.amount, "#7fd67a"); }
     if (a.d.selfHeal && a.hp < a.d.hp && (a.selfT = (a.selfT || 0) + dt) >= a.d.selfHeal) { a.selfT = 0; a.hp = Math.min(a.d.hp, a.hp + 1); float(a.x, a.y, "+1", "#7fd67a"); }
     if (!a.moved) a.spd = Math.max(0, a.spd - speedAt(a) / DATA.movement.brakeTime * dt);   // holding still: brake, keep heading
   }
@@ -1789,7 +2317,7 @@ function update(dt) {
   for (const e of S.enemies) {
     if (e.hp <= 0 || e.enter) continue;
     const c = cellOf(e);
-    if (inGrid(c.x, c.y) && L.reach(c.x, c.y)) {
+    if (inGrid(c.x, c.y) && L.reach(c.x, c.y) && !(e.noReach > 0)) {
       e.hp = 0; e.reached = true; S.ward -= 1;
       float(e.x, e.y, "ward -1", "#e0904a");
       say("Something reached the ward!");
@@ -1803,13 +2331,14 @@ function update(dt) {
     e.dead = true;
     if (e.reached) continue;
     SFX.play("death", e.kind);
-    S.kills++; S.slain[e.kind] = (S.slain[e.kind] || 0) + 1;
+    if (e.boss) S.bossDown = true;
+    else { S.kills++; S.slain[e.kind] = (S.slain[e.kind] || 0) + 1; if (L.arena) S.arenaKills++; }
     let lift = 0.3;
     for (const dr of e.d.drops) {
-      if (!chance(dr.chance)) continue;
+      if (!chance(dr.res === "crystal" ? dr.chance * S.dropMult : dr.chance)) continue;
       const n = dr.min + rnd(dr.max - dr.min + 1);
       S.gathered[dr.res === "bone" ? "bones" : dr.res] += n;
-      if (dr.res === "bone" && chance(e.d.skullChance || 0)) { S.gathered.bones -= n; S.gathered.skulls++; S.skulls++; float(e.x, e.y - lift, "+1 skull", "#d9c6ff"); }   // rarely a whole skull instead
+      if (dr.res === "bone" && chance((e.d.skullChance || 0) * S.dropMult)) { S.gathered.bones -= n; S.gathered.skulls++; S.skulls++; float(e.x, e.y - lift, "+1 skull", "#d9c6ff"); }   // rarely a whole skull instead
       else if (dr.res === "bone") {
         S.bones += n; float(e.x, e.y - lift, "+" + n + " bone" + (n > 1 ? "s" : ""), "#ece3cf");
         if (S.tutorial && !S.hinted.bones) { S.hinted.bones = true; say("Bones! Wisps can't use them, but hold on to them. They go to the warehouse in town."); }
@@ -1827,15 +2356,25 @@ function update(dt) {
   if (S.goblinDeaths.length >= GP.deaths) { S.goblinDeaths = []; panicGoblins(); }
 
   S.enemies = S.enemies.filter(e => !e.dead);
-  for (const u of S.units) if (u.hp <= 0) SFX.play("death", u.kind);
+  for (const u of S.units) if (u.hp <= 0) {
+    SFX.play("death", u.kind);
+    if ((u.kind === "skeleton_warrior" || u.kind === "skeleton_archer") && !u.reassembled && setOn("necro", 5) && chance(0.25)) S.reassemble.push({ kind: u.kind, x: u.x, y: u.y, t: 2 });
+  }
+  for (const r of S.reassemble) if ((r.t -= dt) <= 0) {
+    const u = makeActor("ally", r.kind, r.x, r.y); u.hp = u.d.hp * 0.5; u.reassembled = true; u.free = true; r.done = true;
+    S.units.push(u); float(r.x, r.y - 0.4, "reassembled!", "#b8f07a"); SFX.play("summon", r.kind);
+    if (!S.saidNecro) { S.saidNecro = true; say("That's NOT necromancy. They just... pull themselves together."); }
+  }
+  S.reassemble = S.reassemble.filter(r => !r.done);
   S.units = S.units.filter(u => u.hp > 0);
   // a wave cleared: the wizard cheers
-  if (!S.cheered && S.wave > 0 && !S.enemies.length) { S.cheered = true; wizDo("cheer", 1.8); }
+  if (!S.cheered && S.wave > 0 && !S.enemies.length && !L.arena) { S.cheered = true; wizDo("cheer", 1.8); }
   for (const f of S.floaters) f.t += dt;
   S.floaters = S.floaters.filter(f => f.t < 1);
 
   if (S.ward <= 0) endBattle();
   else if (S.assault && S.foeWardHp <= 0) endBattle("won");
+  else if (S.bossDown) endBattle("won");
 }
 
 // ---------- Fire: firebolts in flight, burning ground and burning creatures ----------
@@ -1846,7 +2385,7 @@ function updateFire(dt) {
     if (d > step) { b.x += dx / d * step; b.y += dy / d * step; continue; }
     b.done = true; SFX.play("fire");
     const hit = nearest({ x: b.tx, y: b.ty }, S.enemies, 0.75);
-    if (hit) hurt(hit, F.damage, "#ff9a3c");
+    if (hit) hurt(hit, F.damage * (hit.d.fireWeak || 1), "#ff9a3c");
     if (terr(b.tx, b.ty).flammable) S.fire[b.ty * C + b.tx] = terr(b.tx, b.ty).burnTime || F.tileBurn;
     S.flash = { x: b.tx, y: b.ty, t: 0.3 };
   }
@@ -1888,12 +2427,12 @@ function updateFire(dt) {
     if (!a.d.ignoresTerrain && !a.d.fireImmune && !a.enter && inGrid(c.x, c.y) && S.fire[c.y * C + c.x] > 0) {
       const fresh = !(a.burn > 0);
       if (fresh) float(a.x, a.y - 0.3, "on fire!", "#ff9a3c");
-      a.burn = F.burn;
-      if (a.side === "foe") { a.panic = Math.max(a.panic, F.burn); if (fresh) { a.path = []; a.fleeTo = null; } }   // summons don't panic
+      a.burn = S.burnDur;
+      if (a.side === "foe" && !a.d.panicImmune) { a.panic = Math.max(a.panic, a.burn); if (fresh) { a.path = []; a.fleeTo = null; } }   // summons and ogres don't panic
     }
     if (a.burn > 0) {
       a.burn -= dt; a.burnT = (a.burnT || 0) + dt;
-      if (a.burnT >= 1) { a.burnT -= 1; hurt(a, F.burnDps, "#ff9a3c"); }
+      if (a.burnT >= 1) { a.burnT -= 1; hurt(a, F.burnDps * S.burnMult * (a.d.fireWeak || 1), "#ff9a3c"); }
       if (a.burn <= 0) { a.burn = 0; a.burnT = 0; }
     }
   }
@@ -1903,8 +2442,8 @@ function ignite(a) {
   const F = DATA.spells.firebolt;
   if (a.d.fireImmune || a.d.ignoresTerrain) return;
   if (!(a.burn > 0)) float(a.x, a.y - 0.3, "on fire!", "#ff9a3c");
-  a.burn = F.burn;
-  if (a.side === "foe") { a.panic = Math.max(a.panic, F.burn); a.path = []; a.fleeTo = null; }
+  a.burn = S.burnDur;
+  if (a.side === "foe" && !a.d.panicImmune) { a.panic = Math.max(a.panic, a.burn); a.path = []; a.fleeTo = null; }
 }
 function drawFlame(px, py, r, t) {
   for (let i = 0; i < 3; i++) {
@@ -1930,36 +2469,52 @@ function endBattle(how) {
   S.wiz.seq = { kind: won ? "victory" : "defeat", e: 0 }; S.wiz.until = 0;
   const E = DATA.exp, rows = [];
   let killExp = 0;
-  for (const k of ["kobold", "bog_goblin", "orc"]) {
+  for (const k of DATA.grimoire.order) {
     const n = S.slain[k] || 0, x = n * E.perKill[k];
+    if (!n && !["kobold", "bog_goblin", "orc"].includes(k)) continue;
     killExp += x;
     rows.push("<tr><td>" + DATA.enemies[k].name + (n === 1 ? "" : "s") + "</td><td>" + n + " × " + fmt(E.perKill[k]) + "</td><td>" + fmt(x) + " exp</td></tr>");
   }
-  const wm = waveMultiplier(S.wave), subtotal = killExp, bonus = won ? S.assault.reward : null;
-  const total = Math.ceil(subtotal * wm - 1e-9) + (bonus ? bonus.exp : 0);
+  const wm = L.arena ? 1 : waveMultiplier(S.wave), subtotal = killExp;
+  const bonus = L.arena === "gauntlet" ? (S.stageRewards.exp ? S.stageRewards : null) : won ? (S.assault ? S.assault.reward : S.raid.D.reward) : null;
+  let total = Math.ceil(subtotal * wm - 1e-9) + (bonus ? bonus.exp : 0);
   rows.push("<tr class='sum'><td>Battle total</td><td></td><td>" + fmt(subtotal) + " exp</td></tr>");
-  rows.push("<tr><td>Reached wave " + S.wave + "</td><td></td><td>× " + fmt(wm) + "</td></tr>");
-  if (bonus) { rows.push("<tr><td>Enemy ward destroyed (" + S.assault.name + ")</td><td></td><td>+" + bonus.exp + " exp</td></tr>"); S.gold += bonus.gold; }
+  if (!L.arena) rows.push("<tr><td>Reached wave " + S.wave + "</td><td></td><td>× " + fmt(wm) + "</td></tr>");
+  if (bonus) {
+    const what = L.arena === "gauntlet" ? (S.stage - 1) + " cave" + (S.stage > 2 ? "s" : "") + " cleared (" + S.gaunt.name + ")" : S.raid ? S.raid.f.boss.name + " defeated (" + S.raid.D.name + ")" : "Enemy ward destroyed (" + S.assault.name + ")";
+    rows.push("<tr><td>" + what + "</td><td>+" + ri("gold", bonus.gold) + "</td><td>+" + bonus.exp + " exp</td></tr>"); S.gold += bonus.gold;
+  }
+  S.loot.gear = won && S.raid ? raidLoot() : [];
+  const gx = gearStat("bexp"), gg = gearStat("bgold"), xExp = Math.round((total) * gx / 100), xGold = Math.round(S.gold * gg / 100);
+  if (xExp || xGold) { rows.push("<tr><td>Equipment bonus</td><td>" + (xGold ? "+" + ri("gold", xGold) : "") + "</td><td>" + (xExp ? "+" + xExp + " exp" : "") + "</td></tr>"); S.gold += xGold; }
+  total += xExp;
   rows.push("<tr class='total'><td>Experience</td><td></td><td>+" + total + "</td></tr>");
-  rows.push("<tr><td>Gold</td><td></td><td class='g'>+" + S.gold + "</td></tr>");
-  rows.push("<tr><td>Bones</td><td></td><td>+" + S.bones + "</td></tr>");
-  if (S.skulls) rows.push("<tr><td>Skulls</td><td></td><td>+" + S.skulls + "</td></tr>");
-  for (const k in DATA.materials) if (S.loot[k]) rows.push("<tr><td>" + DATA.materials[k].name + "</td><td></td><td>+" + S.loot[k] + "</td></tr>");
+  const tl = (k, n) => "<tr><td>" + ri(k) + " " + RES_LABEL[k] + "</td><td></td><td" + (k === "gold" ? " class='g'" : "") + ">+" + n + "</td></tr>";
+  rows.push(tl("gold", S.gold)); rows.push(tl("bones", S.bones));
+  if (S.skulls) rows.push(tl("skulls", S.skulls));
+  for (const k in DATA.materials) if (S.loot[k]) rows.push(tl(k, S.loot[k]));
+  for (const it of S.loot.gear || []) rows.push("<tr><td colspan='2' style='color:" + DATA.gear.rarity[it.rar].color + "'>" + it.name + "</td><td>new gear</td></tr>");
   $("tally").innerHTML = rows.join("");
 
   META.exp += total; META.gold += S.gold;
+  META.battles++; META.ledger.gold += S.gold; META.ledger.exp += total;
+  for (const k in S.gathered) if (k !== "gold") META.ledger.res[k] = (META.ledger.res[k] || 0) + S.gathered[k];
   META.warehouse.bones += S.bones; META.warehouse.skulls += S.skulls;
   for (const k in DATA.materials) META.warehouse[k] = (META.warehouse[k] || 0) + S.loot[k];
   META.kills = META.kills || {};
   for (const k in S.slain) META.kills[k] = (META.kills[k] || 0) + S.slain[k];
   questsAfterBattle();
   S.tallied = true;
-  META.best[levelKey] = Math.max(META.best[levelKey] || 0, S.wave);
-  if (won) { META.wins = META.wins || {}; META.wins[S.diff] = (META.wins[S.diff] || 0) + 1; }
+  if (!L.arena) META.best[levelKey] = Math.max(META.best[levelKey] || 0, S.wave);
+  if (won && S.assault) { META.wins = META.wins || {}; META.wins[S.diff] = (META.wins[S.diff] || 0) + 1; }
+  if (L.arena === "gauntlet") { META.gauntletBest = META.gauntletBest || {}; META.gauntletBest[S.diff] = Math.max(META.gauntletBest[S.diff] || 0, S.stage - 1); }
+  if (won && S.raid) { META.raidWins = (META.raidWins || 0) + 1; META.raidBeat = META.raidBeat || {}; META.raidBeat[S.raid.key + ":" + S.diff] = (META.raidBeat[S.raid.key + ":" + S.diff] || 0) + 1; }
   const first = META.stage === "intro";
   if (first) META.stage = "monologue";
   saveMeta();
   $("overText").textContent = first ? "Wherever this is, you're going to need more than wisps. The wizard blinked back to the nearest town."
+    : won && S.raid ? "The " + S.raid.f.boss.name + " is down. The hall falls silent, apart from the wizard rummaging through the chief's things." + (S.loot.gear.length ? " Found: " + S.loot.gear.map(g => g.name).join(", ") + "." : "")
+    : L.arena === "gauntlet" ? (S.stage > 1 ? "You fought through " + (S.stage - 1) + " cave" + (S.stage > 2 ? "s" : "") + " of the Gauntlet. The rewards for every cave cleared are yours." : "The first cave of the Gauntlet held. Next time, perhaps.")
     : won ? "The enemy ward crumbles into a pile of very red rubble. The villagers will hear about this, and somehow decide it was necromancy."
     : retreated ? "You left " + L.d.name + " at wave " + S.wave + ", with everything you'd gathered. The enemies are calling it a victory. They would."
     : "You held " + L.d.name + " until wave " + S.wave + ". The survivors are telling everyone you're a necromancer.";
@@ -2034,6 +2589,37 @@ function drawTile(x, y, t) {
   } else if (t === "boulder") {
     ctx.fillStyle = "#6c6676"; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T * .58, T * .42, T * .34, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#8a8495"; ctx.beginPath(); ctx.ellipse(X + T * .42, Y + T * .48, T * .2, T * .13, -.4, 0, Math.PI * 2); ctx.fill();
+  } else if (t === "stalagmite") {
+    ctx.fillStyle = "#3b3a42"; ctx.fillRect(X, Y, T, T);
+    ctx.fillStyle = "#6c6676"; ctx.beginPath(); ctx.moveTo(X + T * .28, Y + T * .88); ctx.lineTo(X + T * .46, Y + T * .1); ctx.lineTo(X + T * .58, Y + T * .55); ctx.lineTo(X + T * .72, Y + T * .88); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#8a8495"; ctx.beginPath(); ctx.moveTo(X + T * .4, Y + T * .8); ctx.lineTo(X + T * .46, Y + T * .18); ctx.lineTo(X + T * .5, Y + T * .8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(X + T * .5, Y + T * .9, T * .26, T * .06, 0, 0, Math.PI * 2); ctx.fill();
+  } else if (t === "cavewall" || t === "brick") {
+    ctx.fillStyle = t === "brick" ? "#3e2f30" : "#201d27"; ctx.fillRect(X, Y, T, T);
+    if (t === "brick") { ctx.strokeStyle = "#2a1f22"; ctx.lineWidth = 1; for (let r = 0; r < 3; r++) { ctx.strokeRect(X + (r % 2 ? -T / 4 : 0) + .5, Y + r * T / 3 + .5, T / 2, T / 3); ctx.strokeRect(X + (r % 2 ? T / 4 : T / 2) + .5, Y + r * T / 3 + .5, T / 2, T / 3); } }
+    else { ctx.fillStyle = "#2c2834"; ctx.beginPath(); ctx.moveTo(X + T * .1, Y + T * .8); ctx.lineTo(X + T * .3, Y + T * .35 + h * 2); ctx.lineTo(X + T * .62, Y + T * .5); ctx.lineTo(X + T * .85, Y + T * .2); ctx.lineTo(X + T * .9, Y + T * .85); ctx.closePath(); ctx.fill(); }
+  } else if (t === "gate") {
+    ctx.fillStyle = "#5a3f28"; ctx.fillRect(X, Y, T, T); ctx.strokeStyle = "#3a2818"; ctx.lineWidth = 1;
+    for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(X + T * i / 4, Y); ctx.lineTo(X + T * i / 4, Y + T); ctx.stroke(); }
+    ctx.fillStyle = "#4a4553"; ctx.fillRect(X, Y + T * .22, T, T * .1); ctx.fillRect(X, Y + T * .68, T, T * .1);
+  } else if (t === "gateopen") {
+    ctx.fillStyle = "#0d0b10"; ctx.fillRect(X, Y, T, T); ctx.fillStyle = "rgba(255,215,140," + (0.12 + 0.06 * Math.sin((S ? S.time : 0) * 3)) + ")"; ctx.fillRect(X, Y + T * .5, T, T * .5);
+  } else if (t === "sidegate") {
+    ctx.fillStyle = "#201d27"; ctx.fillRect(X, Y, T, T);
+    ctx.fillStyle = "#0d0b10"; ctx.beginPath(); ctx.moveTo(X + T * .15, Y + T); ctx.lineTo(X + T * .15, Y + T * .4); ctx.quadraticCurveTo(X + T * .5, Y, X + T * .85, Y + T * .4); ctx.lineTo(X + T * .85, Y + T); ctx.fill();
+    ctx.strokeStyle = "#6c6676"; ctx.lineWidth = Math.max(1, T * .05); for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(X + T * (.15 + .175 * i), Y + T * .25); ctx.lineTo(X + T * (.15 + .175 * i), Y + T); ctx.stroke(); }
+  } else if (t === "stonefloor" || t === "carpet") {
+    ctx.fillStyle = alt ? "#3a3844" : "#36343f"; ctx.fillRect(X, Y, T, T); ctx.strokeStyle = "#2a2833"; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, T - 1, T - 1);
+    if (t === "carpet" && L && L.carpet) {
+      const c = L.carpet; ctx.fillStyle = c[0]; ctx.fillRect(X, Y, T, T);
+      ctx.fillStyle = c[1]; if (x === 2) ctx.fillRect(X + T * .08, Y, T * .1, T); if (x === 6) ctx.fillRect(X + T * .82, Y, T * .1, T);
+      if (y === 6) ctx.fillRect(X, Y + T * .82, T, T * .1);
+    }
+  } else if (t === "pillar") {
+    ctx.fillStyle = alt ? "#3a3844" : "#36343f"; ctx.fillRect(X, Y, T, T);
+    ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(X + T * .55, Y + T * .88, T * .4, T * .1, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#7a7484"; ctx.fillRect(X + T * .22, Y + T * .1, T * .56, T * .8); ctx.fillStyle = "#968fa2"; ctx.fillRect(X + T * .22, Y + T * .1, T * .14, T * .8);
+    ctx.fillStyle = "#8a8495"; ctx.fillRect(X + T * .14, Y + T * .02, T * .72, T * .14); ctx.fillRect(X + T * .14, Y + T * .82, T * .72, T * .12);
   } else if (t === "foeward") {
     ctx.fillStyle = "#5a2228"; ctx.fillRect(X, Y, T, T);
     ctx.strokeStyle = "#3a1418"; ctx.lineWidth = 1;
@@ -2046,6 +2632,37 @@ function drawTile(x, y, t) {
   }
 }
 
+// the carpet's emblem, the gate warning lights, the boss's health and the moving ward
+function drawArena() {
+  const T = tile;
+  if (L.arena === "raid" && S.raid) {
+    const cx = 4.5 * T, cy = 3.6 * T, r = T * 0.9, sym = S.raid.f.symbol;
+    ctx.save(); ctx.globalAlpha = 0.55; ctx.fillStyle = S.raid.f.carpet[1]; ctx.strokeStyle = S.raid.f.carpet[1]; ctx.lineWidth = T * 0.12; ctx.lineCap = "round";
+    if (sym === "claw") for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(cx + i * r * 0.45, cy - r * 0.6); ctx.quadraticCurveTo(cx + i * r * 0.55 + r * 0.2, cy, cx + i * r * 0.3, cy + r * 0.7); ctx.stroke(); }
+    else if (sym === "coin") { ctx.beginPath(); ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2); ctx.stroke(); ctx.font = "700 " + Math.round(T * 0.8) + "px serif"; ctx.textAlign = "center"; ctx.fillText("$", cx, cy + T * 0.28); }
+    else if (sym === "fist") { ctx.beginPath(); ctx.roundRect(cx - r * 0.55, cy - r * 0.35, r * 1.1, r * 0.8, r * 0.2); ctx.fill(); ctx.fillRect(cx - r * 0.3, cy + r * 0.4, r * 0.6, r * 0.45); }
+    else if (sym === "club") { ctx.beginPath(); ctx.moveTo(cx - r * 0.5, cy + r * 0.7); ctx.lineTo(cx + r * 0.25, cy - r * 0.2); ctx.stroke(); ctx.beginPath(); ctx.ellipse(cx + r * 0.32, cy - r * 0.32, r * 0.35, r * 0.25, -0.8, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(cx, cy + r * 0.5, r * 0.75, Math.PI, 0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx - r * 0.9, cy - r * 0.25); ctx.lineTo(cx + r * 0.9, cy - r * 0.25); ctx.stroke(); }
+    ctx.restore();
+  }
+  for (const p of S.pending) {          // a light over the gate a group is about to come through
+    const [gx, gy] = SIDE_GATES[p.gate], a = 0.35 + 0.45 * Math.abs(Math.sin(S.time * 10));
+    const g = ctx.createRadialGradient(gx * T + T / 2, gy * T + T / 2, 0, gx * T + T / 2, gy * T + T / 2, T * 1.1);
+    g.addColorStop(0, "rgba(255,120,80," + a + ")"); g.addColorStop(1, "rgba(255,120,80,0)"); ctx.fillStyle = g; ctx.fillRect((gx - 1) * T, (gy - 1) * T, T * 3, T * 3);
+  }
+  // the ward: a 3 x 3 stone platform that slides when it moves
+  const m = wardMid(), o = wardOffset(), x0 = (m.x - 1.5 + o.x) * T, y0 = (m.y - 1.5 + o.y) * T;
+  ctx.fillStyle = "rgba(74,69,83,.92)"; ctx.fillRect(x0 + 2, y0 + 2, 3 * T - 4, 3 * T - 4);
+  ctx.strokeStyle = "#2c2934"; ctx.lineWidth = 1; for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(x0 + i * T, y0 + 2); ctx.lineTo(x0 + i * T, y0 + 3 * T - 2); ctx.moveTo(x0 + 2, y0 + i * T); ctx.lineTo(x0 + 3 * T - 2, y0 + i * T); ctx.stroke(); }
+  ctx.strokeStyle = "rgba(111,168,255,.35)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x0 + 1.5 * T, y0 + 1.5 * T, T * 1.1, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = "#e0904a"; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.strokeRect(x0, y0, 3 * T, 3 * T); ctx.setLineDash([]);
+  if (S.move) { const gx = S.move.goal.x * T + T / 2, gy = S.move.goal.y * T + T / 2; ctx.strokeStyle = "rgba(111,168,255,.7)"; ctx.setLineDash([3, 3]); ctx.strokeRect(gx - 1.5 * T, gy - 1.5 * T, 3 * T, 3 * T); ctx.setLineDash([]); }
+  if (S.boss && S.boss.hp > 0) {
+    ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(T * 1.2, 4, T * 6.6, 8); ctx.fillStyle = "#e2566a"; ctx.fillRect(T * 1.2, 4, T * 6.6 * Math.max(0, S.boss.hp / S.boss.d.hp), 8);
+    ctx.fillStyle = "#ece3cf"; ctx.textAlign = "center"; ctx.font = "700 " + Math.max(10, Math.round(T * .3)) + "px 'Alegreya Sans', Arial, sans-serif"; ctx.fillText(S.boss.d.name, C * T / 2, 24);
+  }
+  if (S.stageClear && S.stageClear.t > 1.8) { const k = S.stageClear.t < 2.6 ? (S.stageClear.t - 1.8) / 0.8 : Math.max(0, 1 - (S.stageClear.t - 2.6) / 0.8); ctx.fillStyle = "rgba(10,8,14," + k + ")"; ctx.fillRect(0, 0, C * T, R * T); }
+}
 // the wizard's reactions: cast, flinch and cheer play once, then he goes back to idling
 function wizDo(m, dur, noBolt) {
   if (!S || S.over) return;
@@ -2055,6 +2672,7 @@ function wizDo(m, dur, noBolt) {
 // where he stands: bottom centre on the Hillside strip, inside the ward elsewhere
 function wizSpot() {
   const T = tile;
+  if (L.arena) { const m = wardMid(), o = wardOffset(); return { x: (m.x + 0.5 + o.x) * T, gy: (m.y + 1.5 + o.y) * T - T * 0.12, s: 2.6 * T / 190 }; }
   if (!L.structs.length) return { x: C * T / 2, gy: (R + strip()) * T - T * 0.12, s: strip() * T * 0.9 / 190 };
   const xs = L.structs.map(p => p.x), ys = L.structs.map(p => p.y);
   const x0 = Math.min(...xs), x1 = Math.max(...xs) + 1, y0 = Math.min(...ys), y1 = Math.max(...ys) + 1;
@@ -2073,9 +2691,17 @@ function drawBattleWizard(dt) {
   } else if (W.until > 0) {
     W.st.oneT += dt; if ((W.until -= dt) <= 0) { W.st.wmode = "idle"; W.st.oneT = null; W.st.noBolt = false; }
   }
+  if (W.seq && W.seq.kind === "vanish" && W.seq.done) S.wizHidden = true;
+  if (S.wizHidden) return;
   ART.drawWizard(ctx, sp.x, sp.gy, sp.s, wizClock, W.st, fx, dt, dpr);
 }
 
+function drawCrown(x, y, w) {
+  ctx.save(); ctx.translate(x, y + Math.sin(S.time * 2) * 1.5);
+  ctx.beginPath(); ctx.moveTo(-w, 0); ctx.lineTo(-w, -w * 0.8); ctx.lineTo(-w * 0.5, -w * 0.35); ctx.lineTo(0, -w * 1.05); ctx.lineTo(w * 0.5, -w * 0.35); ctx.lineTo(w, -w * 0.8); ctx.lineTo(w, 0); ctx.closePath();
+  ctx.fillStyle = "#e8c45a"; ctx.fill(); ctx.strokeStyle = "#2a1f2e"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = "#e2566a"; ctx.beginPath(); ctx.arc(0, -w * 0.35, w * 0.16, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
 function drawSkull(px, py, r, hit) {
   ctx.fillStyle = hit ? "#ffffff" : "#ece3cf";
   ctx.beginPath(); ctx.arc(px, py - r * .15, r * .8, 0, Math.PI * 2); ctx.fill();
@@ -2088,12 +2714,21 @@ function drawSkull(px, py, r, hit) {
 
 function drawActor(a) {
   const T = tile, px = a.x * T + T / 2, py = a.y * T + T / 2;
-  let r = T * .32;
+  let r = T * .32 * (a.d.scale || 1);
+  if (a.boss) drawCrown(px, py - r * 1.2, T * 0.25);
   if (a.kind === "wisp") {
     const pulse = 1 + Math.sin((S.time + a.x) * 5) * .08, tint = a.charm > 0 ? "217,166,255" : "111,168,255";
     const g = ctx.createRadialGradient(px, py, 0, px, py, r * 1.4 * pulse);
     g.addColorStop(0, a.hit ? "#ffffff" : "#e8f2ff"); g.addColorStop(.35, "rgba(" + tint + ",.85)"); g.addColorStop(1, "rgba(" + tint + ",0)");
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 1.4 * pulse, 0, Math.PI * 2); ctx.fill();
+  } else if (a.kind === "spirit") {
+    ctx.globalAlpha = a.phaseT > 0 ? 0.35 : 0.85;
+    ctx.fillStyle = a.hit ? "#ffffff" : "#dfe8ff";
+    ctx.beginPath(); ctx.arc(px, py - r * .2, r * .75, Math.PI, 0); ctx.lineTo(px + r * .75, py + r * .6);
+    for (let i = 0; i < 4; i++) ctx.lineTo(px + r * (.75 - (i + .5) * .375), py + r * (i % 2 ? .6 : .9));
+    ctx.lineTo(px - r * .75, py + r * .6); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = "#6fa8ff"; ctx.beginPath(); ctx.arc(px - r * .28, py - r * .25, r * .14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#b8f07a"; ctx.beginPath(); ctx.arc(px + r * .28, py - r * .25, r * .1, 0, Math.PI * 2); ctx.fill();
   } else if (a.kind === "skeleton_warrior") {
     drawSkull(px, py, r, a.hit);
   } else if (a.kind === "skeleton_archer") {
@@ -2121,6 +2756,22 @@ function drawActor(a) {
     ctx.fillStyle = "#6f9a4a"; ctx.beginPath(); ctx.ellipse(px - r * 0.1, py - r * 0.95, r * 0.24, r * 0.09, 0, 0, Math.PI * 2); ctx.fill();   // moss
     ctx.fillStyle = "#ffd75a"; ctx.beginPath(); ctx.arc(px - r * 0.15, py - r * 0.7, r * 0.08, 0, Math.PI * 2); ctx.arc(px + r * 0.16, py - r * 0.72, r * 0.06, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#6fa8ff"; ctx.lineWidth = Math.max(1, T * 0.04); ctx.beginPath(); ctx.arc(px, py, r * 0.22, 0, Math.PI * 2); ctx.stroke();   // the Septagram glow
+  } else if (a.kind === "ogre") {
+    r *= 1.5;
+    ctx.fillStyle = a.hit ? "#fff0d0" : "#a8865a";
+    ctx.beginPath(); ctx.ellipse(px, py + r * .1, r * .95, r * .85, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px, py - r * .75, r * .38, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#7a5a3a"; ctx.fillRect(px - r * .45, py + r * .5, r * .9, r * .3);
+    ctx.fillStyle = "#2a1f2e"; ctx.beginPath(); ctx.arc(px - r * .14, py - r * .8, r * .06, 0, Math.PI * 2); ctx.arc(px + r * .14, py - r * .8, r * .06, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ece3cf"; ctx.beginPath(); ctx.moveTo(px + r * .1, py - r * .5); ctx.lineTo(px + r * .2, py - r * .78); ctx.lineTo(px + r * .26, py - r * .5); ctx.fill();
+  } else if (a.kind === "troll") {
+    r *= 1.3;
+    ctx.fillStyle = a.hit ? "#d8fff0" : "#6f9a86";
+    ctx.beginPath(); ctx.ellipse(px, py, r * .8, r * .85, 0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(px - r * 1.05, py - r * .1, r * .25, r * .9); ctx.fillRect(px + r * .8, py - r * .1, r * .25, r * .9);
+    ctx.fillStyle = "#3b4a2a"; ctx.beginPath(); ctx.ellipse(px + r * .1, py - r * .7, r * .45, r * .2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#7fae96"; ctx.beginPath(); ctx.ellipse(px + r * .3, py - r * .25, r * .25, r * .18, 0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#f5e05a"; ctx.beginPath(); ctx.arc(px - r * .05, py - r * .45, r * .08, 0, Math.PI * 2); ctx.arc(px + r * .35, py - r * .5, r * .08, 0, Math.PI * 2); ctx.fill();
   } else if (a.kind === "orc") {
     r *= 1.25;
     ctx.fillStyle = a.hit ? "#c6dcb0" : "#4f6b3a";
@@ -2156,12 +2807,15 @@ function drawActor(a) {
 }
 
 // the new character art on the battlefield; the classic shapes stay available through the Art toggle
-const ART_SCALE = { kobold: 0.86, orc: 1.3, golem: 1.3 };
+const FLOATY = { wisp: true, spirit: true };
+const ART_SCALE = { kobold: 0.86, orc: 1.3, golem: 1.3, ogre: 1.5, troll: 1.35 };
 const ICE = document.createElement("canvas");      // scratch layer for tinting chilled creatures
 function drawActorArt(a) {
-  const T = tile, s = T / 112, px = a.x * T + T / 2, gy = a.y * T + T * 0.8;
+  const T = tile, s = T / 112 * (a.d.scale || 1), px = a.x * T + T / 2, gy = a.y * T + T * 0.8;
   if (!a.look) a.look = ART.looks(a.kind);
   if (a.kind === "golem") { a.look.quarry = ((a.d.size || 1) - 1) / 0.1; a.look.gmove = a.lastMove || "punch"; }
+  if (a.kind === "spirit") a.look.phasing = a.phaseT || 0;
+  if (a.kind === "ogre") a.look.gmove = a.lastMove || "punch";
   // which animation to play
   const fighting = a.lastStrike !== null && S.time - a.lastStrike < a.d.attackEvery * 1.15;
   let m = "idle";
@@ -2188,11 +2842,13 @@ function drawActorArt(a) {
     ic.setTransform(1, 0, 0, 1, 0, 0); ic.globalCompositeOperation = "source-atop";
     ic.fillStyle = "rgba(120,190,255," + (Math.min(1, a.chill / 2) * 0.55) + ")"; ic.fillRect(0, 0, W, H);
     ctx.drawImage(ICE, ox, oy, bw, bh);
-  } else ART.drawAt(a.kind, ctx, px, gy, s, t, a.look, m, a.flip);
+  } else if (a.free) { ctx.save(); ctx.globalAlpha = 0.6; ART.drawAt(a.kind, ctx, px, gy, s, t, a.look, m, a.flip); ctx.restore(); }   // a reassembled skeleton: faded and cracked
+  else ART.drawAt(a.kind, ctx, px, gy, s, t, a.look, m, a.flip);
   if (a.burn > 0) drawFlame(px, gy - 60 * s * (ART_SCALE[a.kind] || 1), T * 0.22, S.time * 1.3 + a.phase);
-  if (a.guard) { ctx.fillStyle = "#e8c45a"; ctx.strokeStyle = "#2a1f2e"; ctx.lineWidth = 1; const yy = (a.kind === "wisp" ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1)) - 12; ctx.beginPath(); ctx.moveTo(px, yy - 4); ctx.lineTo(px + 3, yy); ctx.lineTo(px, yy + 4); ctx.lineTo(px - 3, yy); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  if (a.boss) drawCrown(px, gy - 128 * s * (ART_SCALE[a.kind] || 1), T * 0.32);
+  if (a.guard) { ctx.fillStyle = "#e8c45a"; ctx.strokeStyle = "#2a1f2e"; ctx.lineWidth = 1; const yy = (FLOATY[a.kind] ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1)) - 12; ctx.beginPath(); ctx.moveTo(px, yy - 4); ctx.lineTo(px + 3, yy); ctx.lineTo(px, yy + 4); ctx.lineTo(px - 3, yy); ctx.closePath(); ctx.fill(); ctx.stroke(); }
   // health bar and nemesis mark on top
-  const top = a.kind === "wisp" ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1), mid = a.kind === "wisp" ? gy - 62 * s : (top + gy) / 2;
+  const top = FLOATY[a.kind] ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1), mid = FLOATY[a.kind] ? gy - 62 * s : (top + gy) / 2;
   if (S.nemesis && S.nemesis.target === a) {
     ctx.strokeStyle = "#e2566a"; ctx.lineWidth = 2;
     const rr = (gy - top) * 0.55 + Math.sin(S.time * 8) * 2;
@@ -2212,13 +2868,14 @@ function draw() {
   const T = tile;
   for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
     const t = L.terrain[y][x];
-    drawTile(x, y, t);
+    drawTile(x, y, t === "structure" && L.arena ? L.under[y * C + x] : t);
     if (t !== "structure" && L.summon(x, y)) { ctx.fillStyle = "rgba(111,168,255,0.10)"; ctx.fillRect(x * T, y * T, T, T); }
     if (t !== "structure" && L.reach(x, y)) { ctx.fillStyle = "rgba(224,144,74,0.14)"; ctx.fillRect(x * T, y * T, T, T); }
     if (S.fire[y * C + x] > 0) { ctx.fillStyle = "rgba(60,20,10,.45)"; ctx.fillRect(x * T, y * T, T, T); drawFlame(x * T + T / 2, y * T + T * 0.85, T * 0.32, S.time + x * 0.7 + y); }
   }
   ctx.strokeStyle = "#e0904a"; ctx.lineWidth = 2;
-  if (L.structs.length) {
+  if (L.arena) drawArena();
+  else if (L.structs.length) {
     const xs = L.structs.map(s => s.x), ys = L.structs.map(s => s.y);
     const x0 = Math.min(...xs), x1 = Math.max(...xs) + 1, y0 = Math.min(...ys), y1 = Math.max(...ys) + 1;
     ctx.setLineDash([4, 3]); ctx.strokeRect(x0 * T - 2, y0 * T - 2, (x1 - x0) * T + 4, (y1 - y0) * T + 4); ctx.setLineDash([]);
@@ -2331,6 +2988,7 @@ function hud() {
   $("ward").textContent = Math.max(0, S.ward);
   if (S.assault) $("foeWard").textContent = Math.max(0, Math.ceil(S.foeWardHp)) + "/" + S.foeWardMax;
   $("wave").textContent = Math.max(1, S.wave);
+  if (L.arena) { $("killsHud").textContent = Math.min(S.arenaKills, S.arenaTarget) + "/" + S.arenaTarget; $("spell_move").querySelector("span").textContent = S.move ? "moving" : "free"; }
   const free = S.slots - slotsUsed();
   for (const k in DATA.units) {
     const c = DATA.units[k].cost;
@@ -2347,12 +3005,13 @@ function showBest() {
 }
 
 // ---------- Town ----------
-const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "market", "lab", "well", "septagram", "golematorium", "library", "stones", "archivus"];
+const BUILDINGS = ["gate", "tower", "builder", "grimoire", "tavern", "wagon", "spellbook", "market", "lab", "well", "spiritstones", "septagram", "golematorium", "library", "stones", "archivus"];
 function openBuilding(k) {
   for (const b of BUILDINGS) { $("b_" + b).setAttribute("aria-pressed", b === k ? "true" : "false"); $("p_" + b).hidden = b !== k; }
   if (k === "grimoire") renderGrimoire();
   if (k === "builder") builderTalk();
   if (k === "tavern") tavernTalk();
+  if (k === "wagon" && !TALK) talk([{ who: "Saina Lot", text: sainaLine() }]);
 }
 // ---------- Talking: the wizard, the Builder and whoever else has something to say ----------
 const LINES = {
@@ -2378,6 +3037,42 @@ const WIZ_SAYS = {
   golem: "A golem! Heavy, slow and very, very hard to argue with."
 };
 const wizSays = text => [{ who: "The Summonancer", text }];
+// Saina Lot, skeleton bard and bookkeeper
+const SAINA = {
+  arrive: [
+    { who: "Saina Lot", text: "Well, well! The Summonancer himself! Saina Lot: bard, chronicler and bookkeeper, at your service. I've followed your little adventures for five battles now, and somebody has to write all of this down." },
+    { who: "The Summonancer", text: "You're... a skeleton. Did I summon you?" },
+    { who: "Saina Lot", text: "Summon me? Please. I walked here. Had a lovely chat with your Builder about dental plans on the way. From now on I keep the ledger: every foe, every coin, every bone. You'll find my wagon in town." },
+    { who: "The Summonancer", text: "(muttering) Another skeleton nobody asked for. People are going to talk." }
+  ],
+  lines: [
+    "I keep the books. Somebody has to. The skeletons can't count past ten. Fingers, you see.",
+    "Your gold count is up. My lute is still out of tune. Coincidence? Probably.",
+    "Sing of your deeds? Gladly. Do you have any? ...Oh. Right. Those. Yes.",
+    "Every great hero needs a bard. Every great bard needs a hero. We'll have to make do with each other.",
+    "I asked the villagers for a rhyme for 'Summonancer'. They suggested 'necromancer'. I'm working on it.",
+    "A ledger is just a ballad with fewer verses and more arithmetic."
+  ],
+  stat: [
+    () => kills("kobold") > 20 && kills("kobold") + " kobolds. I've written a ballad for each one. Most of them are very short.",
+    () => META.ledger.gold > 100 && "You've earned " + META.ledger.gold + " gold since I started counting. Spent most of it too. Very heroic.",
+    () => (META.ledger.res.bones || 0) > 50 && (META.ledger.res.bones) + " bones gathered. Please don't tell me what you do with them. Actually, do. It's for the ballad.",
+    () => META.battles > 5 && META.battles + " battles so far. Nobody's counting. Except me. I'm counting.",
+    () => (META.summoned.skeleton_warrior || 0) > 30 && (META.summoned.skeleton_warrior) + " skeletons summoned. Not raised. I've underlined that in the ledger. Twice."
+  ],
+  // pointers to what comes next
+  hint: [
+    () => !Object.values(META.wins || {}).some(Boolean) && "Rumour has it there's a red ward up the hill north of here. Break it, and the ballad writes itself. Assault, they call it.",
+    () => !META.gauntletBest && "Have you heard of the Gauntlet? Caves, gates, more caves. The further you get, the better the song.",
+    () => !META.raidWins && "The Raid halls have chiefs at the end of a long red carpet. Chiefs drop things. Shiny things. Wearable things.",
+    () => "When this town has nothing left to give, I'll tally it all up. Every great chapter needs an ending before the next one starts."
+  ]
+};
+let sainaLast = "";
+function sainaLine() {
+  const pool = SAINA.lines.concat(SAINA.stat.map(f => f()).filter(Boolean), [SAINA.hint.map(f => f()).find(Boolean)]).filter(x => x && x !== sainaLast);
+  return (sainaLast = pick(pool));
+}
 const IDLE = ["The town is quiet. Suspiciously quiet.", "Somewhere a villager is muttering the word 'necromancer'.", "The wizard adjusts his hat. The patch holds. For now.",
               "A cat watches the wizard from a rooftop. It does not approve.", "The well gurgles. Probably just the wisps."];
 let TALK = null;
@@ -2389,6 +3084,7 @@ function talk(lines, done) {
 // who the wizard is talking to, judged from the lines: the Builder (alive or not) or the villagers
 function npcOf(lines) {
   const w = (lines.find(l => l.who !== "The Summonancer") || {}).who || "";
+  if (/^Saina/.test(w)) return "saina";
   if (/^Builder/.test(w)) return META.builder === "alive" ? "builder" : "builderSkel";
   if (/^Villagers/.test(w)) return "villagers";
   return null;
@@ -2427,6 +3123,7 @@ document.addEventListener("keydown", e => { if (TALK && !$("townView").hidden &&
 function enterTown() {
   TOWN.idle = IDLE[rnd(IDLE.length)];
   if (META.stage === "monologue" && !TALK) talk(LINES.monologue, () => { META.stage = "builder"; saveMeta(); });
+  else if (META.battles >= 5 && !META.sainaMet && META.stage === "done" && !TALK) talk(SAINA.arrive, () => { META.sainaMet = true; saveMeta(); renderTown(); });
   showTalk();
 }
 function builderTalk() {
@@ -2437,13 +3134,17 @@ function builderTalk() {
 for (const b of BUILDINGS) $("b_" + b).addEventListener("click", () => openBuilding(b));
 
 const maps = $("maps");
+let raidPick = "kobold";
 for (const k in DATA.levels) {
-  const b = document.createElement(k === "assault" ? "div" : "button");
-  b.className = "mapbtn"; b.id = "map_" + k; if (k !== "assault") b.type = "button";
+  const multi = k === "assault" || k === "gauntlet" || k === "raid";
+  const b = document.createElement(multi ? "div" : "button");
+  b.className = "mapbtn"; b.id = "map_" + k; if (!multi) b.type = "button";
   b.innerHTML = "<b>" + DATA.levels[k].name + "</b><span>" + DATA.levels[k].note + "</span><span class='bestline'></span>" +
-    (k === "assault" ? "<div class='diffs'>" + Object.entries(DATA.assault).map(([dk, dd]) => "<button class='btn' type='button' id='assault_" + dk + "' data-diff='" + dk + "'>" + dd.name + "</button>").join("") + "</div>" : "");
-  if (k === "assault") for (const db of b.querySelectorAll("[data-diff]")) db.addEventListener("click", () => goBattle(k, db.dataset.diff));
+    (k === "raid" ? "<div class='diffs' id='raidFactions'>" + Object.entries(DATA.raid.factions).map(([fk, f]) => "<button class='btn' type='button' data-faction='" + fk + "' aria-pressed='" + (fk === raidPick) + "'>" + f.name + "</button>").join("") + "</div>" : "") +
+    (multi ? "<div class='diffs'>" + Object.entries(DATA.assault).map(([dk, dd]) => "<button class='btn' type='button' id='" + k + "_" + dk + "' data-diff='" + dk + "'>" + dd.name + "</button>").join("") + "</div>" : "");
+  if (multi) for (const db of b.querySelectorAll("[data-diff]")) db.addEventListener("click", () => goBattle(k, k === "raid" ? raidPick + ":" + db.dataset.diff : db.dataset.diff));
   else b.addEventListener("click", () => goBattle(k));
+  for (const fb of b.querySelectorAll("[data-faction]")) fb.addEventListener("click", () => { raidPick = fb.dataset.faction; for (const o of b.querySelectorAll("[data-faction]")) o.setAttribute("aria-pressed", o === fb ? "true" : "false"); });
   maps.appendChild(b);
 }
 
@@ -2451,7 +3152,10 @@ for (const k in DATA.levels) {
 const killsNow = k => kills(k) + (S && !S.tallied ? (S.slain[k] || 0) : 0);
 const live = () => inBattle && S && !S.tallied;
 const COMMON = {
-  foes: { kobold: [15, 40, 0.15, 0.55], bog_goblin: [8, 25, 0.35, 0.8], orc: [3, 12, 0.5, 1] },        // count range and difficulty range
+  foes: { kobold: [15, 40, 0.15, 0.55], bog_goblin: [8, 25, 0.35, 0.8], orc: [3, 12, 0.5, 1], ogre: [2, 6, 0.7, 1], troll: [2, 6, 0.7, 1] },        // count range and difficulty range
+  killFields: ["hillside", "crossroads", "outpost", "assault", "gauntlet"],
+  // summon N in a single battle: count range and difficulty range (only summons already bound)
+  summons: { wisp: [8, 15, 0.2, 0.5], skeleton_warrior: [12, 25, 0.3, 0.7], skeleton_archer: [8, 16, 0.35, 0.7], golem: [3, 6, 0.5, 0.9] },
   goods: { bones: [15, 40, 0.1, 0.4], gold: [20, 60, 0.2, 0.6], stone: [3, 8, 0.3, 0.7], iron: [3, 8, 0.3, 0.7], wood: [3, 8, 0.3, 0.7], skulls: [1, 2, 0.7, 1], crystal: [1, 1, 0.9, 0.9] },
   prices: { gold: 1, bones: 1, stone: 10, iron: 10, wood: 10, skulls: 50, crystal: 50 },          // what the Marketplace charges
   asks: {
@@ -2471,11 +3175,27 @@ const COMMON = {
       ["The Bard's Ballad", "A travelling bard needs a heroic ballad. He says nothing rhymes with fewer than {n} waves on {level}. Please. He keeps singing the draft."],
       ["Property Values", "Someone wants to buy land by {level}, but only if it can survive {n} waves. Real estate is brutal around here."]
     ],
+    gauntlet: [
+      ["Spelunking Club", "The Spelunking Club wants someone to go first into the Gauntlet. Get through {n} cave{s} on {diff}. They'll follow. Eventually. Probably."],
+      ["Lost Sheep", "One of our sheep wandered into the Gauntlet. Please clear {n} cave{s} on {diff} and look for her. She answers to Mrs. Fluffington."]
+    ],
+    raid: [
+      ["Royal Pain", "The {boss} keeps sending us bills for 'protection'. We'd like the {boss} to stop. Permanently. Any difficulty will do."],
+      ["Regime Change", "Word is the {boss} sits on a big chair at the end of a carpet. We'd like that chair. Well, Bob would. Don't ask."]
+    ],
+    summon: [
+      ["Bob's Doubts", "Bob doesn't believe you can call up {n} {units} in one battle. He's put his good hat on it. Please. It's a terrible hat."],
+      ["A Head Count", "The census taker wants to know how many {units} you can bring to a single fight. 'At least {n},' we said. Now you have to. Sorry."]
+    ],
     assault: [
       ["Noise Complaint", "There's a red ward up the hill that hums all night. Break it on {diff} and we'll finally get some sleep."],
       ["Red Means Stop", "That red ward keeps leaking kobolds into the village well. Knock it down on {diff}, would you? The water tastes of scales."]
     ]
   },
+  summonReplies: [
+    "{n} {units}? Summoned. In one battle. And not one of them will be raised, because I am NOT a necromancer.",
+    "Tell Bob to start polishing that hat. And tell him it's 'summoning'. With an S. As in 'Summonancer'. Not 'necro' anything."
+  ],
   replies: [
     "Fine. But I'm doing this as a Summonancer, not a necromancer. Write that down. In ink.",
     "Consider it done. Well, nearly done. Well, started. Well... considered.",
@@ -2494,7 +3214,7 @@ const RES_ONE = { bones: "bone", gold: "gold", stone: "smooth stone", iron: "scr
 const resName = (k, n) => n === 1 ? RES_ONE[k] : RES_NAMES[k];
 const RES_NAMES = { bones: "bones", gold: "gold", stone: "smooth stones", iron: "scrap iron", wood: "pieces of wood", skulls: "skulls", crystal: "crystal shards" };
 const pick = a => a[rnd(a.length)];
-const where = k => k === "assault" ? "the Assault field" : "the " + DATA.levels[k].name;
+const where = k => k === "assault" ? "the Assault field" : k === "gauntlet" ? "the Gauntlet" : "the " + DATA.levels[k].name;
 const between = (a, b) => a + rnd(b - a + 1);
 // a reward of 20-150 exp and goods worth 20-100 gold at Marketplace prices, both growing with difficulty
 function makeReward(d) {
@@ -2509,27 +3229,40 @@ function makeReward(d) {
   return { exp: Math.round(20 + d * 130), items };
 }
 function genQuest() {
-  const t = Math.random(), type = t < 0.4 ? "kills" : t < 0.65 ? "collect" : t < 0.9 ? "reach" : "assault";
+  const t = Math.random(), type = t < 0.3 ? "kills" : t < 0.48 ? "collect" : t < 0.66 ? "reach" : t < 0.76 ? "assault" : t < 0.84 ? "gauntlet" : t < 0.9 ? "raid" : "summon";
   const q = { id: "c" + (META.questN = (META.questN || 0) + 1), type, common: true };
   let d = 0.5;
   if (type === "kills") {
-    q.foe = pick(Object.keys(COMMON.foes)); q.level = pick(Object.keys(DATA.levels));
+    q.foe = pick(Object.keys(COMMON.foes).filter(k => !["ogre", "troll"].includes(k) || kills(k))); q.level = pick(COMMON.killFields);
     const [a, b, d0, d1] = COMMON.foes[q.foe]; q.need = between(a, b); d = d0 + (d1 - d0) * (q.need - a) / Math.max(1, b - a);
   } else if (type === "collect") {
     q.res = pick(Object.keys(COMMON.goods));
     const [a, b, d0, d1] = COMMON.goods[q.res]; q.need = between(a, b); d = d0 + (d1 - d0) * (q.need - a) / Math.max(1, b - a);
   } else if (type === "reach") {
     q.level = pick(["hillside", "crossroads", "outpost"]); q.need = between(5, 14); d = 0.2 + 0.8 * (q.need - 5) / 9;
+  } else if (type === "gauntlet") {
+    q.diff = pick(["easy", "normal", "hard"]); q.level = "gauntlet"; q.need = between(1, { easy: 3, normal: 2, hard: 1 }[q.diff]); d = Math.min(1, { easy: 0.25, normal: 0.5, hard: 0.85 }[q.diff] + 0.12 * (q.need - 1));
+  } else if (type === "raid") {
+    q.faction = pick(Object.keys(DATA.raid.factions)); q.level = "raid"; q.need = 1; d = 1;
+  } else if (type === "summon") {
+    const opts = Object.keys(COMMON.summons).filter(k => META.unlocked[k]); q.unit = pick(opts.length ? opts : ["wisp"]);
+    const [a, b, d0, d1] = COMMON.summons[q.unit]; q.need = between(a, b); d = d0 + (d1 - d0) * (q.need - a) / Math.max(1, b - a);
   } else {
     q.diff = pick(["easy", "normal", "hard"]); q.level = "assault"; q.need = 1; d = { easy: 0.4, normal: 0.7, hard: 1 }[q.diff];
   }
   const [title, text] = pick(COMMON.asks[type]), F = q.foe ? DATA.enemies[q.foe].name.toLowerCase() : "";
-  const fill = s => s.replace("{foes}", F + "s").replace("{foe}", F).replace("{n}", q.need).replace("{res}", q.res ? resName(q.res, q.need) : "").replace("{diff}", q.diff ? DATA.assault[q.diff].name : "")
+  const U = q.unit ? DATA.units[q.unit].name.toLowerCase() + "s" : "", B = q.faction ? DATA.raid.factions[q.faction].boss.name : "";
+  const fill = s => s.replace("{foes}", F + "s").replace("{foe}", F).replace(/\{n\}/g, q.need).replace("{res}", q.res ? resName(q.res, q.need) : "").replace("{diff}", q.diff ? DATA.assault[q.diff].name : "")
+    .replace(/\{units\}/g, U).replace(/\{boss\}/g, B).replace("{s}", q.need === 1 ? "" : "s")
     .replace(/\{level\}/g, q.level ? where(q.level) : "");
+  if (type === "summon") q.reply = fill(pick(COMMON.summonReplies));
   q.name = fill(title); q.ask = fill(text); q.reward = makeReward(d); q.diffScore = d;
   q.about = type === "kills" ? "Defeat " + q.need + " " + F + "s on " + where(q.level) + "."
     : type === "collect" ? "Bring back " + q.need + " " + resName(q.res, q.need) + " from the battlefield."
     : type === "reach" ? "Reach wave " + q.need + " on " + where(q.level) + "."
+    : type === "gauntlet" ? "Clear " + q.need + " cave" + (q.need > 1 ? "s" : "") + " of the Gauntlet in one run on " + DATA.assault[q.diff].name + "."
+    : type === "raid" ? "Defeat the " + B + " in the Raid, on any difficulty."
+    : type === "summon" ? "Summon " + q.need + " " + U + " in a single battle."
     : "Destroy the enemy ward on " + DATA.assault[q.diff].name + ".";
   return q;
 }
@@ -2538,15 +3271,19 @@ function refreshBoard() { META.board = Array.from({ length: 2 + rnd(2) }, genQue
 const qdef = id => DATA.quests[id] || (META.quests[id] && META.quests[id].gen);
 function questProgress(id) {
   const q = qdef(id), m = META.quests[id];
-  if (!q.common) { const out = []; for (const k in q.kills) out.push({ have: Math.min(q.kills[k], killsNow(k) - (m.start[k] || 0)), need: q.kills[k], label: DATA.enemies[k].name.toLowerCase() + "s" }); return out; }
+  if (!q.common) { const out = []; for (const k in q.kills) out.push({ have: Math.min(q.kills[k], killsNow(k) - ((m.start || {})[k] || 0)), need: q.kills[k], label: DATA.enemies[k].name.toLowerCase() + "s" }); return out; }
   let have = m.have || 0;
   if (live()) {
     if (q.type === "kills" && levelKey === q.level) have += S.slain[q.foe] || 0;
     if (q.type === "collect") have += S.gathered[q.res] || 0;
     if (q.type === "reach" && levelKey === q.level) have = Math.max(have, S.wave);
+    if (q.type === "gauntlet" && levelKey === "gauntlet" && S.diff === q.diff) have = Math.max(have, S.stage - 1);
+    if (q.type === "summon") have = Math.max(have, (S.summonedNow || {})[q.unit] || 0);
   }
   const label = q.type === "kills" ? DATA.enemies[q.foe].name.toLowerCase() + "s on " + where(q.level)
-    : q.type === "collect" ? RES_NAMES[q.res] : q.type === "reach" ? "waves on " + where(q.level) : DATA.assault[q.diff].name + " victory";
+    : q.type === "collect" ? RES_NAMES[q.res] : q.type === "reach" ? "waves on " + where(q.level)
+    : q.type === "gauntlet" ? "caves on " + DATA.assault[q.diff].name : q.type === "raid" ? DATA.raid.factions[q.faction].boss.name + " defeated"
+    : q.type === "summon" ? DATA.units[q.unit].name.toLowerCase() + "s in one battle" : DATA.assault[q.diff].name + " victory";
   return [{ have: Math.min(have, q.need), need: q.need, label }];
 }
 // a finished battle moves the common quests along
@@ -2556,7 +3293,10 @@ function questsAfterBattle() {
     if (q.type === "kills" && levelKey === q.level) m.have = (m.have || 0) + (S.slain[q.foe] || 0);
     if (q.type === "collect") m.have = (m.have || 0) + (S.gathered[q.res] || 0);
     if (q.type === "reach" && levelKey === q.level) m.have = Math.max(m.have || 0, S.wave);
-    if (q.type === "assault" && S.won && S.diff === q.diff) m.have = 1;
+    if (q.type === "assault" && S.won && S.assault && S.diff === q.diff) m.have = 1;
+    if (q.type === "gauntlet" && levelKey === "gauntlet" && S.diff === q.diff) m.have = Math.max(m.have || 0, S.stage - 1);
+    if (q.type === "raid" && S.won && S.raid && S.raid.key === q.faction) m.have = 1;
+    if (q.type === "summon") m.have = Math.max(m.have || 0, (S.summonedNow || {})[q.unit] || 0);
   }
 }
 const questDone = id => META.quests[id] && META.quests[id].state === "active" && questProgress(id).every(p => p.have >= p.need);
@@ -2604,7 +3344,7 @@ function renderQuests() {
   for (const b of $("tavernList").querySelectorAll("[data-accept]")) b.addEventListener("click", () => {
     const q = META.board[+b.dataset.accept]; if (!q || activeCommon().length >= 3) return;
     META.quests[q.id] = { state: "active", gen: q, have: 0 }; META.board.splice(+b.dataset.accept, 1); saveMeta(); renderTown();
-    talk([{ who: "Villagers", text: q.ask }, { who: "The Summonancer", text: pick(COMMON.replies) }]);
+    talk([{ who: "Villagers", text: q.ask }, { who: "The Summonancer", text: q.reply || pick(COMMON.replies) }]);
   });
   markQuests();
 }
@@ -2612,6 +3352,7 @@ function claimQuest(id) {
   if (!questDone(id)) return;
   const q = qdef(id), r = q.reward;
   META.exp += r.exp || 0; META.gold += r.gold || 0;
+  META.ledger.exp += r.exp || 0; META.ledger.gold += (r.gold || 0) + ((r.items && r.items.gold) || 0);
   for (const k in r.items || {}) { if (k === "gold") META.gold += r.items[k]; else META.warehouse[k] = (META.warehouse[k] || 0) + r.items[k]; }
   META.quests[id].state = "claimed";
   if (q.common) delete META.quests[id];           // finished common jobs make room for new ones
@@ -2642,7 +3383,8 @@ function goBattle(k, diff) {
 function renderTown() {
   $("tGold").textContent = META.gold; $("tExp").textContent = META.exp;
   const W = META.warehouse;
-  $("goods").innerHTML = [["Gold", META.gold], ["Bones", W.bones], ["Skulls", W.skulls]].concat(Object.keys(DATA.materials).map(k => [DATA.materials[k].name, W[k] || 0])).map(([n, v]) => "<div class='good'><b>" + v + "</b><span>" + n + "</span></div>").join("");
+  $("goods").innerHTML = [["gold", META.gold], ["bones", W.bones], ["skulls", W.skulls]].concat(Object.keys(DATA.materials).map(k => [k, W[k] || 0]))
+    .map(([k, v]) => "<span class='good' title='" + RES_LABEL[k] + "' aria-label='" + v + " " + RES_LABEL[k] + "'>" + ICONS[k] + "<b aria-hidden='true'>" + v + "</b></span>").join("");
   for (const k in DATA.builder) $("b_" + k).hidden = !META.built[k];
   const alive = META.builder === "alive";
   $("builderAlive").toggleAttribute("hidden", !alive); $("builderSkel").toggleAttribute("hidden", alive);   // svg elements have no .hidden
@@ -2651,8 +3393,9 @@ function renderTown() {
   $("b_builder").classList.toggle("glow", META.stage === "builder");
   $("b_septagram").classList.toggle("glow", META.stage === "septagram");
   renderBuilder(); renderSeptagram();
-  for (const w of ["lab", "well", "golematorium", "library", "stones"]) renderResearch(w);
-  renderMarket(); renderSpellBook();
+  for (const w of ["lab", "well", "golematorium", "library", "stones", "spiritstones"]) renderResearch(w);
+  renderMarket(); renderSpellBook(); renderLoadout(); renderLedger();
+  $("b_wagon").hidden = !META.sainaMet;
   renderUnits(); renderQuests(); if (!TALK) showTalk();
   $("b_tavern").classList.toggle("glow", META.stage === "done" && !META.quests.hero || anyQuestReady());
   const T = DATA.tower;
@@ -2662,11 +3405,17 @@ function renderTown() {
   $("upRegenInfo").textContent = "Level " + META.regenLv + " · " + fmt(wizRegen()) + " → " + fmt(wizRegen() + T.regen.per) + " mana per second";
   $("upRegen").textContent = "Upgrade · " + rCost + " exp"; $("upRegen").disabled = META.exp < rCost;
   $("upSlotInfo").textContent = wizSlots() + " summons on the field at once → " + (wizSlots() + T.slots.per);
+  const nextSlot = DATA.spellSlots.extra[META.spellSlots];
+  $("upSpellInfo").textContent = spellSlots() + " spells taken into battle" + (nextSlot ? " → " + (spellSlots() + 1) : " (the most there is)");
+  $("upSpell").innerHTML = nextSlot ? "Add a slot · " + costText(nextSlot) : "All slots";
+  $("upSpell").disabled = !nextSlot || !canPay(nextSlot);
   $("upSlot").textContent = "Add a slot · " + sCost + " exp"; $("upSlot").disabled = META.exp < sCost;
   for (const k in DATA.levels) {
     const b = META.best[k] || 0;
     $("map_" + k).querySelector(".bestline").textContent = k === "assault"
       ? "Victories: " + Object.entries(DATA.assault).map(([dk, dd]) => dd.name + " " + ((META.wins || {})[dk] || 0)).join(" · ")
+      : k === "gauntlet" ? "Furthest: " + Object.entries(DATA.gauntlet).filter(([dk]) => dk !== "perStage").map(([dk, dd]) => dd.name + " " + ((META.gauntletBest || {})[dk] || 0) + " caves").join(" · ")
+      : k === "raid" ? "Chiefs defeated: " + (META.raidWins || 0)
       : b ? "Longest stand: wave " + b : "Not yet attempted";
   }
 }
@@ -2677,12 +3426,16 @@ function upgrade(key, lvKey) {
 $("upMana").addEventListener("click", () => upgrade("mana", "manaLv"));
 $("upRegen").addEventListener("click", () => upgrade("regen", "regenLv"));
 $("upSlot").addEventListener("click", () => upgrade("slots", "slotLv"));
+$("upSpell").addEventListener("click", () => {
+  const c = DATA.spellSlots.extra[META.spellSlots]; if (!c || !canPay(c)) return;
+  pay(c); META.spellSlots++; SFX.play("coins"); saveMeta(); renderTown();
+});
 // ---------- Builder, Cryptic Laboratory, Wisping Well ----------
 function renderBuilder() {
   $("buildList").innerHTML = Object.entries(DATA.builder).map(([k, b]) => {
-    const needs = b.needs && !META.unlocked[b.needs], glow = k === "septagram" && META.stage === "builder" ? " glow" : "";
+    const needs = (b.needs && !META.unlocked[b.needs]) || (b.after && !META.built[b.after]), glow = k === "septagram" && META.stage === "builder" ? " glow" : "";
     const btn = META.built[k] ? "<span class='done'>Built</span>"
-      : needs ? "<span class='req'>Needs " + DATA.units[b.needs].name.toLowerCase() + "s from the Septagram</span>"
+      : needs ? "<span class='req'>Needs " + (b.needs && !META.unlocked[b.needs] ? DATA.units[b.needs].name.toLowerCase() + "s from the Septagram" : "the " + DATA.builder[b.after].name) + "</span>"
       : "<button class='btn" + glow + "' type='button' data-build='" + k + "'" + (canPay(asCost(b.cost)) ? "" : " disabled") + ">Build · " + costText(asCost(b.cost)) + "</button>";
     return "<div class='opt'><div class='what'><b>" + b.name + "</b><span>" + b.about + "</span></div>" + btn + "</div>";
   }).join("");
@@ -2696,14 +3449,41 @@ function renderBuilder() {
     if (WIZ_SAYS[k]) talk(wizSays(WIZ_SAYS[k]));
   });
 }
+// the equipment screen, opened by tapping the wizard in town
+function renderGear() {
+  const G = DATA.gear, E = META.gear.eq, col = it => "style='color:" + G.rarity[it.rar].color + "'";
+  $("gearSlots").innerHTML = G.slots.map(([k, label]) => { const it = E[k];
+    return it ? "<button class='gslot' type='button' data-off='" + k + "'><small>" + label + " · tap to take off</small><b " + col(it) + ">" + it.name + "</b><small>" + gearLine(it) + "</small></button>"
+              : "<div class='gslot empty'><small>" + label + "</small>nothing</div>"; }).join("");
+  const sets = Object.keys(G.sets).filter(k => setCount(k) || META.gear.bag.some(i => i.set === k));
+  $("gearSets").innerHTML = sets.length ? "<h3>Sets</h3>" + sets.map(k => { const S0 = G.sets[k], n = setCount(k);
+    return "<p class='setline'><b>" + S0.name + "</b> · " + n + " worn<br>" + [2, 3, 5].map(c => "<span class='" + (n >= c ? "on" : "") + "'>" + c + ": " + S0[c] + "</span>").join("<br>") + "</p>"; }).join("") : "";
+  $("gearBag").innerHTML = META.gear.bag.length ? META.gear.bag.map(it => "<div class='opt'><div class='what'><b " + col(it) + ">" + it.name + "</b><span>" + G.rarity[it.rar].name + " · " + it.kind + " · " + G.sets[it.set].name + " · " + gearLine(it) + "</span></div><button class='btn' type='button' data-on='" + it.id + "'>Wear</button></div>").join("")
+    : "<p class='blank'>The bag is empty. Raid chiefs carry wearable things.</p>";
+  for (const b of $("gearSlots").querySelectorAll("[data-off]")) b.addEventListener("click", () => { const it = E[b.dataset.off]; if (!it) return; META.gear.bag.push(it); E[b.dataset.off] = null; gearChanged(); });
+  for (const b of $("gearBag").querySelectorAll("[data-on]")) b.addEventListener("click", () => {
+    const i = META.gear.bag.findIndex(x => x.id === +b.dataset.on); if (i < 0) return;
+    const it = META.gear.bag[i], slot = it.kind === "ring" ? (!E.ring1 ? "ring1" : !E.ring2 ? "ring2" : "ring1") : it.kind;
+    META.gear.bag.splice(i, 1); if (E[slot]) META.gear.bag.push(E[slot]); E[slot] = it; gearChanged();
+  });
+}
+function gearChanged() { TOWN.st.gear = gearLook(); SFX.play("appear"); saveMeta(); renderGear(); renderTown(); }
+function openGear() { if (TALK || inBattle) return; renderGear(); $("gearOverlay").hidden = false; }
+$("wizCv").addEventListener("click", openGear);
+$("gearClose").addEventListener("click", () => { $("gearOverlay").hidden = true; });
 // the Marketplace
 function renderMarket() {
   $("marketList").innerHTML = Object.entries(DATA.market).map(([k, m]) => {
     const n = have(k), lots = Math.floor(n / m.lot);
     const b = (act, label, ok) => "<button class='btn' type='button' data-mk='" + k + "' data-act='" + act + "'" + (ok ? "" : " disabled") + ">" + label + "</button>";
-    return "<div class='opt'><div class='what'><b>" + m.name + "</b><span>You have " + n + " · sell " + m.lot + " for " + m.sellFor + " gold · buy 1 for " + m.buyFor + " gold</span></div>" +
-      b("sell", "Sell " + m.lot, lots >= 1) + b("sellAll", "Sell all · +" + lots * m.sellFor + " gold", lots >= 1) + b("buy", "Buy 1", META.gold >= m.buyFor) + b("buy10", "Buy 10", META.gold >= m.buyFor * 10) + "</div>";
+    return "<div class='opt'><div class='what'><b>" + ri(k) + " " + m.name + "</b><span>You have " + n + " · sell " + m.lot + " for " + ri("gold", m.sellFor) + " · buy 1 for " + ri("gold", m.buyFor) + "</span></div>" +
+      b("sell", "Sell " + m.lot, lots >= 1) + b("sellAll", "Sell all · +" + ri("gold", lots * m.sellFor), lots >= 1) + b("buy", "Buy 1", META.gold >= m.buyFor) + b("buy10", "Buy 10", META.gold >= m.buyFor * 10) + "</div>";
   }).join("");
+  if (META.gear.bag.length) $("marketList").innerHTML += "<h3>Spare gear</h3>" + META.gear.bag.map(it => "<div class='opt'><div class='what'><b style='color:" + DATA.gear.rarity[it.rar].color + "'>" + it.name + "</b><span>" + DATA.gear.rarity[it.rar].name + " · " + gearLine(it) + "</span></div><button class='btn' type='button' data-sellgear='" + it.id + "'>Sell · " + ri("gold", DATA.gear.rarity[it.rar].sell) + "</button></div>").join("");
+  for (const btn of $("marketList").querySelectorAll("[data-sellgear]")) btn.addEventListener("click", () => {
+    const i = META.gear.bag.findIndex(x => x.id === +btn.dataset.sellgear); if (i < 0) return;
+    META.gold += DATA.gear.rarity[META.gear.bag[i].rar].sell; META.gear.bag.splice(i, 1); SFX.play("coins"); saveMeta(); renderTown();
+  });
   for (const btn of $("marketList").querySelectorAll("[data-mk]")) btn.addEventListener("click", () => {
     const k = btn.dataset.mk, m = DATA.market[k], act = btn.dataset.act, add = (n) => { if (k === "gold") return; META.warehouse[k] = (META.warehouse[k] || 0) + n; };
     if (act === "sell" || act === "sellAll") {
@@ -2716,6 +3496,37 @@ function renderMarket() {
     SFX.play("coins"); saveMeta(); renderTown();
   });
 }
+// Saina's ledger
+function renderLedger() {
+  const sec = (t, body) => "<div class='sec'><h4>" + t + "</h4>" + body + "</div>";
+  const tbl = rows => "<table class='facts'>" + rows.map(([a, b]) => "<tr><th>" + a + "</th><td>" + b + "</td></tr>").join("") + "</table>";
+  const foes = Object.keys(DATA.enemies).filter(k => kills(k)).map(k => [DATA.enemies[k].name + "s", kills(k)]);
+  const res = ["bones", "skulls", "stone", "iron", "wood", "crystal"].map(k => ri(k, META.ledger.res[k] || 0)).join("");
+  const summ = Object.keys(DATA.units).filter(k => META.summoned[k]).map(k => [DATA.units[k].name, META.summoned[k]]);
+  const fields = Object.keys(DATA.levels).filter(k => META.best[k]).map(k => [DATA.levels[k].name, "longest stand: wave " + META.best[k]]);
+  const wins = Object.entries(DATA.assault).map(([d, dd]) => dd.name + " " + ((META.wins || {})[d] || 0)).join(" · ");
+  $("ledger").innerHTML =
+    sec("Earnings", tbl([["Battles fought", META.battles], ["Gold earned", ri("gold", META.ledger.gold)], ["Experience earned", META.ledger.exp]])) +
+    sec("Gathered from the battlefield", "<p>" + res + "</p>") +
+    sec("Foes defeated", foes.length ? tbl(foes.concat([["In total", foes.reduce((n, f) => n + f[1], 0)]])) : "<p class='blank'>Nothing yet. A short ballad.</p>") +
+    sec("Battlefields", tbl(fields.concat([["Assault victories", wins]]).concat(META.gauntletBest ? [["Gauntlet, furthest", Object.entries(META.gauntletBest).map(([d, n]) => DATA.assault[d].name + " " + n + " fields").join(" · ")]] : []).concat(META.raidWins ? [["Raid chiefs defeated", META.raidWins]] : []))) +
+    sec("Summons called", summ.length ? tbl(summ) : "<p class='blank'>None yet.</p>");
+}
+// the Spellbook: which known spells go into battle
+function renderLoadout() {
+  META.loadout = META.loadout.filter(knowsSpell);
+  $("slotLine").innerHTML = "<b>Spells taken: " + META.loadout.length + " / " + spellSlots() + "</b>";
+  $("bookList").innerHTML = SPELL_ORDER.filter(knowsSpell).map(k => {
+    const on = META.loadout.includes(k), sp = DATA.spells[k], full = META.loadout.length >= spellSlots();
+    return "<div class='opt'><div class='what'><b>" + sp.name + "</b><span>" + spellMana(k, sp.mana) + " mana" + (sp.school ? " · " + sp.school + " spell" : "") + " · " + sp.about + "</span></div>" +
+      "<button class='btn" + (on ? " primary" : "") + "' type='button' data-load='" + k + "'" + (!on && full ? " disabled title='All slots are taken'" : "") + ">" + (on ? "Taken along" : "Leave at home") + "</button></div>";
+  }).join("") + (SPELL_ORDER.some(k => !knowsSpell(k)) ? "<p class='req'>More spells can be learned at the Overdue Library.</p>" : "");
+  for (const b of $("bookList").querySelectorAll("[data-load]")) b.addEventListener("click", () => {
+    const k = b.dataset.load, i = META.loadout.indexOf(k);
+    if (i >= 0) META.loadout.splice(i, 1); else if (META.loadout.length < spellSlots()) META.loadout.push(k);
+    saveMeta(); renderLoadout();
+  });
+}
 // the Overdue Library's spell book
 function renderSpellBook() {
   $("libSpells").innerHTML = Object.entries(DATA.spellBook).map(([k, b]) =>
@@ -2724,7 +3535,9 @@ function renderSpellBook() {
   for (const btn of $("libSpells").querySelectorAll("[data-learn]")) btn.addEventListener("click", () => {
     const k = btn.dataset.learn, b = DATA.spellBook[k];
     if (META.spells[k] || !canPay(b.cost)) return;
-    pay(b.cost); META.spells[k] = true; SFX.play("coins"); saveMeta(); renderTown();
+    pay(b.cost); META.spells[k] = true; SFX.play("coins");
+    if (!META.loadout.includes(k) && META.loadout.length < spellSlots()) META.loadout.push(k);      // a free slot takes the new spell straight away
+    saveMeta(); renderTown();
     talk(wizSays(k === "guardstone" ? "Guardstone! Finally, a way to make the skeletons stay put. Usually they wander off to find their other leg." : k === "firebolt" ? "Firebolt! Small, cheap and wonderfully irresponsible around dry grass." : k === "freeze" ? "Freeze! For when the grass fire got slightly out of hand. Again." : k === "nurture" ? "Nurture! Grass, bushes, trees... I'm basically a gardener now. A gardener with skeletons." : "A new spell. Lovely."));
   });
 }
@@ -2760,6 +3573,9 @@ function unitPlate(k) {
   if (d.taunt) rows.push(["Draws enemies", "within " + fmt(d.taunt) + " tiles"]);
   if (d.slam) rows.push(["Ground slam", "every " + ["", "", "2nd", "3rd", "4th"][d.slam.every] + " attack, shoves " + fmt(d.slam.knock) + " tiles"]);
   if (d.slots > 1) rows.push(["Summon slots", d.slots]);
+  if (d.aura) rows.push(["Hovering", "hurts everything within " + fmt(d.aura) + " tiles beneath it"]);
+  if (d.phasing) rows.push(["Phasing", "untouchable for " + fmt(d.phasing) + " s after a hit"]);
+  if (d.regen) rows.push(["Regeneration", d.regen.amount + " HP every " + d.regen.every + " s"]);
   rows.push(["Summon", d.cost.mana + " mana" + (d.cost.bone ? " · " + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : "") : "")]);
   return "<div class='uplate'><canvas data-plate='" + k + "' aria-label='" + d.name + " animation'></canvas><div><b>" + d.name + "</b><table class='facts'>" +
     rows.map(r => "<tr><th>" + r[0] + "</th><td>" + r[1] + "</td></tr>").join("") + "</table></div></div>";
@@ -2769,6 +3585,7 @@ function renderUnits() {
   show("labUnits", ["skeleton_warrior", "skeleton_archer"], "Bind skeletons at the Septagram to study them here.");
   show("wellUnits", ["wisp"], "");
   show("golematoriumUnits", ["golem"], "Bind a golem at the Septagram to study it here.");
+  show("spiritstonesUnits", ["spirit"], "Bind a spirit at the Septagram to study it here.");
 }
 function drawPlates(t, dt) {
   for (const cv of document.querySelectorAll("canvas[data-plate]")) {
@@ -2778,11 +3595,39 @@ function drawPlates(t, dt) {
     ART.render(k, cv, st, t, dt, Math.floor(t / 3) % 2 ? "attack" : "walk");
   }
 }
+// ---------- Pixel-art resource icons (8 x 8) ----------
+const ICON_ART = {
+  gold:    { pal: { o: "#6a4a12", y: "#e8c45a", w: "#fff1b8", d: "#b8902e" }, px: ["..oooo..", ".oyyyyo.", "oywwyyyo", "oywyyydo", "oyyyyydo", "oyyyyddo", ".odddddo", "..oooo.."] },
+  bones:   { pal: { o: "#2a1f2e", w: "#f1e8d4", s: "#cfc2a6" }, px: ["........", "oo....oo", "owo..owo", ".owwwso.", ".owssso.", "owo..owo", "oo....oo", "........"] },
+  skulls:  { pal: { o: "#2a1f2e", w: "#f1e8d4", k: "#2a1f2e", s: "#cfc2a6" }, px: ["..oooo..", ".owwwwo.", "owwwwwwo", "owkwwkwo", "owkwwkso", ".owwwso.", "..owso..", "..okko.."] },
+  stone:   { pal: { o: "#2a1f2e", g: "#a8a293", l: "#d4cfc2", d: "#7d7869" }, px: ["........", "..oooo..", ".ollggo.", "olgggggo", "oggggggo", "ogggggdo", ".oddddo.", "..oooo.."] },
+  iron:    { pal: { o: "#2a1f2e", s: "#8a8f99", l: "#c3c8d0", r: "#a8572e", b: "#4a4f58" }, px: ["........", "oooooo..", "olllsoo.", "olbsrsso", "osssrbso", ".oosrrso", "..oooooo", "........"] },
+  wood:    { pal: { o: "#2a1f2e", b: "#8a5a34", d: "#6a4426", t: "#d9b07a", r: "#b8875a" }, px: ["........", ".oooooo.", "obbbbbto", "oddddtrt", "obbbbbto", ".oooooo.", "........", "........"] },
+  crystal: { pal: { o: "#2a1f2e", p: "#b79cf0", l: "#efe6ff", d: "#7d5fc4" }, px: ["...o....", "..olo...", "..olpo..", ".olppo..", ".oppppo.", ".opppdo.", "..oddo..", "...oo..."] }
+};
+const ICONS = {};
+for (const k in ICON_ART) {   // (built once; the battle HUD picks them up below)
+  const A = ICON_ART[k]; let r = "";
+  A.px.forEach((row, y) => [...row].forEach((ch, x) => { if (A.pal[ch]) r += "<rect x='" + x + "' y='" + y + "' width='1' height='1' fill='" + A.pal[ch] + "'/>"; }));
+  ICONS[k] = "<svg viewBox='0 0 8 8' shape-rendering='crispEdges' aria-hidden='true'>" + r + "</svg>";
+}
+setTimeout(() => { for (const el of document.querySelectorAll(".hudico")) el.innerHTML = ICONS[el.dataset.ico]; }, 0);
+const RES_LABEL = { gold: "Gold", bones: "Bones", skulls: "Skulls", stone: "Smooth stone", iron: "Scrap iron", wood: "Wood", crystal: "Crystal shards" };
+// a resource with its icon; the name rides along as a tooltip and for screen readers
+const ri = (k, n) => "<span class='ri' title='" + RES_LABEL[k] + "' aria-label='" + (n === undefined ? "" : n + " ") + RES_LABEL[k] + "'>" + ICONS[k] + (n === undefined ? "" : "<span aria-hidden='true'>" + n + "</span>") + "</span>";
+// tapping an icon outside a button shows its name for a moment
+document.addEventListener("click", e => {
+  const el = e.target.closest && e.target.closest(".ri, .good");
+  if (!el || e.target.closest("button")) return;
+  let tip = document.querySelector(".tip"); if (!tip) { tip = document.createElement("div"); tip.className = "tip"; document.body.appendChild(tip); }
+  const r = el.getBoundingClientRect(); tip.textContent = el.title; tip.style.left = Math.max(4, r.left) + "px"; tip.style.top = Math.max(4, r.top - 26) + "px"; tip.hidden = false;
+  clearTimeout(tip.timer); tip.timer = setTimeout(() => { tip.hidden = true; }, 1500);
+});
 // prices can include any warehouse goods: gold, bones, skulls, stone, iron, wood, crystal
 const COST_NAMES = { gold: ["gold", "gold"], bones: ["bone", "bones"], skulls: ["skull", "skulls"], stone: ["smooth stone", "smooth stones"], iron: ["scrap iron", "scrap iron"], wood: ["wood", "wood"], crystal: ["crystal shard", "crystal shards"] };
 const asCost = c => typeof c === "number" ? { gold: c } : c;
 const have = k => k === "gold" ? META.gold : (META.warehouse[k] || 0);
-const costText = c => Object.keys(COST_NAMES).filter(k => c[k]).map(k => c[k] + " " + COST_NAMES[k][c[k] > 1 ? 1 : 0]).join(" · ") || "free";
+const costText = c => Object.keys(COST_NAMES).filter(k => c[k]).map(k => ri(k, c[k])).join("") || "free";
 const canPay = c => Object.keys(COST_NAMES).every(k => have(k) >= (c[k] || 0));
 function pay(c) { for (const k in COST_NAMES) if (c[k]) { if (k === "gold") META.gold -= c[k]; else META.warehouse[k] -= c[k]; } }
 function renderResearch(where) {
@@ -2796,7 +3641,7 @@ function renderResearch(where) {
   for (const btn of $(where + "List").querySelectorAll("[data-r]")) btn.addEventListener("click", () => {
     const r = list.find(x => x.key === btn.dataset.r), lv = lvs[r.key] || 0, c = DATA.research.cost(r, lv);
     if (lv >= r.max || !canPay(c)) return;
-    META.gold -= c.gold; META.warehouse.bones -= c.bones; META.warehouse.skulls -= c.skulls; lvs[r.key] = lv + 1;
+    pay(c); lvs[r.key] = lv + 1;
     if (c.gold) SFX.play("coins");
     saveMeta(); renderTown();
   });
@@ -3348,6 +4193,132 @@ function orc(ctx, cx, gy, s0, t, st) {
 }
 
 
+// ---------- Ogre ----------
+const OGRE = "#a8865a", OGRE_D = "#86683f", LOIN = "#7a5a3a", ROPE = "#d1b277";
+function ogre(ctx, cx, gy, s0, t, st) {
+  const s = s0 * 1.45, slam = st.gmove === "slam";
+  const M = motion(t, 4, st, slam ? ["main"] : ["main", "kick"]);
+  if (slam && M.attacking) { M.mv = "main"; M.main = true; M.kick = false; M.butt = false; M.bx = M.hit * 3; }
+  const bx = cx + M.bx * 0.5 * s + M.shake * s, bob = M.bob * s * 0.6 + (M.main ? M.hit * 5 * s : 0);
+  feet(ctx, M, bx, gy, s, OGRE_D, 15, kickFoot(M, s, st));
+  const bodyY = gy - 38 * s + bob, BW = 31 * s, BH = 27 * s;
+  // the belly: most of the ogre
+  ctx.beginPath(); ctx.ellipse(bx, bodyY, BW, BH, 0, 0, Math.PI * 2); ctx.fillStyle = OGRE; ctx.fill();
+  ctx.save(); ctx.clip(); ctx.fillStyle = OGRE_D; ctx.beginPath(); ctx.ellipse(bx + 17 * s, bodyY + 6 * s, 22 * s, 30 * s, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.ellipse(bx - 10 * s, bodyY - 8 * s, 10 * s, 7 * s, -0.4, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  ctx.beginPath(); ctx.ellipse(bx, bodyY, BW, BH, 0, 0, Math.PI * 2); ctx.lineWidth = 4.5 * LW; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(bx - 2 * s, bodyY + 4 * s, 1.6 * s, 0, Math.PI * 2); ctx.fill();          // belly button
+  // loincloth on a rope belt
+  ctx.beginPath(); ctx.moveTo(bx - 13 * s, bodyY + 15 * s); ctx.lineTo(bx + 13 * s, bodyY + 15 * s); ctx.lineTo(bx + 10 * s + Math.sin(M.p) * 2 * s, bodyY + 33 * s); ctx.lineTo(bx - 9 * s + Math.sin(M.p) * 2 * s, bodyY + 33 * s); ctx.closePath(); shape(ctx, LOIN, 3);
+  ctx.beginPath(); ctx.moveTo(bx - BW * 0.82, bodyY + 11 * s); ctx.quadraticCurveTo(bx, bodyY + 21 * s, bx + BW * 0.82, bodyY + 11 * s);
+  ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 6.5 * LW; ctx.stroke(); ctx.strokeStyle = ROPE; ctx.lineWidth = 3.4 * LW; ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = 1.4 * LW; for (let i = -3; i <= 3; i++) { const x = bx + i * 6 * s, y = bodyY + 16 * s - Math.abs(i) * 0.9 * s; ctx.beginPath(); ctx.moveTo(x - 1.5 * s, y - 1.5 * s); ctx.lineTo(x + 1.5 * s, y + 1.5 * s); ctx.stroke(); }
+  // a small head on a big ogre
+  const R = 16 * s, hx = bx + Math.sin(M.tilt) * 6 * s + 2 * s, hy = bodyY - BH - R * 0.45 + (M.main ? M.hit * 5 * s : 0);
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(M.tilt * 0.6 + M.tiltAdd * 0.5);
+  for (const side of [-1, 1]) ell(ctx, side * R * 0.98, -R * 0.1, R * 0.26, R * 0.32, side * 0.3, OGRE, 3);
+  ell(ctx, 0, 0, R, R * 0.92, 0, OGRE, 4);
+  for (const [wx, wy] of st.warts || []) { ell(ctx, wx * R, wy * R, R * 0.09, R * 0.09, 0, OGRE_D, 1.8); }
+  const wide = M.panicking, ey = -R * 0.18;
+  if (M.charmed) for (const ex of [-R * 0.38, R * 0.38]) heart(ctx, ex, ey, R * 0.2 * charmBeat(t));
+  else for (const ex of [-R * 0.38, R * 0.38]) {
+    if (wide) { ell(ctx, ex, ey, R * 0.18, R * 0.18, 0, "#ffffff", 2.5); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ex, ey, R * 0.07, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ex, ey, R * 0.09, 0, Math.PI * 2); ctx.fill(); }
+  }
+  if (!wide && !M.charmed) { ctx.strokeStyle = INK; ctx.lineWidth = 3.5 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-R * 0.6, -R * 0.42); ctx.lineTo(-R * 0.15, M.confused ? -R * 0.5 : -R * 0.32); ctx.moveTo(R * 0.6, -R * 0.42); ctx.lineTo(R * 0.15, -R * 0.32); ctx.stroke(); }
+  ell(ctx, 0, R * 0.12, R * 0.22, R * 0.17, 0, OGRE_D, 3);                       // a round, squashed nose
+  if (st.noseRing) goldRing(ctx, 0, R * 0.32, R * 0.12);
+  // underbite: a jaw that sticks out further than the face, one big tusk and the odd missing tooth
+  const open = M.walking ? Math.abs(Math.sin(M.p)) * 0.2 : M.attacking ? M.hit * 0.8 : M.panicking ? 0.9 : 0.05, jy = R * 0.45 + open * R * 0.12;
+  ctx.fillStyle = "#3a1f2a"; ctx.fillRect(-R * 0.45, R * 0.36, R * 0.9, jy - R * 0.34);
+  ctx.beginPath(); ctx.roundRect(-R * 0.72, jy, R * 1.44, R * 0.42, R * 0.18); shape(ctx, OGRE, 3.5);
+  const ts = st.tuskSide || 1;
+  ctx.beginPath(); ctx.moveTo(ts * R * 0.42, jy + R * 0.1); ctx.quadraticCurveTo(ts * R * 0.56, jy - R * 0.55, ts * R * 0.3, jy - R * 0.62); ctx.quadraticCurveTo(ts * R * 0.3, jy - R * 0.2, ts * R * 0.2, jy + R * 0.1); ctx.closePath(); shape(ctx, TUSK, 3);
+  if (!st.gap) { ctx.beginPath(); ctx.rect(-ts * R * 0.32, jy - R * 0.16, R * 0.14, R * 0.18); shape(ctx, TUSK, 2); }
+  ctx.restore();
+  // fists: huge; on a slam both come down together
+  for (const side of [-1, 1]) {
+    let x = bx + side * 34 * s - (M.walking ? side * M.swing * 5 * s : 0), y = bodyY + 4 * s;
+    if (M.panicking) { x = bx + side * (34 + Math.sin(t * 20 + side) * 4) * s; y = hy - R * 1.2 + Math.cos(t * 18 + side) * 4 * s; }
+    if (M.main) {
+      if (slam) { x = bx + side * (12 - M.hit * 4) * s + M.hit * 14 * s; y = bodyY - M.wind * 120 * s + M.hit * 32 * s; }
+      else if (side === 1) { x = bx + (30 + M.hit * 16) * s; y = bodyY - M.wind * 70 * s + M.hit * 16 * s; }
+    }
+    [x, y] = sharedHands(M, side, x, y, s);
+    ell(ctx, x, y, 12 * s, 11 * s, 0, OGRE);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW; ctx.beginPath(); ctx.moveTo(x - 4 * s, y - 5 * s); ctx.lineTo(x - 4 * s, y + 2 * s); ctx.moveTo(x + 3 * s, y - 5 * s); ctx.lineTo(x + 3 * s, y + 2 * s); ctx.stroke();
+  }
+  if (M.main && M.hit > 0.85) {
+    burst(ctx, bx + 18 * s, gy - 6 * s, s * (slam ? 2 : 1.3), M.hit);
+    if (slam) for (let i = 0; i < 6; i++) { const a = Math.PI + i * Math.PI / 5; ell(ctx, bx + 14 * s + Math.cos(a) * 40 * s * (1.2 - M.hit), gy - 4 * s + Math.sin(a) * 6 * s, 5 * s, 3 * s, 0, "#8a7a64", 1.5); }
+  }
+  sharedBurst(ctx, M, s, st);
+  qMarks(ctx, st, hx, hy - R * 1.1, s, M.confused);
+  if (M.panicking) { exclaim(ctx, hx, hy - R * 1.4, s, t); sweat(ctx, hx + R * 1.1, hy - R * 0.3, s, t); }
+}
+
+// ---------- Troll ----------
+function troll(ctx, cx, gy, s0, t, st) {
+  const s = s0 * 1.3, M = motion(t, 4.5, st, ["main", "kick", "headbutt"]);
+  const SK = st.skin || ["#6f9a86", "#557a69"];
+  const bx = cx + M.bx * 0.6 * s + M.shake * s, bob = M.bob * s * 0.8;
+  feet(ctx, M, bx - 2 * s, gy, s, SK[1], 12, kickFoot(M, s, st));
+  // the arm at the back swings low
+  const hand = (side) => {
+    let x = bx + side * 26 * s + 8 * s - (M.walking ? side * M.swing * 10 * s : 0), y = gy - 10 * s + Math.abs(M.swing) * 3 * s;
+    if (M.panicking) { x = bx + side * (26 + Math.sin(t * 20 + side) * 5) * s; y = gy - 70 * s + Math.cos(t * 18 + side) * 5 * s; }
+    if (M.main && side === 1) { x = bx + (24 + M.hit * 22 - M.wind * 10) * s; y = gy - 12 * s - M.wind * 60 * s + M.hit * 30 * s; }
+    return sharedHands(M, side, x, y, s);
+  };
+  const arm = (side) => {
+    const [x, y] = hand(side), sx = bx + side * 15 * s + 6 * s, sy = gy - 50 * s + bob;
+    ctx.lineCap = "round"; ctx.strokeStyle = INK; ctx.lineWidth = 12 * s; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo((sx + x) / 2 + side * 6 * s, (sy + y) / 2, x, y); ctx.stroke();
+    ctx.strokeStyle = side < 0 ? SK[1] : SK[0]; ctx.lineWidth = 12 * s - 4.5 * LW; ctx.stroke();
+    ell(ctx, x, y, 8.5 * s, 7.5 * s, 0, side < 0 ? SK[1] : SK[0], 3);
+    ctx.strokeStyle = INK; ctx.lineWidth = 2 * LW; ctx.beginPath(); ctx.moveTo(x - 3 * s, y - 4 * s); ctx.lineTo(x - 3 * s, y + 2 * s); ctx.moveTo(x + 2 * s, y - 4 * s); ctx.lineTo(x + 2 * s, y + 2 * s); ctx.stroke();
+  };
+  arm(-1);
+  // a hunched body, leaning forward
+  const bodyY = gy - 42 * s + bob;
+  ctx.save(); ctx.translate(bx, bodyY); ctx.rotate(0.32 + M.tilt * 0.5);
+  ctx.beginPath(); ctx.ellipse(0, 0, 21 * s, 26 * s, 0, 0, Math.PI * 2); shape(ctx, SK[0], 4.5);
+  ctx.beginPath(); ctx.ellipse(0, 6 * s, 15 * s, 15 * s, 0, 0, Math.PI); ctx.lineTo(-15 * s, 6 * s); ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-18 * s, 8 * s); ctx.lineTo(18 * s, 8 * s); ctx.lineTo(14 * s, 24 * s); ctx.lineTo(-14 * s, 24 * s); ctx.closePath(); shape(ctx, "#5a4a3a", 3);   // ragged shorts
+  if (st.moss && st.moss.back) { ell(ctx, -14 * s, -14 * s, 8 * s, 5 * s, -0.6, MOSS, 2.5); ell(ctx, -8 * s, -20 * s, 4 * s, 3 * s, -0.4, "#86b05a", 2); }
+  ctx.restore();
+  // head pushed forward, low between the shoulders
+  const R = 22 * s, hx = bx + 16 * s + Math.sin(M.tilt) * 6 * s + M.hdx * s, hy = bodyY - 26 * s + M.hdy * s;
+  if (M.butt && M.hit > 0.85) st.impact = { x: hx + R * 1.3, y: hy + R * 0.2 };
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(M.tilt * 0.5 + M.tiltAdd * 0.6);
+  // shaggy hair: a ring of tufts over the top
+  ctx.fillStyle = st.hair || "#3b4a2a"; ctx.strokeStyle = INK; ctx.lineWidth = 3 * LW;
+  for (let i = 0; i < 7; i++) { const a = -Math.PI * 0.95 + i * Math.PI * 0.9 / 6, len = R * (0.45 + 0.15 * Math.sin(i * 2.3 + t * 2)); ctx.beginPath(); ctx.moveTo(Math.cos(a - 0.25) * R * 0.85, Math.sin(a - 0.25) * R * 0.85); ctx.lineTo(Math.cos(a) * (R + len), Math.sin(a) * (R + len)); ctx.lineTo(Math.cos(a + 0.25) * R * 0.85, Math.sin(a + 0.25) * R * 0.85); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  ell(ctx, 0, 0, R, R * 0.85, 0, SK[0], 4);
+  ctx.beginPath(); ctx.ellipse(-R * 0.1, -R * 0.62, R * 0.8, R * 0.3, 0, Math.PI, 0); ctx.fillStyle = st.hair || "#3b4a2a"; ctx.fill();   // fringe
+  if (st.moss && st.moss.head) ell(ctx, -R * 0.4, -R * 0.78, R * 0.22, R * 0.12, 0, MOSS, 2);
+  // ear and earring
+  ell(ctx, -R * 0.9, R * 0.05, R * 0.2, R * 0.32, -0.3, SK[1], 3);
+  if (st.earring) goldRing(ctx, -R * 0.95, R * 0.38, R * 0.11);
+  // small deep-set eyes under a heavy brow
+  const ey = -R * 0.18;
+  if (M.charmed) for (const ex of [R * 0.05, R * 0.55]) heart(ctx, ex, ey, R * 0.15 * charmBeat(t));
+  else for (const ex of [R * 0.05, R * 0.55]) { const r = R * (M.panicking ? 0.15 : 0.09); ell(ctx, ex, ey, r, r, 0, M.panicking ? "#ffffff" : "#f5e05a", 2.5); if (M.panicking) { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ex, ey, r * 0.4, 0, Math.PI * 2); ctx.fill(); } }
+  if (!M.panicking && !M.charmed) { ctx.strokeStyle = INK; ctx.lineWidth = 4 * LW; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-R * 0.15, -R * 0.36); ctx.quadraticCurveTo(R * 0.3, M.confused ? -R * 0.6 : -R * 0.42, R * 0.78, -R * 0.36); ctx.stroke(); }
+  // the nose: big, knobbly and in front of everything
+  ctx.beginPath(); ctx.ellipse(R * 0.62, R * 0.2, R * 0.42, R * 0.3, 0.3, 0, Math.PI * 2); shape(ctx, SK[0], 3.5);
+  ell(ctx, R * 0.88, R * 0.05, R * 0.12, R * 0.1, 0, SK[1], 2); ell(ctx, R * 0.5, R * 0.36, R * 0.09, R * 0.08, 0, SK[1], 2);
+  // a wide mouth with one tooth poking up
+  const open = M.attacking ? M.hit * 0.6 : M.panicking ? 0.8 : M.walking ? Math.abs(Math.sin(M.p)) * 0.15 : 0.05;
+  ctx.beginPath(); ctx.moveTo(-R * 0.25, R * 0.55); ctx.quadraticCurveTo(R * 0.3, R * (0.62 + open * 0.3), R * 0.7, R * 0.52); ctx.strokeStyle = INK; ctx.lineWidth = 3.5 * LW; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(R * 0.12, R * 0.6); ctx.lineTo(R * 0.2, R * 0.38); ctx.lineTo(R * 0.28, R * 0.6); ctx.closePath(); shape(ctx, TUSK, 2);
+  ctx.restore();
+  arm(1);
+  if (M.main && M.hit > 0.85) burst(ctx, bx + 46 * s, gy - 14 * s, s * 1.2, M.hit);
+  sharedBurst(ctx, M, s, st);
+  qMarks(ctx, st, hx, hy - R * 1.2, s, M.confused);
+  if (M.panicking) { exclaim(ctx, hx, hy - R * 1.5, s, t); sweat(ctx, hx - R * 1.1, hy - R * 0.3, s, t); }
+}
+
 // ---------- Wisp ----------
 // a glowing orb: pulses as it drifts, flashes red on a strike, shimmers yellow like a mirage in a panic,
 // and glows pink and lilac, throwing off little hearts, when charmed
@@ -3412,6 +4383,67 @@ function wisp(ctx, cx, gy, s, t, st) {
   st.hearts = st.hearts.filter(h => h.life < 1.1);
   qMarks(ctx, st, x, y - R * 1.05, s, M.confused);
   if (M.panicking) exclaim(ctx, x, y - R * 1.15, s, t);
+}
+
+// ---------- Spirit (summon) ----------
+// a chibi ghost: a floating sheet with a swishing hem and tail, mismatched glowing eyes,
+// sometimes chains, a bow or a torn hem; it flickers while phasing
+function spirit(ctx, cx, gy, s, t, st) {
+  const M = motion(t, 5, st, ["main"]);
+  const bob = Math.sin(t * 2.2) * 6 * s, sway = M.walking || M.panicking ? Math.sin(t * 7) * 0.12 : Math.sin(t * 1.5) * 0.05;
+  const x = cx + (M.main ? M.k * 6 * s : 0) + M.shake * s, y = gy - 72 * s + bob + (M.main ? M.hit * 10 * s : 0);
+  const R = 30 * s;
+  ctx.save();
+  if (st.phasing > 0) ctx.globalAlpha = 0.25 + 0.3 * Math.abs(Math.sin(t * 40));
+  // the chill it gives off when it strikes: a pale ring under the sheet
+  if (M.main) { ctx.save(); ctx.globalAlpha *= M.hit; ctx.strokeStyle = "#cfe0ff"; ctx.lineWidth = 3 * LW; ctx.beginPath(); ctx.ellipse(x, gy - 4 * s, 34 * s * (0.6 + M.hit * 0.5), 8 * s, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+  ctx.fillStyle = "rgba(160,190,255,.18)"; ctx.beginPath(); ctx.ellipse(x, gy - 3 * s, 24 * s, 5 * s, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.translate(x, y); ctx.rotate(sway);
+  // body: dome on top, sides flaring out, a wavy (or torn) hem and a tail that flicks behind
+  const hemY = R * 1.25, ph = t * 5;
+  const body = () => {
+    ctx.beginPath(); ctx.moveTo(-R, 0); ctx.arc(0, 0, R, Math.PI, 0);
+    ctx.quadraticCurveTo(R * 1.08, R * 0.7, R * 1.05, hemY);
+    const n = 5;
+    for (let i = 0; i < n; i++) {
+      const x0 = R * 1.05 - (i + 1) * (R * 2.1 / n), xm = x0 + R * 1.05 / n, dip = st.torn && i % 2 ? R * 0.32 : R * 0.18;
+      if (st.torn) { ctx.lineTo(xm, hemY - dip + Math.sin(ph + i) * 3 * s); ctx.lineTo(x0, hemY + Math.sin(ph + i + 1) * 3 * s); }
+      else ctx.quadraticCurveTo(xm, hemY - dip + Math.sin(ph + i) * 4 * s, x0, hemY + Math.sin(ph + i + 1) * 3 * s);
+    }
+    // the tail curls out to the back
+    ctx.quadraticCurveTo(-R * 1.5, hemY + R * 0.1 + Math.sin(ph) * 4 * s, -R * 1.65 + Math.sin(ph * 0.8) * 4 * s, hemY - R * 0.45);
+    ctx.quadraticCurveTo(-R * 1.25, hemY - R * 0.25, -R * 1.02, R * 0.55);
+    ctx.quadraticCurveTo(-R * 1.05, R * 0.3, -R, 0); ctx.closePath();
+  };
+  body(); ctx.fillStyle = M.main && M.hit > 0.3 ? "#ffffff" : "#e6edff"; ctx.fill();
+  ctx.save(); body(); ctx.clip(); ctx.fillStyle = "#c3d0f0"; ctx.beginPath(); ctx.ellipse(R * 0.7, R * 0.8, R * 0.6, R * 1.4, 0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.ellipse(-R * 0.4, -R * 0.45, R * 0.25, R * 0.16, -0.5, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  body(); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.lineJoin = "round"; ctx.stroke();
+  // little arms
+  for (const side of [-1, 1]) {
+    const ax = side * R * 0.95 + (M.main ? side * M.hit * 6 * s : 0), ay = R * 0.45 - (M.panicking ? R * 0.9 : M.main ? M.wind * R * 0.5 : Math.sin(t * 3 + side) * 3 * s);
+    ell(ctx, ax, ay, R * 0.2, R * 0.13, side * 0.6, "#e6edff", 3);
+  }
+  // mismatched glowing eyes
+  const eyes = st.eyes || [["#6fa8ff", 1], ["#b8f07a", 0.75]];
+  if (M.charmed) { heart(ctx, -R * 0.35, -R * 0.1, R * 0.2 * charmBeat(t)); heart(ctx, R * 0.35, -R * 0.1, R * 0.16 * charmBeat(t)); }
+  else eyes.forEach(([c, k], i) => {
+    const ex = (i ? 1 : -1) * R * 0.35, ey = -R * 0.12, r = R * 0.17 * k * (M.panicking ? 1.3 : 1);
+    const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, r * 2.6); g.addColorStop(0, c); g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ex, ey, r * 2.6, 0, Math.PI * 2); ctx.fill();
+    ell(ctx, ex, ey, r, (t % 4.1) < 0.12 ? r * 0.15 : r * 1.15, 0, c, 2.5);
+  });
+  // an "ooo" mouth
+  const mo = M.panicking ? 1.4 : M.main ? 0.6 + M.hit * 0.6 : 0.6 + 0.15 * Math.sin(t * 2);
+  ell(ctx, 0, R * 0.3, R * 0.1 * mo, R * 0.14 * mo, 0, "#2a2a44", 2);
+  if (st.bow) { const bx = R * 0.55, by = -R * 0.78; ell(ctx, bx - R * 0.17, by, R * 0.2, R * 0.12, 0.3, "#e2566a", 2.5); ell(ctx, bx + R * 0.17, by, R * 0.2, R * 0.12, -0.3, "#e2566a", 2.5); ell(ctx, bx, by, R * 0.08, R * 0.08, 0, "#b83a4f", 2); }
+  if (st.chains) {     // a few loose links dangling from the hem
+    for (let i = 0; i < 4; i++) { const cx2 = -R * 0.5 + i * R * 0.12, cy2 = hemY + R * 0.05 + i * R * 0.13 + Math.sin(t * 3 + i) * 2 * s;
+      ctx.beginPath(); ctx.ellipse(cx2, cy2, R * 0.07, R * 0.1, i % 2 ? 0.9 : 0, 0, Math.PI * 2); ctx.lineWidth = 4 * LW; ctx.strokeStyle = INK; ctx.stroke(); ctx.lineWidth = 2 * LW; ctx.strokeStyle = "#9a98a8"; ctx.stroke(); }
+  }
+  ctx.restore();
+  qMarks(ctx, st, x, y - R * 1.25, s, M.confused);
+  if (M.panicking) exclaim(ctx, x, y - R * 1.35, s, t);
 }
 
 // ---------- Golem (summon) ----------
@@ -3675,10 +4707,12 @@ function wizHat(ctx, G, lift, tipA, sq, t) {
 }
 function wizHand(ctx, x, y, side, G, rot) {
   ell(ctx, x - side * 6, y + 3, 8, 6.5, rot || side * 0.4, G.robe[0], 3);
-  ctx.beginPath(); ctx.arc(x, y, 6.5, 0, Math.PI * 2); shape(ctx, GLOVE, 3);
+  if (G.cuff) ell(ctx, x - side * 3, y + 1.5, 3.5, 6.5, rot || side * 0.4, G.cuff, 2);
+  ctx.beginPath(); ctx.arc(x, y, 6.5, 0, Math.PI * 2); shape(ctx, G.glove || GLOVE, 3);
+  if (G.ring && side === 1) { ell(ctx, x - 2, y + 4, 2.4, 2.4, 0, "#e8c45a", 1.5); sparkle(ctx, x - 2, y + 1, 2.4, 0.9); }
 }
 function wizard(ctx, cx, gy, s, t, st) {
-  const G = GEAR[st.gear || "starter"], m = st.wmode || "idle";
+  const G = typeof st.gear === "object" ? st.gear : GEAR[st.gear || "starter"], m = st.wmode || "idle";
   let dx = 0, by = Math.sin(t * 2) * 1.2, lean = 0, lift = 0, tipA = 1.95 + Math.sin(t * 1.3) * 0.12, sq = 1;
   let look = (t % 3.7) < 0.13 ? "blink" : "open", eyeDy = 0, boost = 1, flutter = st.talking ? Math.sin(t * 13) * 0.12 : 0;
   let hF = [31, -50], hB = [-33, -48], staffA = -0.05, orbGlow = 0.55 + 0.15 * Math.sin(t * 3), c = 0, r = 0, ph = 0, hop = 0, j = 0;
@@ -3708,8 +4742,13 @@ function wizard(ctx, cx, gy, s, t, st) {
   ctx.save(); ctx.translate(cx + dx * s, gy + by * s); ctx.scale(s, s); ctx.rotate(lean);
   const LW0 = LW; LW = LW0 / s;
   // boots peek out under the robe
-  if (st.lev) for (const side of [-1, 1]) ell(ctx, side * 9 + 4, -2, 8.5, 4.6, 1.15 + Math.sin(t * 1.8 + side) * 0.08, BOOT, 3);
-  else for (const side of [-1, 1]) ell(ctx, side * 11 + 3, -4, 9, 5, 0, BOOT, 3);
+  if (G.cloak) {         // a cloak hangs from the shoulders behind everything else
+    const sw = Math.sin(t * 2) * 2 + flutter * 8;
+    ctx.beginPath(); ctx.moveTo(-26, -78); ctx.quadraticCurveTo(-44 - sw, -40, -46 - sw, -2); ctx.quadraticCurveTo(-20, 4 + sw * 0.3, 2, -1); ctx.quadraticCurveTo(24, 4, 40 - sw * 0.5, -3); ctx.quadraticCurveTo(40, -40, 26, -78); ctx.closePath();
+    shape(ctx, G.cloak[0], 3.5); ctx.fillStyle = G.cloak[1]; ctx.beginPath(); ctx.moveTo(-40 - sw, -6); ctx.quadraticCurveTo(-30, -2, -22, 0); ctx.lineTo(-30, -40); ctx.closePath(); ctx.fill();
+  }
+  if (st.lev) for (const side of [-1, 1]) ell(ctx, side * 9 + 4, -2, 8.5, 4.6, 1.15 + Math.sin(t * 1.8 + side) * 0.08, G.boot || BOOT, 3);
+  else for (const side of [-1, 1]) ell(ctx, side * 11 + 3, -4, 9, 5, 0, G.boot || BOOT, 3);
   // robe: a bell from the shoulders to a hem that sways a little
   const hemW = Math.sin(t * 2.4) * 1.2 + flutter * 5;
   const robe = () => {
@@ -3959,6 +4998,23 @@ function renderNpc(cv, npc, who, t, st) {
   LW = Math.max(0.5, s); mode = "idle";
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, W);
   const shadow = (x, r) => { ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(x, gy, r * s, r * 0.19 * s, 0, 0, Math.PI * 2); ctx.fill(); };
+  if (npc === "saina") {
+    townBack(ctx, W, gy, s); shadow(W * 0.48, 36);
+    st.ctx = ctx; st.talking = who === "Saina Lot"; skeleton(st, W * 0.48, gy, s, t);
+    ctx.save(); ctx.translate(W * 0.48 + 4 * s, gy - 146 * s); ctx.scale(s, s); const L0 = LW; LW = L0 / s;
+    ctx.save(); ctx.rotate(-0.18); ctx.beginPath(); ctx.ellipse(6, 0, 46, 15, 0, 0, Math.PI * 2); shape(ctx, "#7a2f6a", 3.5);
+    ctx.beginPath(); ctx.ellipse(6, -6, 34, 13, 0, Math.PI, 0); ctx.closePath(); shape(ctx, "#8e3a7c", 3);
+    ctx.beginPath(); ctx.moveTo(30, -8); ctx.quadraticCurveTo(70, -50, 58, -70); ctx.quadraticCurveTo(52, -40, 26, -12); ctx.closePath(); shape(ctx, "#e8c45a", 2.5); ctx.restore();
+    // the lute, held across the ribs
+    ctx.save(); ctx.translate(-4, 112); ctx.rotate(-0.6 + Math.sin(t * (st.talking ? 9 : 1.5)) * 0.04);
+    ctx.beginPath(); ctx.ellipse(0, 0, 18, 14, 0, 0, Math.PI * 2); shape(ctx, "#c98d4a", 3);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(3, 0, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.rect(14, -3, 34, 6); shape(ctx, "#8a5a34", 2.5); ctx.beginPath(); ctx.rect(46, -5, 8, 10); shape(ctx, "#6b4426", 2);
+    ctx.restore();
+    if (st.talking) for (let i = 0; i < 2; i++) { const f = (t * 0.8 + i * 0.5) % 1; ctx.save(); ctx.globalAlpha = 1 - f; ctx.fillStyle = "#e8c45a"; ctx.font = "700 " + 22 + "px serif"; ctx.fillText(i ? "♫" : "♪", 50 + i * 14, 70 - f * 50); ctx.restore(); }
+    LW = L0; ctx.restore();
+    return;
+  }
   if (npc === "villagers") {
     tavernBack(ctx, W, gy, s);
     const mutter = /muttering/i.test(who), talk = who === "Villagers";
@@ -4108,7 +5164,7 @@ function rollCracks() {
 }
 
 
-  const DRAW = { kobold, bog_goblin: goblin, orc, golem, wisp,
+  const DRAW = { kobold, bog_goblin: goblin, orc, golem, wisp, ogre, troll, spirit,
     skeleton_warrior: (ctx, x, gy, s, t, st) => { st.ctx = ctx; skeleton(st, x, gy, s, t); },
     skeleton_archer: (ctx, x, gy, s, t, st) => { st.ctx = ctx; st.archer = true; skeleton(st, x, gy, s, t); } };
   // draw one character on a square canvas: ground, shadow and the creature, in the given animation mode
@@ -4138,6 +5194,20 @@ function rollCracks() {
     if (kind === "golem") {
       st.mossSpots = { head: Math.random() < 0.5, left: Math.random() < 0.5, right: Math.random() < 0.5 };
       st.mossTop = ["plain", "flower", "mushroom"][Math.floor(Math.random() * 3)]; st.gcracks = rollGolemCracks(); st.quarry = 0;
+    }
+    if (kind === "spirit") {
+      const c = ["#6fa8ff", "#b8f07a", "#ffd75a", "#ff8fc0", "#c79bff"].sort(() => Math.random() - 0.5);
+      st.eyes = Math.random() < 0.5 ? [[c[0], 1], [c[1], 0.72]] : [[c[0], 0.75], [c[1], 1]];
+      st.chains = Math.random() < 0.4; st.bow = Math.random() < 0.3; st.torn = Math.random() < 0.4;
+    }
+    if (kind === "ogre") {
+      st.warts = Array.from({ length: Math.floor(Math.random() * 4) }, () => [Math.random() * 1.2 - 0.6, Math.random() * 0.7 - 0.5]);
+      st.noseRing = Math.random() < 0.4; st.gap = Math.random() < 0.5; st.tuskSide = Math.random() < 0.5 ? -1 : 1;
+    }
+    if (kind === "troll") {
+      st.hair = ["#3b4a2a", "#5a3a2a", "#2b2a35", "#8a7a5a", "#6a2e2e"][Math.floor(Math.random() * 5)];
+      st.earring = Math.random() < 0.45; st.moss = { head: Math.random() < 0.5, back: Math.random() < 0.6 };
+      st.skin = Math.random() < 0.5 ? ["#6f9a86", "#557a69"] : ["#6f8aa0", "#557086"];
     }
     if (kind === "orc") { st.marks = {}; for (const spot of ["left", "right", "forehead"]) { const r = Math.random(); st.marks[spot] = r < 0.35 ? "scar" : r < 0.65 ? "plaster" : null; } }
     return st;
@@ -4196,7 +5266,7 @@ function renderGrimoire() {
   const animBtns = allAnims.map(a => anims.includes(a)
     ? "<button class='anim' type='button' data-a='" + a + "' aria-pressed='" + (a === GRIM.anim) + "'>" + G.animNames[a] + "</button>"
     : "<button class='anim' type='button' disabled title='Locked'>" + G.animNames[a] + "</button>").join("");
-  const firstWave = k === "kobold" ? 1 : k === "bog_goblin" ? DATA.waves.goblinsFrom : DATA.waves.orcsFrom;
+  const firstWave = { kobold: 1, bog_goblin: DATA.waves.goblinsFrom, orc: DATA.waves.orcsFrom, ogre: DATA.waves.ogresFrom, troll: DATA.waves.trollsFrom }[k];
   const sec = (key, title, body) => unlocked(k, key)
     ? "<div class='sec'><h4>" + title + "</h4>" + body + "</div>"
     : "<div class='sec locked'><h4>" + title + "</h4><p>Defeat " + (G.tiers.find(x => x.key === key).at - n) + " more to reveal.</p></div>";
