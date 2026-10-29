@@ -468,7 +468,7 @@ function kobold(ctx, cx, gy, s0, t, st) {
   const bodyY = gy - 31 * s + bob;
   if (st.boss) for (const side of [-1, 1]) {      // the king's small bat wings, folded behind the shoulders and twitching
     const flap = Math.sin(t * (M.walking ? 9 : M.panicking ? 22 : 3)) * (M.panicking ? 0.35 : 0.14);
-    ctx.save(); ctx.translate(bx + side * 7 * s, bodyY - 4 * s); ctx.scale(side * 1.45, 1.45); ctx.rotate(0.05 - flap);
+    ctx.save(); ctx.translate(bx + side * 7 * s, bodyY - 4 * s); ctx.scale(side * 1.67, 1.67); ctx.rotate(-0.2 - flap);
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(10 * s, -12 * s); ctx.lineTo(22 * s, -10 * s);         // arm and finger tip
     ctx.quadraticCurveTo(19 * s, -3 * s, 21 * s, 3 * s); ctx.quadraticCurveTo(15 * s, 0, 13 * s, 5 * s);   // scalloped trailing edge
     ctx.quadraticCurveTo(8 * s, 1 * s, 4 * s, 7 * s); ctx.closePath(); shape(ctx, "#7a3d2c", 2.5);
