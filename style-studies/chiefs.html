@@ -728,6 +728,18 @@ function ogre(ctx, cx, gy, s0, t, st) {
       else if (side === 1) { x = bx + (30 + M.hit * 16) * s; y = bodyY - M.wind * 70 * s + M.hit * 16 * s; }
     }
     [x, y] = sharedHands(M, side, x, y, s);
+    if (st.boss && side === 1) {        // a roast ham on the bone: lifted behind on the wind-up, swung down on the hit
+      const ang = M.main && !slam ? 0.3 - M.wind * 1.5 + M.hit * 2.0 : M.main ? -0.2 + M.hit * 1.2 : 0.45 + Math.sin(t * 1.4) * 0.06;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+      ctx.beginPath(); ctx.roundRect(-2.8 * s, -27 * s, 5.6 * s, 42 * s, 2.6 * s); shape(ctx, BONE, 2.5);          // the bone handle
+      for (const dx of [-2.6, 2.6]) { ctx.beginPath(); ctx.arc(dx * s, 15 * s, 3.6 * s, 0, Math.PI * 2); shape(ctx, BONE, 2.2); }   // knobbly end
+      ctx.beginPath(); ctx.moveTo(-4 * s, -22 * s); ctx.bezierCurveTo(-21 * s, -30 * s, -19 * s, -58 * s, 0, -59 * s); ctx.bezierCurveTo(19 * s, -58 * s, 21 * s, -30 * s, 4 * s, -22 * s); ctx.closePath(); shape(ctx, "#a8502e", 3.5);
+      ctx.save(); ctx.clip(); ctx.fillStyle = "#7e3720"; ctx.beginPath(); ctx.ellipse(10 * s, -40 * s, 10 * s, 22 * s, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(255,226,180,.35)"; ctx.beginPath(); ctx.ellipse(-7 * s, -45 * s, 4 * s, 8 * s, -0.3, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      ctx.strokeStyle = "#e8b48a"; ctx.lineWidth = 1.6 * LW; ctx.lineCap = "round";           // a crispy fat rind near the bone
+      ctx.beginPath(); ctx.moveTo(-7 * s, -26 * s); ctx.quadraticCurveTo(0, -22 * s, 7 * s, -26 * s); ctx.stroke();
+      ctx.restore();
+    }
     ell(ctx, x, y, 12 * s, 11 * s, 0, OGRE);
     ctx.strokeStyle = INK; ctx.lineWidth = 2.5 * LW; ctx.beginPath(); ctx.moveTo(x - 4 * s, y - 5 * s); ctx.lineTo(x - 4 * s, y + 2 * s); ctx.moveTo(x + 3 * s, y - 5 * s); ctx.lineTo(x + 3 * s, y + 2 * s); ctx.stroke();
   }
