@@ -598,7 +598,7 @@ div.mapbtn { cursor: default; }
       <p>Pick a summon below and tap a lit tile near the ward. The ward holds as long as nothing reaches it.</p>
       <h3>Summons</h3>
       <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
-      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow, very tough and takes two summon slots: nearby enemies can't help attacking it, and every fourth blow is a ground slam that shoves them back. A <b>Spirit</b> drifts through anything and hovers right on top of enemies, hurting everything beneath it; badly hurt, it falls back to a wisp to mend. A <b>Ghost</b> never fights: it hangs back behind your summons and haunts the ground, so everyone near it hits harder and moves faster. A <b>Wraith</b> casts slow Frost Bolts from two tiles away that chill what they hit; it takes two slots. New summons are bound at the Summoning Septagram in town.</p>
+      <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow, very tough and takes two summon slots: nearby enemies can't help attacking it, and every fourth blow is a ground slam that shoves them back. A <b>Spirit</b> drifts through anything and keeps sweeping through the enemy, hurting everything it passes over; badly hurt, it falls back to a wisp to mend. A <b>Ghost</b> never fights: it hangs back behind your summons and haunts the ground, so everyone near it hits harder and moves faster. A <b>Wraith</b> casts slow Frost Bolts from two tiles away that chill what they hit; it takes two slots. New summons are bound at the Summoning Septagram in town.</p>
       <h3>Spells</h3>
       <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward. A <b>Guardstone</b> keeps the first summons to step into its circle on guard there. <b>Freeze</b> chills an area and slows everything in it; <b>Nurture</b> grows bare earth into grass, grass into bushes and bushes into trees.</p>
       <h3>Assault</h3>
@@ -701,7 +701,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.7-alpha";
+const VERSION = "0.9.8-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -741,7 +741,7 @@ const DATA = {
     skeleton_warrior: { gold: 0,  bones: 5,  skulls: 0, about: "Walks around obstacles and hits hard. Cheap and cheerful." },
     skeleton_archer:  { gold: 15, bones: 15, skulls: 0, about: "Shoots from two tiles away. Slow and fragile." },
     golem:            { gold: 60, bones: 0,  skulls: 1, about: "A slow, very tough defender that takes two summon slots. Enemies close by can't resist attacking it." },
-    spirit:           { gold: 200, bones: 0, skulls: 10, crystal: 10, about: "Drifts through anything and hovers over enemies, hurting everything beneath it. When badly hurt it falls back to the nearest wisp to mend, then returns." },
+    spirit:           { gold: 200, bones: 0, skulls: 10, crystal: 10, about: "Drifts through anything and sweeps through enemies without stopping, hurting everything it passes over. When badly hurt it falls back to the nearest wisp to mend, then returns." },
     ghost:            { gold: 300, bones: 0, skulls: 15, crystal: 10, about: "Doesn't fight at all. It drifts behind your other summons and haunts the ground around it: summons nearby hit harder and move faster. Floats over anything; doesn't burn or freeze." },
     wraith:           { gold: 500, bones: 0, skulls: 25, crystal: 25, charcoal: 100, about: "The first spellcaster. Hurls Frost Bolts from two tiles away that chill whatever they hit. Floats over anything, doesn't burn or freeze, and takes two summon slots." }
   },
@@ -802,6 +802,7 @@ const DATA = {
         { gold: 1500, crystal: 20, skulls: 6 }, { gold: 2500, crystal: 35, skulls: 10 }, { gold: 4000, crystal: 50, skulls: 15 }, { gold: 6000, crystal: 80, skulls: 20 }],
         fx: lv => lv ? "can't be hurt for " + fmt(lv * 0.1) + " s after taking damage" : "no phasing" },
       { key: "reality", name: "Barely There",  max: 5, gold: 40, needsSkill: "pseudoS", fx: lv => (10 + 2 * lv) + " % of physical attacks miss" },
+      { key: "sponge", name: "Warmth Sponge",  max: 10, gold: 25, fx: lv => lv ? "receives +" + fmt(0.1 * lv) + " healing from wisps" : "no extra healing from wisps" },
       { key: "regen", name: "Regeneration",    max: 3, costs: [{ gold: 300, crystal: 10 }, { gold: 900, crystal: 25 }, { gold: 2500, crystal: 50, skulls: 5 }], fx: lv => lv ? "mends " + lv + " HP every 5 s" : "no mending" }
     ],
     // the ghost's upgrades, by the Remembrance Lanterns at the Wisping Well
@@ -966,7 +967,7 @@ const DATA = {
       spirit: {
         lore: "A wisp that went somewhere dark and came back different: a shifting knot of violet smoke with two bright eyes in it. A spirit was bound, not raised; it is very particular about that.",
         attacks: "A chill that hurts everything beneath it",
-        behaviour: "Drifts over walls, water and enemies alike and hovers right on top of them, hurting everything underneath. At half health it falls back to the nearest wisp to mend (or to the ward, if there are no wisps) and returns once it is at 80 %. It doesn't burn or freeze, and wards only take half the damage from it.",
+        behaviour: "A skirmisher that never stops: it drifts over walls, water and enemies alike, sweeping straight through them and out the other side, hurting everything it passes over. At half health it falls back to the nearest wisp to mend (or to the ward, if there are no wisps) and returns once it is at 80 %. It doesn't burn or freeze, and wards only take half the damage from it.",
         notes: "It leaves little puffs of smoke wherever it goes and takes offence if you call it a cloud."
       },
       ghost: {
@@ -1901,6 +1902,7 @@ function unitDef(kind) {
     d.hp = Math.round(b.hp * (1 + 0.1 * g("hp"))); d.armor = 0.3 * g("armor");
     d.speed = b.speed * (1 + 0.05 * g("speed")); d.damage = b.damage * (1 + 0.1 * g("dmg"));
     d.phasing = 0.1 * g("phase"); if (g("regen")) d.regen = { amount: g("regen"), every: 5 };
+    d.healBonus = 0.1 * g("sponge");
   } else if (kind === "ghost") {
     const g = k => lv("lanterns", k);
     d.hp = Math.round(b.hp * (1 + 0.15 * g("hp"))); d.armor = 0.3 * g("armor"); d.speed = b.speed * (1 + 0.05 * g("move"));
@@ -2375,6 +2377,7 @@ function updateAlly(a, dt) {
   if (a.d.retreat && spiritRetreat(a, dt)) return;
   if (S.command) { goToTile(a, S.command.x, S.command.y, dt); return; }
   if (a.d.support) { hauntDrift(a, dt); return; }        // a ghost never fights
+  if (a.d.aura && skirmish(a, dt)) return;               // a spirit never stops: it sweeps through the enemy and hurts whatever it passes over
   const nem = S.nemesis && S.nemesis.target.hp > 0 ? S.nemesis.target : null;
   if (nem) {
     if (dist(a, nem) <= a.d.range) { a.path = []; if (a.cd === 0) strike(a, nem); return; }
@@ -2393,7 +2396,7 @@ function updateAlly(a, dt) {
       const H = a.d.heal;
       if (a.cd === 0) {
         const near = others.filter(u => u.hp < u.d.hp && dist(a, u) <= H.range).sort((p, q) => p.hp / p.d.hp - q.hp / q.d.hp)[0];
-        if (near) { near.hp = Math.min(near.d.hp, near.hp + H.amount); a.cd = H.every; float(near.x, near.y, "+" + H.amount, "#7fd67a"); }
+        if (near) { const amt = H.amount + (near.d.healBonus || 0); near.hp = Math.min(near.d.hp, near.hp + amt); a.cd = H.every; float(near.x, near.y, "+" + fmt(amt), "#7fd67a"); }   // Warmth Sponge soaks up a little extra
       }
       return;
     }
@@ -2409,6 +2412,31 @@ function updateAlly(a, dt) {
   approach(a, target, dt);
 }
 
+// the spirit's skirmish: pick an enemy, sweep right through it and out the other side, pick the next. Whatever is beneath it
+// gets hurt every time its chill is ready, so it never has to stop
+function skirmish(a, dt) {
+  if (a.cd === 0) { const under = nearest(a, S.enemies, a.d.aura + 0.15, e => !e.enter); if (under) strike(a, under); }
+  const nem = S.nemesis && S.nemesis.target.hp > 0 ? S.nemesis.target : null;
+  let sw = a.sweep;
+  if (sw && (sw.t += dt) > 2.6) sw = null;
+  if (sw && sw.target && (sw.target.hp <= 0 || (nem && sw.target !== nem))) sw = null;
+  if (sw && sw.past && Math.hypot(sw.x - a.x, sw.y - a.y) < 0.3) sw = null;
+  if (!sw) {
+    const pool = S.enemies.filter(e => e.hp > 0 && !e.enter);
+    const target = nem || (pool.length ? pool.reduce((p, q) => dist(a, q) < dist(a, p) ? q : p) : null);
+    if (!target) { a.sweep = null; return false; }       // nothing to fight: the usual rules (the enemy ward, standing by)
+    if (S.assault && S.foeWardHp > 0 && !nem && dist(a, target) > 3) { a.sweep = null; return false; }
+    let dx = target.x - a.x, dy = target.y - a.y; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+    const over = 1.3 + Math.random() * 0.5, side = (Math.random() - 0.5) * 0.8;          // overshoot, with a little sideways drift
+    sw = { target, ox: dx * over - dy * side, oy: dy * over + dx * side, t: 0, past: false };
+  }
+  a.sweep = sw;
+  if (!sw.past && dist(a, sw.target) < 0.45) sw.past = true;          // through it: from here on the exit point stays put
+  if (!sw.past) { sw.x = sw.target.x + sw.ox; sw.y = sw.target.y + sw.oy; }   // until then it follows the target as it moves
+  sw.x = Math.max(0, Math.min(C - 1, sw.x)); sw.y = Math.max(0, Math.min(R - 1, sw.y));
+  if (moveDirect(a, sw.x, sw.y, dt, true, 0.25) === "blocked") { a.sweep = null; goToTile(a, Math.round(sw.target.x), Math.round(sw.target.y), dt); }
+  return true;
+}
 // a hurt spirit falls back to the nearest wisp (or the ward) and keeps hurting whatever comes underneath
 function spiritRetreat(a, dt) {
   const T = a.d.retreat;
@@ -4098,6 +4126,7 @@ function unitPlate(k) {
   if (["skeleton_warrior", "skeleton_archer", "golem"].includes(k)) rows.push(["Skill slots", (META.skills.equip[k] || []).filter(x => META.skills.unlocked[x]).length + " / " + skillSlots(k) + " in use"]);
   if (d.dodge) rows.push(["Pseudo Reality", Math.round(d.dodge * 100) + " % of physical attacks miss"]);
   if (d.aura) rows.push(["Hovering", "hurts everything within " + fmt(d.aura) + " tiles beneath it"]);
+  if (d.healBonus) rows.push(["Warmth Sponge", "+" + fmt(d.healBonus) + " healing from wisps"]);
   if (d.phasing) rows.push(["Phasing", "untouchable for " + fmt(d.phasing) + " s after a hit"]);
   if (d.regen) rows.push(["Regeneration", d.regen.amount + " HP every " + d.regen.every + " s"]);
   rows.push(["Summon", d.cost.mana + " mana" + (d.cost.bone ? " · " + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : "") : "")]);
