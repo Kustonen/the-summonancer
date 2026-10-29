@@ -232,6 +232,9 @@ div.mapbtn { cursor: default; }
 .smithjob .acts { display: flex; gap: 4px; flex-wrap: wrap; }
 .smithjob .acts .btn { padding: 4px 9px; font-size: 13px; }
 .num.small { width: 80px; }
+.ver { color: var(--dim); font-size: 12px; }
+.goodsgrp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
+.goodsgrp > small { width: 100%; color: var(--dim); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
 .gearslots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
 .gslot { text-align: left; background: var(--panel2, #24202e); border: 1px solid #3a3547; border-radius: 10px; padding: 6px 8px; color: inherit; font: inherit; cursor: pointer; min-height: 52px; }
 .gslot small { display: block; color: var(--dim); font-size: 12px; }
@@ -535,7 +538,7 @@ div.mapbtn { cursor: default; }
     <div class="goods" id="goods"></div>
   </section>
 
-  <div class="foot">Progress is saved in this browser.</div>
+  <div class="foot">Progress is saved in this browser. · <span id="verTown"></span></div>
 </div>
 
 <!-- ============ BATTLE ============ -->
@@ -593,6 +596,7 @@ div.mapbtn { cursor: default; }
       <p>This is a summoning. Nobody is being raised from the dead. Please stop asking.</p>
       <p><kbd>1</kbd>–<kbd>4</kbd> summons, <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> spells, <kbd>P</kbd> pauses.</p>
       <p id="best"></p>
+      <p class="ver" id="verBattle"></p>
     </aside>
   </div>
   <div class="toast" id="toast"></div>
@@ -672,6 +676,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
+const VERSION = "0.7.0-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -730,7 +735,8 @@ const DATA = {
       { key: "self",  name: "Self-Mending",   max: 8,  gold: 12, fx: lv => lv ? "mends itself 1 HP every " + fmt(12 * Math.pow(0.85, lv - 1)) + " s" : "no self-healing" },
       { key: "dmg",   name: "Brighter Spark", max: 6,  gold: 8,  fx: lv => "+" + lv * 50 + " % damage" },
       { key: "hp",    name: "Steady Glow",    max: 10, gold: 10, fx: lv => "+" + lv * 10 + " % health" },
-      { key: "speed", name: "Quick Drift",    max: 8,  gold: 8,  fx: lv => "+" + lv * 5 + " % move speed" }
+      { key: "speed", name: "Quick Drift",    max: 8,  gold: 8,  fx: lv => "+" + lv * 5 + " % move speed" },
+      { key: "reality", name: "Barely There", max: 5, gold: 40, needsSkill: "pseudoW", fx: lv => (10 + 2 * lv) + " % of physical attacks miss" }
     ],
     golematorium: [
       { key: "quarry",   name: "Living Quarry",     max: 8, gold: 15, fx: lv => "+" + lv * 15 + " % health, " + lv * 4 + " % bigger" },
@@ -765,6 +771,7 @@ const DATA = {
       { key: "phase", name: "Phasing",         max: 10, costs: [{ gold: 30 }, { gold: 60 }, { gold: 100 }, { gold: 150 }, { gold: 400, crystal: 5, skulls: 2 }, { gold: 800, crystal: 10, skulls: 4 },
         { gold: 1500, crystal: 20, skulls: 6 }, { gold: 2500, crystal: 35, skulls: 10 }, { gold: 4000, crystal: 50, skulls: 15 }, { gold: 6000, crystal: 80, skulls: 20 }],
         fx: lv => lv ? "can't be hurt for " + fmt(lv * 0.1) + " s after taking damage" : "no phasing" },
+      { key: "reality", name: "Barely There",  max: 5, gold: 40, needsSkill: "pseudoS", fx: lv => (10 + 2 * lv) + " % of physical attacks miss" },
       { key: "regen", name: "Regeneration",    max: 3, costs: [{ gold: 300, crystal: 10 }, { gold: 900, crystal: 25 }, { gold: 2500, crystal: 50, skulls: 5 }], fx: lv => lv ? "mends " + lv + " HP every 5 s" : "no mending" }
     ],
     stones: [
@@ -808,7 +815,18 @@ const DATA = {
     wood:    { name: "Wood",           lot: 5,  sellFor: 1, buyFor: 10 },
     charcoal: { name: "Charcoal",      lot: 5,  sellFor: 1, buyFor: 3 },
     ingot:   { name: "Iron ingots",    lot: 1,  sellFor: 3, buyFor: 25 },
-    steel:   { name: "Steel ingots",   lot: 1,  sellFor: 10, buyFor: 80 }
+    steel:   { name: "Steel ingots",   lot: 1,  sellFor: 10, buyFor: 80 },
+    sand:    { name: "Pouches of sand", lot: 5, sellFor: 1, buyFor: 10 },
+    // mushrooms and trophies come from the battlefield only: the merchant buys them cheap and never sells
+    mush_red:    { name: "Red mushrooms",    lot: 1, sellFor: 2 },
+    mush_blue:   { name: "Blue mushrooms",   lot: 1, sellFor: 2 },
+    mush_yellow: { name: "Yellow mushrooms", lot: 1, sellFor: 2 },
+    mush_green:  { name: "Green mushrooms",  lot: 1, sellFor: 2 },
+    scale:   { name: "Kobold scales",  lot: 1, sellFor: 8 },
+    claw:    { name: "Goblin claws",   lot: 1, sellFor: 8 },
+    hair:    { name: "Orc hairs",      lot: 1, sellFor: 8 },
+    toenail: { name: "Ogre toenails",  lot: 1, sellFor: 8 },
+    tooth:   { name: "Troll teeth",    lot: 1, sellFor: 8 }
   },
   exp: {
     perKill: { kobold: 0.5, bog_goblin: 1, orc: 2, ogre: 4, troll: 4 },
@@ -831,23 +849,23 @@ const DATA = {
   enemies: {
     kobold: { name: "Kobold", hp: 7, damage: 1, attackEvery: 0.9, speed: 1.15, range: 1.15, aggro: 2.4, move: "ground",
               drops: [{ res: "bone", chance: 1, min: 1, max: 1 }, { res: "gold", chance: 0.25, min: 1, max: 1 },
-                      { res: "stone", chance: 0.08, min: 1, max: 1 }, { res: "wood", chance: 0.06, min: 1, max: 1 }, { res: "crystal", chance: 0.01, min: 1, max: 1 }], skullChance: 0.01, panicOnKinDeath: 1 },
+                      { res: "stone", chance: 0.08, min: 1, max: 1 }, { res: "wood", chance: 0.06, min: 1, max: 1 }, { res: "crystal", chance: 0.01, min: 1, max: 1 }, { res: "sand", chance: 0.06, min: 1, max: 1 }, { res: "mush_yellow", chance: 0.03, min: 1, max: 1 }, { res: "scale", chance: 0.05, min: 1, max: 1 }], skullChance: 0.01, panicOnKinDeath: 1 },
     bog_goblin: { name: "Goblin", hp: 12, damage: 2, attackEvery: 1.0, speed: 0.9, range: 1.15, aggro: 2.6, move: "ground",
                   drops: [{ res: "bone", chance: 0.5, min: 1, max: 2 }, { res: "gold", chance: 0.35, min: 1, max: 3 },
-                          { res: "iron", chance: 0.10, min: 1, max: 1 }, { res: "wood", chance: 0.08, min: 1, max: 2 }, { res: "crystal", chance: 0.02, min: 1, max: 1 }], skullChance: 0.02,
+                          { res: "iron", chance: 0.10, min: 1, max: 1 }, { res: "wood", chance: 0.08, min: 1, max: 2 }, { res: "crystal", chance: 0.02, min: 1, max: 1 }, { res: "mush_red", chance: 0.04, min: 1, max: 1 }, { res: "mush_green", chance: 0.03, min: 1, max: 1 }, { res: "claw", chance: 0.05, min: 1, max: 1 }], skullChance: 0.02,
                   panic: { deaths: 4, window: 5, min: 1, max: 5, steadiedBy: ["orc", "ogre"], steadyRange: 3 } },
     orc: { name: "Orc", hp: 32, damage: 4, attackEvery: 1.3, speed: 0.65, range: 1.15, aggro: 2.8, move: "ground",
            drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.5, min: 3, max: 6 },
-                   { res: "iron", chance: 0.15, min: 1, max: 2 }, { res: "stone", chance: 0.10, min: 1, max: 2 }, { res: "crystal", chance: 0.03, min: 1, max: 1 }], skullChance: 0.03 },
+                   { res: "iron", chance: 0.15, min: 1, max: 2 }, { res: "stone", chance: 0.10, min: 1, max: 2 }, { res: "crystal", chance: 0.03, min: 1, max: 1 }, { res: "sand", chance: 0.04, min: 1, max: 1 }, { res: "mush_red", chance: 0.02, min: 1, max: 1 }, { res: "hair", chance: 0.05, min: 1, max: 1 }], skullChance: 0.03 },
     // big, slow and never scared; every 6th or 7th blow is a ground slam that hits every summon around and shoves them back
     ogre: { name: "Ogre", hp: 70, damage: 6, attackEvery: 1.7, speed: 0.5, range: 1.2, aggro: 2.8, move: "ground", panicImmune: true,
             ogreSlam: { radius: 1.3, knock: 0.7, every: [6, 7] },
             drops: [{ res: "bone", chance: 0.5, min: 1, max: 3 }, { res: "gold", chance: 0.6, min: 5, max: 10 },
-                    { res: "iron", chance: 0.25, min: 1, max: 3 }, { res: "stone", chance: 0.25, min: 1, max: 3 }, { res: "crystal", chance: 0.04, min: 1, max: 1 }], skullChance: 0.08 },
+                    { res: "iron", chance: 0.25, min: 1, max: 3 }, { res: "stone", chance: 0.25, min: 1, max: 3 }, { res: "crystal", chance: 0.04, min: 1, max: 1 }, { res: "sand", chance: 0.05, min: 1, max: 1 }, { res: "mush_green", chance: 0.04, min: 1, max: 1 }, { res: "toenail", chance: 0.05, min: 1, max: 1 }], skullChance: 0.08 },
     // mends itself unless it is burning, and fire hurts it twice as much
     troll: { name: "Troll", hp: 70, damage: 5, attackEvery: 1.4, speed: 0.6, range: 1.25, aggro: 2.8, move: "ground", regen: { amount: 1, every: 5 }, fireWeak: 2,
              drops: [{ res: "bone", chance: 0.6, min: 2, max: 4 }, { res: "wood", chance: 0.3, min: 1, max: 3 }, { res: "gold", chance: 0.5, min: 3, max: 7 },
-                     { res: "crystal", chance: 0.02, min: 1, max: 1 }], skullChance: 0.033 }
+                     { res: "crystal", chance: 0.02, min: 1, max: 1 }, { res: "mush_blue", chance: 0.06, min: 1, max: 1 }, { res: "mush_green", chance: 0.04, min: 1, max: 1 }, { res: "tooth", chance: 0.05, min: 1, max: 1 }], skullChance: 0.033 }
   },
   // The Grand Grimoire of Everything: what each page reveals, and after how many defeats
   grimoire: {
@@ -970,7 +988,18 @@ const DATA = {
     stone:   { one: "smooth stone", many: "smooth stones", name: "Smooth stone" },
     iron:    { one: "scrap iron",   many: "scrap iron",    name: "Scrap iron" },
     wood:    { one: "piece of wood", many: "pieces of wood", name: "Wood" },
-    crystal: { one: "crystal shard", many: "crystal shards", name: "Crystal shards" }
+    crystal: { one: "crystal shard", many: "crystal shards", name: "Crystal shards" },
+    sand:        { one: "pouch of sand", many: "pouches of sand", name: "Pouches of sand", group: "materials" },
+    mush_red:    { one: "red mushroom", many: "red mushrooms", name: "Red mushrooms", group: "herbs" },
+    mush_blue:   { one: "blue mushroom", many: "blue mushrooms", name: "Blue mushrooms", group: "herbs" },
+    mush_yellow: { one: "yellow mushroom", many: "yellow mushrooms", name: "Yellow mushrooms", group: "herbs" },
+    mush_green:  { one: "green mushroom", many: "green mushrooms", name: "Green mushrooms", group: "herbs" },
+    // only one kind of enemy carries each of these
+    scale:   { one: "kobold scale", many: "kobold scales", name: "Kobold scales", group: "trophies" },
+    claw:    { one: "goblin claw", many: "goblin claws", name: "Goblin claws", group: "trophies" },
+    hair:    { one: "orc hair", many: "orc hairs", name: "Orc hairs", group: "trophies" },
+    toenail: { one: "ogre toenail", many: "ogre toenails", name: "Ogre toenails", group: "trophies" },
+    tooth:   { one: "troll tooth", many: "troll teeth", name: "Troll teeth", group: "trophies" }
   },
   waves: {
     firstDelay: 6, gap: 12,
@@ -1014,6 +1043,8 @@ const DATA = {
     rapid: { name: "Rapid Slash",    unit: "skeleton_warrior", cost: { gold: 200, crystal: 5 }, about: "Every 5th hit the skeleton attacks 75 % faster for the next 3 hits. The count starts again once the frenzy is over." },
     flame: { name: "Flaming Arrows", unit: "skeleton_archer",  cost: { gold: 100 },             about: "Every 5th arrow is on fire and may set its target ablaze." },
     frost: { name: "Frost Arrows",   unit: "skeleton_archer",  cost: { gold: 200, crystal: 5 }, about: "Every 5th arrow is ice-cold and slows its target 60 % for 6 seconds." },
+    pseudoW: { name: "Pseudo Reality", unit: "wisp",   cost: { gold: 300, crystal: 10 }, about: "The wisp is only mostly there: 10 % of physical attacks aimed at it miss." },
+    pseudoS: { name: "Pseudo Reality", unit: "spirit", cost: { gold: 300, crystal: 10 }, about: "The spirit is only mostly there: 10 % of physical attacks aimed at it miss." },
     slam:  { name: "Ground Slam",    unit: "golem",            cost: { gold: 100, stone: 20 },  about: "Every 4th attack is a two-fisted slam that hits everything in front and shoves it back." }
   },
   // the Blacksmith: what goes in, what comes out and how long one takes
@@ -1105,6 +1136,7 @@ try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const saved = JSON.
 // older saves kept bought bones separately; they now live in the warehouse
 META.warehouse = META.warehouse || { bones: 0, skulls: 0 }; META.built = META.built || {};
 for (const k of ["stone", "iron", "wood", "crystal", "charcoal", "ingot", "steel"]) META.warehouse[k] = META.warehouse[k] || 0;
+for (const k of ["sand", "mush_red", "mush_blue", "mush_yellow", "mush_green", "scale", "claw", "hair", "toenail", "tooth"]) META.warehouse[k] = META.warehouse[k] || 0;
 if (!META.skills) {          // skills came later: what older saves already had carries over
   META.skills = { unlocked: {}, equip: {} };
   if (((META.research || {}).lab || {}).flame) { META.skills.unlocked.flame = true; META.skills.equip.skeleton_archer = ["flame"]; }
@@ -1395,21 +1427,25 @@ function wardDistFn(structs) {
 
 // the Gauntlet and the Raid: walls on three sides, the great gate at the top, four side gates and a 3 x 3 ward at the bottom
 const SIDE_GATES = [[0, 2], [C - 1, 2], [0, 7], [C - 1, 7]];
-function footOkIn(g, cx, cy, under) {
+// strict (the generator's 3-wide way): every tile of the 3 x 3 must be clear;
+// lenient (Move): the ward may cover walls, rocks and stalagmites, only the wizard's tile must be clear and no gate may be under it
+const GATES = { gate: true, gateopen: true, sidegate: true };
+function footOkIn(g, cx, cy, under, lenient) {
   for (let y = cy - 1; y <= cy + 1; y++) for (let x = cx - 1; x <= cx + 1; x++) {
     if (!inGrid(x, y)) return false;
     let t = g[y][x]; if (t === "structure" && under) t = under[y * C + x];
-    if ((DATA.terrain[t].blocks || []).includes("ground") || t === "gateopen") return false;
+    if (GATES[t]) return false;
+    if ((!lenient || (x === cx && y === cy)) && (DATA.terrain[t].blocks || []).includes("ground")) return false;
   }
   return true;
 }
 // breadth-first over the ward's middle tile: the 3 x 3 ward has to fit at every step
-function footPath(g, from, goal, under) {
+function footPath(g, from, goal, under, lenient) {
   const key = (x, y) => y * C + x, came = new Map([[key(from.x, from.y), -1]]), q = [from];
   while (q.length) {
     const c = q.shift();
     if (goal(c.x, c.y)) { const path = []; let k = key(c.x, c.y); while (k !== key(from.x, from.y)) { path.unshift({ x: k % C, y: Math.floor(k / C) }); k = came.get(k); } return path; }
-    for (const [dx, dy] of DIRS4) { const nx = c.x + dx, ny = c.y + dy; if (came.has(key(nx, ny)) || !footOkIn(g, nx, ny, under)) continue; came.set(key(nx, ny), key(c.x, c.y)); q.push({ x: nx, y: ny }); }
+    for (const [dx, dy] of DIRS4) { const nx = c.x + dx, ny = c.y + dy; if (came.has(key(nx, ny)) || !footOkIn(g, nx, ny, under, lenient)) continue; came.set(key(nx, ny), key(c.x, c.y)); q.push({ x: nx, y: ny }); }
   }
   return null;
 }
@@ -1549,8 +1585,8 @@ function startBattle(key, diff) {
   const carried = 0;
   S = {
     mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(), slots: wizSlots(),
-    bones: 0, carried, skulls: 0, gold: 0, loot: { stone: 0, iron: 0, wood: 0, crystal: 0 }, foeDefs: {},
-    gathered: { bones: 0, skulls: 0, gold: 0, stone: 0, iron: 0, wood: 0, crystal: 0 }, ward: wardHits(), wardMax: wardHits(),
+    bones: 0, carried, skulls: 0, gold: 0, loot: Object.fromEntries(Object.keys(DATA.materials).map(k => [k, 0])), foeDefs: {},
+    gathered: Object.assign({ bones: 0, skulls: 0, gold: 0 }, Object.fromEntries(Object.keys(DATA.materials).map(k => [k, 0]))), ward: wardHits(), wardMax: wardHits(),
     sp: spellsNow(), shoveLv: rlv("stones", "shove"), shoveCd: 0, mendLv: rlv("stones", "mend"), mendT: 0, shoveFx: 0,
     tutorial: META.stage === "intro", fire: {}, bolts: [], freezes: [], stones: [], grows: [], hinted: {}, cheered: true, overShown: false,
     wiz: { st: wizLook(), seq: { kind: "appear", e: 0 }, until: 0 },
@@ -1678,11 +1714,11 @@ function moveWardTo(fx, fy) {
   let goal = null, best = 9;
   for (let y = 1; y < R - 1; y++) for (let x = 1; x < C - 1; x++) {
     const d = Math.hypot(x - tx, y - ty);
-    if (d < best && d <= 2.5 && footOkIn(L.terrain, x, y, L.under)) { best = d; goal = { x, y }; }
+    if (d < best && d <= 2.5 && footOkIn(L.terrain, x, y, L.under, true)) { best = d; goal = { x, y }; }
   }
-  if (!goal) { say("The ward can't stand there. It needs a clear 3 x 3 spot."); return; }
+  if (!goal) { say("The wizard can't stand there. He needs a clear tile, and the ward can't sit on a gate."); return; }
   if (goal.x === from.x && goal.y === from.y) { say("The ward is already there."); setSpell(null); return; }
-  const path = footPath(L.terrain, from, (x, y) => x === goal.x && y === goal.y, L.under);
+  const path = footPath(L.terrain, from, (x, y) => x === goal.x && y === goal.y, L.under, true);
   if (!path) { say("There's no way for the ward to get there."); return; }
   S.move = { path, t: 0, goal }; setSpell(null);
   wizDo("cast", 1.0, true); SFX.play("shove");
@@ -1710,7 +1746,7 @@ function updateMove(dt) {
   if ((S.move.t += dt) < 1) return;
   S.move.t = 0;
   const n = S.move.path.shift();
-  if (!n || !footOkIn(L.terrain, n.x, n.y, L.under)) { S.move = null; say("Something's in the way. The ward stops."); return; }
+  if (!n || !footOkIn(L.terrain, n.x, n.y, L.under, true)) { S.move = null; say("Something's in the way. The ward stops."); return; }
   stepWard(n);
   if (!S.move.path.length) { S.move = null; say("The ward settles down. Summon away."); }
 }
@@ -1766,6 +1802,8 @@ function unitDef(kind) {
   if (b.heal) d.heal = Object.assign({}, b.heal);
   if (b.swampCharm) d.swampCharm = Object.assign({}, b.swampCharm);
   const lv = (where, key) => (META.research[where] && META.research[where][key]) || 0;
+  if (kind === "wisp" && skillOn(kind, "pseudoW")) d.dodge = 0.1 + 0.02 * lv("well", "reality");
+  if (kind === "spirit" && skillOn(kind, "pseudoS")) d.dodge = 0.1 + 0.02 * lv("spiritstones", "reality");
   if (kind === "wisp") {
     d.swampCharm.duration = Math.max(2, b.swampCharm.duration - lv("well", "charm"));
     d.heal.every = b.heal.every * Math.pow(0.92, lv("well", "heal"));
@@ -2104,7 +2142,7 @@ function strike(a, target) {
     if (a.atkN >= a.slamAt && !target.isWard) {
       a.atkN = 0; a.slamAt = O.every[rnd(O.every.length)]; a.lastMove = "slam"; SFX.play("attack", "ogreSlam");
       const fx = (a.x + target.x) / 2, fy = (a.y + target.y) / 2;
-      for (const u of S.units) { if (u.hp <= 0 || (u !== target && Math.hypot(u.x - fx, u.y - fy) > O.radius)) continue; hurt(u, a.d.damage, "#e0904a"); knock(u, a.x, a.y, O.knock); }
+      for (const u of S.units) { if (u.hp <= 0 || (u !== target && Math.hypot(u.x - fx, u.y - fy) > O.radius)) continue; if (missed(u)) continue; hurt(u, a.d.damage, "#e0904a"); knock(u, a.x, a.y, O.knock); }
       float(a.x, a.y - 0.6, "SLAM!", "#e0904a"); return;
     }
     a.lastMove = "punch"; SFX.play("attack", a.kind);
@@ -2132,8 +2170,11 @@ function strike(a, target) {
     }
     return;
   }
+  if (a.side === "foe" && missed(target)) return;
   hurt(target, target.isWard && a.d.wardMult ? a.d.damage * a.d.wardMult : a.d.damage, a.side === "ally" ? "#ece3cf" : "#e0904a");   // wards are built to keep spirits out
 }
+// Pseudo Reality: a physical blow can pass straight through
+function missed(t) { if (t.d.dodge && chance(t.d.dodge)) { float(t.x, t.y - 0.2, "miss!", "#cfe0ff"); return true; } return false; }
 function hurt(t, dmg, color) {
   if (t.isWard) {
     dmg = Math.max(dmg * 0.25, dmg - S.assault.armor);
@@ -2755,7 +2796,7 @@ function wizDo(m, dur, noBolt) {
 // where he stands: bottom centre on the Hillside strip, inside the ward elsewhere
 function wizSpot() {
   const T = tile;
-  if (L.arena) { const m = wardMid(), o = wardOffset(); return { x: (m.x + 0.5 + o.x) * T, gy: (m.y + 1.5 + o.y) * T - T * 0.12, s: 2.6 * T / 190 }; }
+  if (L.arena) { const m = wardMid(), o = wardOffset(); return { x: (m.x + 0.5 + o.x) * T, gy: (m.y + 1 + o.y) * T - T * 0.1, s: 1.25 * T / 190 }; }
   if (!L.structs.length) return { x: C * T / 2, gy: (R + strip()) * T - T * 0.12, s: strip() * T * 0.9 / 190 };
   const xs = L.structs.map(p => p.x), ys = L.structs.map(p => p.y);
   const x0 = Math.min(...xs), x1 = Math.max(...xs) + 1, y0 = Math.min(...ys), y1 = Math.max(...ys) + 1;
@@ -3239,7 +3280,10 @@ const COMMON = {
   killFields: ["hillside", "crossroads", "outpost", "assault", "gauntlet"],
   // summon N in a single battle: count range and difficulty range (only summons already bound)
   summons: { wisp: [8, 15, 0.2, 0.5], skeleton_warrior: [12, 25, 0.3, 0.7], skeleton_archer: [8, 16, 0.35, 0.7], golem: [3, 6, 0.5, 0.9] },
-  goods: { bones: [15, 40, 0.1, 0.4], gold: [20, 60, 0.2, 0.6], stone: [3, 8, 0.3, 0.7], iron: [3, 8, 0.3, 0.7], wood: [3, 8, 0.3, 0.7], skulls: [1, 2, 0.7, 1], crystal: [1, 1, 0.9, 0.9] },
+  goods: { bones: [15, 40, 0.1, 0.4], gold: [20, 60, 0.2, 0.6], stone: [3, 8, 0.3, 0.7], iron: [3, 8, 0.3, 0.7], wood: [3, 8, 0.3, 0.7], skulls: [1, 2, 0.7, 1], crystal: [1, 1, 0.9, 0.9],
+           sand: [3, 8, 0.3, 0.6], mush_red: [2, 4, 0.4, 0.8], mush_blue: [2, 4, 0.5, 0.9], mush_yellow: [2, 4, 0.4, 0.8], mush_green: [2, 4, 0.4, 0.8],
+           scale: [1, 3, 0.5, 0.9], claw: [1, 3, 0.5, 0.9], hair: [1, 3, 0.6, 1], toenail: [1, 2, 0.8, 1], tooth: [1, 2, 0.8, 1] },
+  goodsFrom: { scale: "kobold", claw: "bog_goblin", hair: "orc", toenail: "ogre", tooth: "troll", mush_blue: "troll" },   // only once that enemy has been met
   prices: { gold: 1, bones: 1, stone: 10, iron: 10, wood: 10, skulls: 50, crystal: 50 },          // what the Marketplace charges
   asks: {
     kills: [
@@ -3294,8 +3338,10 @@ const COMMON = {
   ]
 };
 const RES_ONE = { bones: "bone", gold: "gold", stone: "smooth stone", iron: "scrap iron", wood: "piece of wood", skulls: "skull", crystal: "crystal shard" };
+for (const k in DATA.materials) RES_ONE[k] = RES_ONE[k] || DATA.materials[k].one;
 const resName = (k, n) => n === 1 ? RES_ONE[k] : RES_NAMES[k];
 const RES_NAMES = { bones: "bones", gold: "gold", stone: "smooth stones", iron: "scrap iron", wood: "pieces of wood", skulls: "skulls", crystal: "crystal shards" };
+for (const k in DATA.materials) RES_NAMES[k] = RES_NAMES[k] || DATA.materials[k].many;
 const pick = a => a[rnd(a.length)];
 const where = k => k === "assault" ? "the Assault field" : k === "gauntlet" ? "the Gauntlet" : "the " + DATA.levels[k].name;
 const between = (a, b) => a + rnd(b - a + 1);
@@ -3319,7 +3365,7 @@ function genQuest() {
     q.foe = pick(Object.keys(COMMON.foes).filter(k => !["ogre", "troll"].includes(k) || kills(k))); q.level = pick(COMMON.killFields);
     const [a, b, d0, d1] = COMMON.foes[q.foe]; q.need = between(a, b); d = d0 + (d1 - d0) * (q.need - a) / Math.max(1, b - a);
   } else if (type === "collect") {
-    q.res = pick(Object.keys(COMMON.goods));
+    q.res = pick(Object.keys(COMMON.goods).filter(k => !COMMON.goodsFrom[k] || kills(COMMON.goodsFrom[k])));
     const [a, b, d0, d1] = COMMON.goods[q.res]; q.need = between(a, b); d = d0 + (d1 - d0) * (q.need - a) / Math.max(1, b - a);
   } else if (type === "reach") {
     q.level = pick(["hillside", "crossroads", "outpost"]); q.need = between(5, 14); d = 0.2 + 0.8 * (q.need - 5) / 9;
@@ -3466,8 +3512,7 @@ function goBattle(k, diff) {
 function renderTown() {
   $("tGold").textContent = META.gold; $("tExp").textContent = META.exp;
   const W = META.warehouse;
-  $("goods").innerHTML = [["gold", META.gold], ["bones", W.bones], ["skulls", W.skulls]].concat(Object.keys(DATA.materials).concat(Object.keys(DATA.smith.recipes)).map(k => [k, W[k] || 0]))
-    .map(([k, v]) => "<span class='good' title='" + RES_LABEL[k] + "' aria-label='" + v + " " + RES_LABEL[k] + "'>" + ICONS[k] + "<b aria-hidden='true'>" + v + "</b></span>").join("");
+  renderGoodsOnly();
   for (const k in DATA.builder) $("b_" + k).hidden = !META.built[k];
   const alive = META.builder === "alive";
   $("builderAlive").toggleAttribute("hidden", !alive); $("builderSkel").toggleAttribute("hidden", alive);   // svg elements have no .hidden
@@ -3664,10 +3709,15 @@ function smithTick() {
   M0.queue = M0.queue.filter(j => j.done < j.n);
   if (changed) { saveMeta(); if (!inBattle) { smithShown = smithShown && "x"; const W = META.warehouse; renderGoodsOnly(); } }
 }
+// the warehouse in groups; goods that have never turned up stay off the shelf
 function renderGoodsOnly() {
-  const W = META.warehouse;
-  $("goods").innerHTML = [["gold", META.gold], ["bones", W.bones], ["skulls", W.skulls]].concat(Object.keys(DATA.materials).concat(Object.keys(RECIPES)).map(k => [k, W[k] || 0]))
-    .map(([k, v]) => "<span class='good' title='" + RES_LABEL[k] + "' aria-label='" + v + " " + RES_LABEL[k] + "'>" + ICONS[k] + "<b aria-hidden='true'>" + v + "</b></span>").join("");
+  const W = META.warehouse, seen = META.seenRes = META.seenRes || {};
+  const chip = k => { const v = k === "gold" ? META.gold : W[k] || 0; return "<span class='good' title='" + RES_LABEL[k] + "' aria-label='" + v + " " + RES_LABEL[k] + "'>" + ICONS[k] + "<b aria-hidden='true'>" + v + "</b></span>"; };
+  const groups = [["Basics", ["gold", "bones", "skulls"]], ["Materials", ["stone", "iron", "wood", "crystal", "sand"]], ["Forged", Object.keys(RECIPES)],
+    ["Mushrooms", Object.keys(DATA.materials).filter(k => DATA.materials[k].group === "herbs")], ["Trophies", Object.keys(DATA.materials).filter(k => DATA.materials[k].group === "trophies")]];
+  for (const [, ks] of groups) for (const k of ks) if ((k === "gold" ? META.gold : W[k]) > 0) seen[k] = true;
+  $("goods").innerHTML = groups.map(([name, ks], i) => { const show = i < 2 ? ks.filter(k => seen[k] || ["gold", "bones", "skulls", "stone", "iron", "wood", "crystal"].includes(k)) : ks.filter(k => seen[k]);
+    return show.length ? "<div class='goodsgrp'><small>" + name + "</small>" + show.map(chip).join("") + "</div>" : ""; }).join("");
 }
 // the equipment screen, opened by tapping the wizard in town
 function renderGear() {
@@ -3693,11 +3743,11 @@ $("wizCv").addEventListener("click", openGear);
 $("gearClose").addEventListener("click", () => { $("gearOverlay").hidden = true; });
 // the Marketplace
 function renderMarket() {
-  $("marketList").innerHTML = Object.entries(DATA.market).map(([k, m]) => {
+  $("marketList").innerHTML = Object.entries(DATA.market).filter(([k, m]) => m.buyFor || have(k) || (META.ledger.res[k] || 0)).map(([k, m]) => {
     const n = have(k), lots = Math.floor(n / m.lot);
     const b = (act, label, ok) => "<button class='btn' type='button' data-mk='" + k + "' data-act='" + act + "'" + (ok ? "" : " disabled") + ">" + label + "</button>";
-    return "<div class='opt'><div class='what'><b>" + ri(k) + " " + m.name + "</b><span>You have " + n + " · sell " + m.lot + " for " + ri("gold", m.sellFor) + " · buy 1 for " + ri("gold", m.buyFor) + "</span></div>" +
-      b("sell", "Sell " + m.lot, lots >= 1) + b("sellAll", "Sell all · +" + ri("gold", lots * m.sellFor), lots >= 1) + b("buy", "Buy 1", META.gold >= m.buyFor) + b("buy10", "Buy 10", META.gold >= m.buyFor * 10) + "</div>";
+    return "<div class='opt'><div class='what'><b>" + ri(k) + " " + m.name + "</b><span>You have " + n + " · sell " + m.lot + " for " + ri("gold", m.sellFor) + (m.buyFor ? " · buy 1 for " + ri("gold", m.buyFor) : " · not for sale") + "</span></div>" +
+      b("sell", "Sell " + m.lot, lots >= 1) + b("sellAll", "Sell all · +" + ri("gold", lots * m.sellFor), lots >= 1) + (m.buyFor ? b("buy", "Buy 1", META.gold >= m.buyFor) + b("buy10", "Buy 10", META.gold >= m.buyFor * 10) : "") + "</div>";
   }).join("");
   if (META.gear.bag.length) $("marketList").innerHTML += "<h3>Spare gear</h3>" + META.gear.bag.map(it => "<div class='opt'><div class='what'><b style='color:" + DATA.gear.rarity[it.rar].color + "'>" + it.name + "</b><span>" + DATA.gear.rarity[it.rar].name + " · " + gearLine(it) + "</span></div><button class='btn' type='button' data-sellgear='" + it.id + "'>Sell · " + ri("gold", DATA.gear.rarity[it.rar].sell) + "</button></div>").join("");
   for (const btn of $("marketList").querySelectorAll("[data-sellgear]")) btn.addEventListener("click", () => {
@@ -3722,7 +3772,7 @@ function renderLedger() {
   const sec = (t, body) => "<div class='sec'><h4>" + t + "</h4>" + body + "</div>";
   const tbl = rows => "<table class='facts'>" + rows.map(([a, b]) => "<tr><th>" + a + "</th><td>" + b + "</td></tr>").join("") + "</table>";
   const foes = Object.keys(DATA.enemies).filter(k => kills(k)).map(k => [DATA.enemies[k].name + "s", kills(k)]);
-  const res = ["bones", "skulls", "stone", "iron", "wood", "crystal"].map(k => ri(k, META.ledger.res[k] || 0)).join("");
+  const res = ["bones", "skulls"].concat(Object.keys(DATA.materials)).filter(k => META.ledger.res[k] || ["bones", "skulls", "stone", "iron", "wood", "crystal"].includes(k)).map(k => ri(k, META.ledger.res[k] || 0)).join("");
   const summ = Object.keys(DATA.units).filter(k => META.summoned[k]).map(k => [DATA.units[k].name, META.summoned[k]]);
   const fields = Object.keys(DATA.levels).filter(k => META.best[k]).map(k => [DATA.levels[k].name, "longest stand: wave " + META.best[k]]);
   const wins = Object.entries(DATA.assault).map(([d, dd]) => dd.name + " " + ((META.wins || {})[d] || 0)).join(" · ");
@@ -3802,6 +3852,7 @@ function unitPlate(k) {
   if (d.flame) rows.push(["Flaming Arrows", "every 5th arrow, " + Math.round(d.flame * 100) + " % to ignite"]);
   if (d.frostArrow) rows.push(["Frost Arrows", "every 5th arrow slows " + Math.round(d.frostArrow.slow * 100) + " % for " + d.frostArrow.dur + " s"]);
   if (["skeleton_warrior", "skeleton_archer", "golem"].includes(k)) rows.push(["Skill slots", (META.skills.equip[k] || []).filter(x => META.skills.unlocked[x]).length + " / " + skillSlots(k) + " in use"]);
+  if (d.dodge) rows.push(["Pseudo Reality", Math.round(d.dodge * 100) + " % of physical attacks miss"]);
   if (d.aura) rows.push(["Hovering", "hurts everything within " + fmt(d.aura) + " tiles beneath it"]);
   if (d.phasing) rows.push(["Phasing", "untouchable for " + fmt(d.phasing) + " s after a hit"]);
   if (d.regen) rows.push(["Regeneration", d.regen.amount + " HP every " + d.regen.every + " s"]);
@@ -3835,6 +3886,16 @@ const ICON_ART = {
   crystal: { pal: { o: "#2a1f2e", p: "#b79cf0", l: "#efe6ff", d: "#7d5fc4" }, px: ["...o....", "..olo...", "..olpo..", ".olppo..", ".oppppo.", ".opppdo.", "..oddo..", "...oo..."] },
   charcoal: { pal: { o: "#15121a", k: "#3a3540", l: "#5f5a68", e: "#f08a3c" }, px: ["........", "..ooo...", ".okllo..", ".okkkoo.", "okkekklo", "okkkkkko", ".oooooo.", "........"] },
   ingot:   { pal: { o: "#2a1f2e", l: "#d0d4dc", s: "#8a8f99", d: "#5a5f68" }, px: ["........", "........", "..oooo..", ".ollllo.", "osssssso", "oddddddo", ".oooooo.", "........"] },
+  sand:    { pal: { o: "#2a1f2e", b: "#a8865a", d: "#86683f", s: "#e8d39a", t: "#c9a86a" }, px: ["...oo...", "..obbo..", "...oo...", "..obbo..", ".obbbbo.", "obbsbbbo", "obbbbddo", ".oooooo."] },
+  mush_red:    { pal: { o: "#2a1f2e", c: "#d0423a", w: "#ffffff", s: "#efe2c4" }, px: ["..oooo..", ".occwco.", "ocwccwco", "oooooooo", "...ss...", "...ss...", "..osso..", "..oooo.."] },
+  mush_blue:   { pal: { o: "#2a1f2e", c: "#4a7ad0", w: "#cfe3ff", s: "#efe2c4" }, px: ["..oooo..", ".occwco.", "ocwccwco", "oooooooo", "...ss...", "...ss...", "..osso..", "..oooo.."] },
+  mush_yellow: { pal: { o: "#2a1f2e", c: "#e8c45a", w: "#fff6c8", s: "#efe2c4" }, px: ["..oooo..", ".occwco.", "ocwccwco", "oooooooo", "...ss...", "...ss...", "..osso..", "..oooo.."] },
+  mush_green:  { pal: { o: "#2a1f2e", c: "#6fa04a", w: "#d8f0b8", s: "#efe2c4" }, px: ["..oooo..", ".occwco.", "ocwccwco", "oooooooo", "...ss...", "...ss...", "..osso..", "..oooo.."] },
+  scale:   { pal: { o: "#2a1f2e", k: "#c0703f", l: "#e8a46e", d: "#9c5530" }, px: ["...oo...", "..okko..", ".oklkko.", ".oklkko.", "okkkkkdo", "okkkkddo", ".okkddo.", "..oooo.."] },
+  claw:    { pal: { o: "#2a1f2e", c: "#e8dcbf", d: "#b8ab8a", g: "#8fbf6a" }, px: ["......o.", ".....oco", "....ocdo", "...ocdo.", "..ocdo..", "oggdo...", "oggo....", ".oo....."] },
+  hair:    { pal: { o: "#2a1f2e", h: "#2b2530", l: "#5a4a60" }, px: ["......o.", ".....oho", "....ohlo", "...oho..", "..ohlo..", ".oho....", "ohlo....", ".oo....."] },
+  toenail: { pal: { o: "#2a1f2e", n: "#d6c08a", l: "#f0e2b8", d: "#a88a50" }, px: ["........", "..oooo..", ".onllno.", "onnlnnno", "onnnnndo", ".onnddo.", "..oooo..", "........"] },
+  tooth:   { pal: { o: "#2a1f2e", w: "#f2e8cf", s: "#cfc2a6" }, px: ["........", ".oooooo.", "owwwwwso", "owwwwwso", ".owwwso.", ".owosso.", ".oo.oo..", "........"] },
   steel:   { pal: { o: "#1e2a38", l: "#f2f8ff", s: "#a8bfd6", d: "#6a849e", w: "#ffffff" }, px: ["......w.", ".....www", "..oooow.", ".ollllo.", "osssssso", "oddddddo", ".oooooo.", "........"] }
 };
 const ICONS = {};
@@ -3845,6 +3906,7 @@ for (const k in ICON_ART) {   // (built once; the battle HUD picks them up below
 }
 setTimeout(() => { for (const el of document.querySelectorAll(".hudico")) el.innerHTML = ICONS[el.dataset.ico]; }, 0);
 const RES_LABEL = { gold: "Gold", bones: "Bones", skulls: "Skulls", stone: "Smooth stone", iron: "Scrap iron", wood: "Wood", crystal: "Crystal shards", charcoal: "Charcoal", ingot: "Iron ingots", steel: "Steel ingots" };
+for (const k in DATA.materials) RES_LABEL[k] = RES_LABEL[k] || DATA.materials[k].name;
 // a resource with its icon; the name rides along as a tooltip and for screen readers
 const ri = (k, n) => "<span class='ri' title='" + RES_LABEL[k] + "' aria-label='" + (n === undefined ? "" : n + " ") + RES_LABEL[k] + "'>" + ICONS[k] + (n === undefined ? "" : "<span aria-hidden='true'>" + n + "</span>") + "</span>";
 // tapping an icon outside a button shows its name for a moment
@@ -3857,6 +3919,7 @@ document.addEventListener("click", e => {
 });
 // prices can include any warehouse goods: gold, bones, skulls, stone, iron, wood, crystal
 const COST_NAMES = { gold: ["gold", "gold"], bones: ["bone", "bones"], skulls: ["skull", "skulls"], stone: ["smooth stone", "smooth stones"], iron: ["scrap iron", "scrap iron"], wood: ["wood", "wood"], crystal: ["crystal shard", "crystal shards"], charcoal: ["charcoal", "charcoal"], ingot: ["iron ingot", "iron ingots"], steel: ["steel ingot", "steel ingots"] };
+for (const k in DATA.materials) COST_NAMES[k] = COST_NAMES[k] || [DATA.materials[k].one, DATA.materials[k].many];
 const asCost = c => typeof c === "number" ? { gold: c } : c;
 const have = k => k === "gold" ? META.gold : (META.warehouse[k] || 0);
 const costText = c => Object.keys(COST_NAMES).filter(k => c[k]).map(k => ri(k, c[k])).join("") || "free";
@@ -5716,6 +5779,7 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 
+$("verTown").textContent = "v" + VERSION; $("verBattle").textContent = "The Summonancer v" + VERSION;
 // a brand-new wizard wakes up in the middle of a battle; everyone else starts in town
 if (META.stage === "intro") startBattle("hillside");
 else { TOWN.seq = { kind: "appear", e: 0 }; showView("town"); }
