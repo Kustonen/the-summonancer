@@ -348,7 +348,7 @@ div.mapbtn { cursor: default; }
       <b>Cryptic Laboratory</b>
     </button>
     <button class="bld" id="b_well" type="button" aria-pressed="false" hidden>
-      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 18h36" stroke="#8a5a34" stroke-width="4" stroke-linecap="round"/><path d="M18 18v20M46 18v20" stroke="#8a5a34" stroke-width="3"/><path d="M10 16l22-8 22 8z" fill="#b0563f"/><ellipse cx="32" cy="40" rx="20" ry="6" fill="#1e3552"/><circle cx="32" cy="40" r="6" fill="#6fa8ff" opacity=".55"/><circle cx="32" cy="40" r="2.5" fill="#e8f2ff"/><path d="M12 40v14c0 3 9 6 20 6s20-3 20-6V40c0 3-9 6-20 6s-20-3-20-6z" fill="#6c6676"/><path d="M12 47c6 3 34 3 40 0" stroke="#4a4553" stroke-width="2" fill="none"/><path d="M32 18v14" stroke="#ece3cf" stroke-width="1.5"/></svg>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><g id="wellStonesBack" style="display:none"><path d='M1 46l1.5-16h5l1.5 16z' fill='#8a8495' stroke='#2a1f2e' stroke-width='1.5'/><path d='M3.5 37.2h3' stroke='#9fd0ff' stroke-width='1.4'/><path d='M55 46l1.5-16h5l1.5 16z' fill='#8a8495' stroke='#2a1f2e' stroke-width='1.5'/><path d='M57.5 37.2h3' stroke='#9fd0ff' stroke-width='1.4'/><path d='M11 38l1.5-12h5l1.5 12z' fill='#8a8495' stroke='#2a1f2e' stroke-width='1.5'/><path d='M13.5 31.4h3' stroke='#9fd0ff' stroke-width='1.4'/><path d='M45 38l1.5-12h5l1.5 12z' fill='#8a8495' stroke='#2a1f2e' stroke-width='1.5'/><path d='M47.5 31.4h3' stroke='#9fd0ff' stroke-width='1.4'/></g><path d="M14 18h36" stroke="#8a5a34" stroke-width="4" stroke-linecap="round"/><path d="M18 18v20M46 18v20" stroke="#8a5a34" stroke-width="3"/><path d="M10 16l22-8 22 8z" fill="#b0563f"/><ellipse cx="32" cy="40" rx="20" ry="6" fill="#1e3552"/><circle cx="32" cy="40" r="6" fill="#6fa8ff" opacity=".55"/><circle cx="32" cy="40" r="2.5" fill="#e8f2ff"/><path d="M12 40v14c0 3 9 6 20 6s20-3 20-6V40c0 3-9 6-20 6s-20-3-20-6z" fill="#6c6676"/><path d="M12 47c6 3 34 3 40 0" stroke="#4a4553" stroke-width="2" fill="none"/><path d="M32 18v14" stroke="#ece3cf" stroke-width="1.5"/><g id="wellStonesFront" style="display:none"><path d='M2 63l1.5-14h5l1.5 14z' fill='#8a8495' stroke='#2a1f2e' stroke-width='1.5'/><path d='M4.5 55.3h3' stroke='#9fd0ff' stroke-width='1.4'/><path d='M54 63l1.5-14h5l1.5 14z' fill='#8a8495' stroke='#2a1f2e' stroke-width='1.5'/><path d='M56.5 55.3h3' stroke='#9fd0ff' stroke-width='1.4'/></g></svg>
       <b>Wisping Well</b>
     </button>
     <button class="bld" id="b_septagram" type="button" aria-pressed="false" hidden>
@@ -671,7 +671,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.7.3-alpha";
+const VERSION = "0.7.4-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -3513,6 +3513,7 @@ function renderTown() {
   const tier2 = !!META.built.spiritstones;
   $("wellTitle").textContent = tier2 ? "Wisping Well with Spirit Stones" : "Wisping Well"; $("wellQuote2").hidden = !tier2; $("wellSpirit").hidden = !tier2;
   $("b_well").querySelector("b").textContent = tier2 ? "Stony Wisping Well" : "Wisping Well";
+  for (const id of ["wellStonesBack", "wellStonesFront"]) $(id).style.display = tier2 ? "" : "none";
   const alive = META.builder === "alive";
   $("builderAlive").toggleAttribute("hidden", !alive); $("builderSkel").toggleAttribute("hidden", alive);   // svg elements have no .hidden
   $("builderAbout").textContent = alive ? "Your local engineer: hard hat, overalls, a hammer and boundless optimism. Give him gold and he'll put up whatever you point at."
