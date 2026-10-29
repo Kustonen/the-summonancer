@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.16-alpha – 2026-10-29
+- Wraith drawings: a longer shroud torn into ragged strips of uneven length that stream and flutter in the wind of the vortex, harder when it moves or panics
+
 ## 0.8.15-alpha – 2026-10-29
 - Wraith drawings: slightly smaller horns
 
