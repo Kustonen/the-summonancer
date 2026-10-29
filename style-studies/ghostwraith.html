@@ -971,20 +971,22 @@ function wraith(ctx, cx, gy, s, t, st) {
   ctx.save(); ctx.translate(hx0, hy0); ctx.rotate(M.tilt * 0.5); ctx.scale(1.18, 1.18);
   // a pair of bull horns in an S: out and a little down from the skull, sweeping up, the last stretch straight up to the point
   const horn = (side) => {
-    const L2 = st.hornLift || 1, top = -(30 + 10 * L2), N = 22, C0 = [], bz = (a, b, c, d, u) => (1 - u) ** 3 * a + 3 * (1 - u) ** 2 * u * b + 3 * (1 - u) * u * u * c + u ** 3 * d;
+    const L2 = st.hornLift || 1, top = -(45 + 3 * L2), N = 28, C0 = [], bz = (a, b, c, d, u) => (1 - u) ** 3 * a + 3 * (1 - u) ** 2 * u * b + 3 * (1 - u) * u * u * c + u ** 3 * d;
     for (let i = 0; i <= N; i++) {           // the centre line: a bezier for the S, then a straight run upward
       const u = i / N;
-      if (u <= 0.75) { const v = u / 0.75; C0.push([bz(8, 24, 33, 32, v), bz(-14, -2, -10, -22, v)]); }
-      else { const v = (u - 0.75) / 0.25; C0.push([32, -22 + (top + 22) * v]); }
+      // out and a little down, up the outside, then curling back in so the point stands straight up over the side of the skull
+      if (u <= 0.45) { const v = u / 0.45; C0.push([bz(8, 24, 33, 31, v), bz(-14, -5, -13, -28, v)]); }
+      else if (u <= 0.85) { const v = (u - 0.45) / 0.4; C0.push([bz(31, 29, 14, 13, v), bz(-28, -40, -34, -42, v)]); }
+      else { const v = (u - 0.85) / 0.15; C0.push([13, -42 + (top + 42) * v]); }
     }
     const Lp = [], Rp = [];
     C0.forEach(([cx, cy], i) => {
-      const [nx, ny] = C0[Math.min(N, i + 1)], [px, py] = C0[Math.max(0, i - 1)], dx = nx - px, dy = ny - py, l = Math.hypot(dx, dy) || 1, w = 5.5 * (1 - i / N) + 0.3;
+      const [nx, ny] = C0[Math.min(N, i + 1)], [px, py] = C0[Math.max(0, i - 1)], dx = nx - px, dy = ny - py, l = Math.hypot(dx, dy) || 1, w = 5.5 * Math.pow(1 - i / N, 0.6) + 0.4;
       Lp.push([cx - dy / l * w, cy + dx / l * w]); Rp.push([cx + dy / l * w, cy - dx / l * w]);
     });
     ctx.beginPath(); Lp.forEach(([a, b], i) => i ? ctx.lineTo(side * a * s, b * s) : ctx.moveTo(side * a * s, b * s));
     for (let i = N; i >= 0; i--) ctx.lineTo(side * Rp[i][0] * s, Rp[i][1] * s); ctx.closePath(); shape(ctx, "#ddd2b6", 3);
-    ctx.save(); ctx.clip(); ctx.fillStyle = "#3a3134"; ctx.fillRect(side > 0 ? 26 * s : -38 * s, (top - 2) * s, 12 * s, 10 * s);       // dark tip
+    ctx.save(); ctx.clip(); ctx.fillStyle = "#6a5a54"; ctx.fillRect(side > 0 ? 7 * s : -19 * s, (top - 2) * s, 12 * s, 5 * s);       // dark tip
     ctx.fillStyle = "#a89a7a"; ctx.beginPath(); ctx.ellipse(side * 11 * s, -13 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1.3 * LW; ctx.beginPath();
     C0.slice(4, N - 3).forEach(([cx, cy], i) => i ? ctx.lineTo(side * (cx - 1.5) * s, (cy - 1.5) * s) : ctx.moveTo(side * (cx - 1.5) * s, (cy - 1.5) * s)); ctx.stroke();
@@ -1822,7 +1824,7 @@ const CAST = [
     lore: "A wisp gone dark: an amorphous blob of black and grey with a violet-to-purple glow at the edge and two glowing eyes, always shifting like a panicking wisp, trailing smoke and sinking motes of violet light. It strikes with a dark pulse.",
     moves: [["main", "Dark pulse"]], looks: "Rolled: eye colour (violet, green, amber, ice blue, red), violet or purple glow, how lumpy it is, how much smoke trails off it (always some)" },
   { k: "wraith", name: "Wraith", tag: "Future summon", stats: [["Status", "graphics only"]],
-    lore: "A tall, vaguely human shape in a dark, tattered shroud hanging open over a bare ribcage and spine, a goat skull for a face with a pair of S-curved bull horns pointing straight up and slit-pupilled embers in the sockets. Long arms end in bony claws; below the waist it is a whirling column of smoke. It pulses: a dark aura breathes around it and the whole figure fades in and out.",
+    lore: "A tall, vaguely human shape in a dark, tattered shroud hanging open over a bare ribcage and spine, a goat skull for a face with a pair of bull horns that sweep out and curl back in, their points standing straight up over the sides of the skull and slit-pupilled embers in the sockets. Long arms end in bony claws; below the waist it is a whirling column of smoke. It pulses: a dark aura breathes around it and the whole figure fades in and out.",
     moves: [["main", "Claw rake"]], looks: "Rolled: ember colour (green, red, blue, violet), how high the horns sweep, a cracked skull, shroud colour, how ragged the hem is" }
 ];
 const tiles = [];

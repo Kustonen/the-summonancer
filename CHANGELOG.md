@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.8.14-alpha – 2026-10-29
+- Wraith drawings: the horns curl back in so their points stand straight up above the sides of the skull
+
 ## 0.8.13-alpha – 2026-10-29
 - Wraith drawings: the bull horns curve in an S and end pointing straight up; the top of the whirlwind is a little narrower
 
