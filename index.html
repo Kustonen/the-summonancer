@@ -604,7 +604,7 @@ div.mapbtn { cursor: default; }
       <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it keeps to the back, behind something sturdy, and mends their bones instead. Wisps are far too flighty to stand guard. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
       <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow, very tough and takes two summon slots: nearby enemies can't help attacking it, and every fourth blow is a ground slam that shoves them back. A <b>Spirit</b> drifts through anything and keeps sweeping through the enemy, hurting everything it passes over; badly hurt, it falls back to a wisp to mend. A <b>Ghost</b> never fights: it hangs back behind your summons and haunts the ground, so everyone near it hits harder and moves faster. A <b>Wraith</b> casts slow Frost Bolts from two tiles away that chill what they hit; it takes two slots. New summons are bound at the Summoning Septagram in town.</p>
       <h3>Spells</h3>
-      <p><b>Command</b> plants a beacon that stays until you press Command again: summons with no enemy within 3 tiles head there. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward. A <b>Guardstone</b> keeps the first summons to step into its circle on guard there. Once the Stone Circle teaches Ward Guard, summon onto the wizard to post a <b>ward guard</b>: it patrols just outside the danger ring and goes for anything that comes close; <b>Release guards</b> sets them loose. <b>Freeze</b> chills an area and slows everything in it; <b>Nurture</b> grows bare earth into grass, grass into bushes and bushes into trees.</p>
+      <p><b>Command</b> plants a beacon that stays until you press Command again: summons with no enemy close by (3 tiles, less with Strict Curfew) head there. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward. A <b>Guardstone</b> keeps the first summons to step into its circle on guard there. Once the Stone Circle teaches Ward Guard, summon onto the wizard to post a <b>ward guard</b>: it patrols just outside the danger ring and goes for anything that comes close; <b>Release guards</b> sets them loose. <b>Freeze</b> chills an area and slows everything in it; <b>Nurture</b> grows bare earth into grass, grass into bushes and bushes into trees.</p>
       <h3>Assault</h3>
       <p>On the Assault field the enemies pour out of a <b>red ward</b> at the top. Summons with nothing to fight nearby march up and attack it. It is armoured (wisps barely scratch it; wards are built to keep spirits out), it pulses to hurt summons right next to it, and every third of its health lost it spits out a squad of defenders. Break it to win; spells that hit a tile can't touch it.</p>
       <h3>Gauntlet and Raid</h3>
@@ -706,7 +706,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.10.0-alpha";
+const VERSION = "0.10.1-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -784,8 +784,9 @@ const DATA = {
       { key: "skillSlot", name: "Deeper Thoughts",  max: 1, costs: [{ gold: 1000, stone: 100, iron: 100, crystal: 50 }], fx: lv => (1 + lv) + " skill slot" + (lv ? "s" : "") + " for golems" }
     ],
     library: [
-      { key: "cmdDur",  name: "Extended Loan",   max: 6, gold: 10, soon: true, fx: lv => "being reworked for the Command beacon" },
-      { key: "cmdCost", name: "Late Fee Waiver", max: 5, gold: 12, fx: lv => "Command costs " + (10 - lv) + " mana" },
+      { key: "cmdDur",  name: "Strict Curfew",   max: 4, costs: [{ gold: 20 }, { gold: 40 }, { gold: 70 }, { gold: 110 }], fx: lv => "summons leave the Command beacon only for enemies within " + fmt(3 - 0.5 * lv) + " tiles" },
+      { key: "cmdCost", name: "Late Fee Waiver", max: 5, costs: [{ gold: 10 }, { gold: 20 }, { gold: 35 }, { gold: 55 }, { gold: 80 }], fx: lv => "Command costs " + (10 - lv - rlv("library", "cmdFree")) + " mana" },
+      { key: "cmdFree", name: "Overdue Amnesty", max: 3, costs: [{ gold: 40 }, { gold: 80 }, { gold: 150 }], fx: lv => "Command costs " + (10 - rlv("library", "cmdCost") - lv) + " mana" },
       { key: "nemDur",  name: "Grudge Ledger",   max: 6, gold: 10, fx: lv => "Nemesis lasts " + (5 + lv) + " s" },
       { key: "nemCost", name: "Bulk Borrowing",  max: 5, gold: 12, fx: lv => "Nemesis costs " + (20 - 2 * lv) + " mana" },
       { key: "exposed", name: "Exposed",         max: 8, gold: 14, fx: lv => lv ? "the marked enemy takes +" + lv * 10 + " % damage" : "no extra damage" },
@@ -852,7 +853,7 @@ const DATA = {
       : ({ gold: Math.round(r.gold * (lv + 1) * (1 + lv * 0.25)), bones: lv >= 2 ? lv * 2 : 0, skulls: lv >= 6 ? lv - 5 : 0 })
   },
   spells: {
-    command:  { name: "Command",  mana: 10, duration: 1, about: "Plants a beacon that stays until you press Command again. Summons with no enemy within 3 tiles home in on it; tap elsewhere to move it for free." },
+    command:  { name: "Command",  mana: 10, duration: 1, about: "Plants a beacon that stays until you press Command again. Summons with no enemy within 3 tiles (less with Strict Curfew) home in on it; tap elsewhere to move it for free." },
     nemesis:  { name: "Nemesis",  mana: 20, duration: 5, about: "Marks one enemy; every summon goes after it." },
     // hits one tile for 1 damage and sets flammable ground alight: anyone walking on it burns for 5 s (1 damage a second) and panics
     firebolt: { name: "Firebolt", school: "fire", about: "Hits a tile and sets grass, bushes and trees on fire.", mana: 2, damage: 1, tileBurn: 8, burn: 5, burnDps: 1 },
@@ -1333,7 +1334,7 @@ const shoveCooldown = lv => Math.max(30, 60 - 6 * (lv - 1));
 // spell costs and durations for this battle, with the Overdue Library applied
 function spellsNow() {
   return {
-    command: { name: "Command", mana: spellMana("command", 10 - rlv("library", "cmdCost")), sight: 3 },     // summons with no enemy within "sight" tiles home in on the beacon
+    command: { name: "Command", mana: spellMana("command", 10 - rlv("library", "cmdCost") - rlv("library", "cmdFree")), sight: 3 - 0.5 * Math.min(4, rlv("library", "cmdDur")) },     // summons with no enemy within "sight" tiles home in on the beacon
     nemesis: { name: "Nemesis", mana: spellMana("nemesis", 20 - 2 * rlv("library", "nemCost")), duration: 5 + rlv("library", "nemDur") + (setOn("warlord", 2) ? 2 : 0), exposed: 0.1 * rlv("library", "exposed") },
     firebolt: Object.assign({}, DATA.spells.firebolt, { mana: spellMana("firebolt", DATA.spells.firebolt.mana) }),
     nurture: Object.assign({}, DATA.spells.nurture, { mana: spellMana("nurture", DATA.spells.nurture.mana) }),

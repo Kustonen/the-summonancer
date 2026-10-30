@@ -2,6 +2,11 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.10.1-alpha
+- Extended Loan is now **Strict Curfew** (4 levels): summons only leave the Command beacon for enemies within 3, 2.5, 2, 1.5 or 1 tile.
+- New **Overdue Amnesty** (3 levels): Command costs 1 less mana per level, on top of Late Fee Waiver (down to 2 mana).
+- Command upgrades are cheap and gold-only: Command is the main way to steer the horde.
+
 ## 0.10.0-alpha
 - **Wisps** in healer mode keep to the back: they heal anyone in reach, slip in behind a hurt summon (with it between them and the enemy) when needed, and otherwise hang back behind the group like ghosts. Swamps still distract them.
 - **Command** is now a beacon: it stays until you press Command again, and tapping elsewhere moves it for free. Summons with no enemy within 3 tiles head for it; guards keep guarding; wisps and ghosts stay with their group. Extended Loan is marked for rework.
