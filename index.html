@@ -247,7 +247,28 @@ div.mapbtn { cursor: default; }
 #wizCv { cursor: pointer; }
 .qgroup { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 8px 0 0; color: var(--gold); }
 @media (prefers-reduced-motion: reduce) { .manabar > div { transition: none; } .bld.glow, .btn.glow { animation: none; box-shadow: 0 0 10px rgba(232, 196, 90, .5); } }
+/* the title screen: before everything else */
+#startScreen { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at 50% 70%, #241c3d 0%, #120f1c 55%, #08070c 100%); overflow: hidden; }
+#startScreen[hidden] { display: none; }
+#startCv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.startUi { position: absolute; left: 0; right: 0; bottom: 2vh; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 0 16px; }
+#startBtn { font-family: var(--display); font-size: clamp(22px, 4vw, 34px); font-weight: 500; padding: 10px 28px; border-radius: 12px; box-shadow: 0 0 24px rgba(111,168,255,.45); }
+#startBtn:hover { box-shadow: 0 0 36px rgba(111,168,255,.75); }
+.startUi .ver { color: var(--bone); opacity: .8; font-size: 14px; margin-top: 8px; }
+.startUi .credit { color: var(--dim); font-style: italic; font-size: 14px; }
+.startUi .hint { color: var(--mana); font-size: 13px; opacity: .8; min-height: 1.2em; }
 </style>
+
+<!-- ============ TITLE SCREEN ============ -->
+<div id="startScreen">
+  <canvas id="startCv" aria-hidden="true"></canvas>
+  <div class="startUi">
+    <button class="btn primary" id="startBtn" type="button">Begin the Summonance!</button>
+    <p class="ver" id="startVer"></p>
+    <p class="credit">Design by Tarjei the Mad Mage</p>
+    <p class="hint" id="startHint"></p>
+  </div>
+</div>
 
 <!-- ============ TOWN ============ -->
 <div class="view town" id="townView">
@@ -706,7 +727,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.11.1-alpha";
+const VERSION = "0.12.0-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -6462,15 +6483,15 @@ if (window.ResizeObserver) new ResizeObserver(() => resize()).observe($("field")
 // ---------- Music: browsers only allow sound after the first tap ----------
 const bgm = $("bgm"); bgm.volume = 0.45;
 // battles play the two tracks in turn; the town has its own loop
-const TRACKS = ["music/ghost_of_sherwood.mp3", "music/shadowy_loops.mp3"], TOWN_TRACK = "music/lanterns_over_the_village.mp3";
+const TRACKS = ["music/ghost_of_sherwood.mp3", "music/shadowy_loops.mp3"], TOWN_TRACK = "music/lanterns_over_the_village.mp3", TITLE_TRACK = "music/the_summonance.mp3";
 let musicOn = true, track = 0, musicZone = "battle";
 try { musicOn = localStorage.getItem("summonancer_music") !== "off"; } catch (e) {}
 bgm.addEventListener("ended", () => { if (musicZone !== "battle") return; track = (track + 1) % TRACKS.length; bgm.src = TRACKS[track]; playMusic(); });
 // switch between the town loop and the battle playlist
 function setMusicZone(z) {
   if (z === musicZone) return;
-  musicZone = z; bgm.loop = z === "town";
-  bgm.src = z === "town" ? TOWN_TRACK : TRACKS[track]; bgm.currentTime = 0;
+  musicZone = z; bgm.loop = z !== "battle";
+  bgm.src = z === "town" ? TOWN_TRACK : z === "title" ? TITLE_TRACK : TRACKS[track]; bgm.currentTime = 0;
   playMusic();
 }
 function markMusic() { for (const id of ["music", "musicTown"]) { $(id).textContent = musicOn ? "Music on" : "Music off"; $(id).setAttribute("aria-pressed", musicOn ? "true" : "false"); } }
@@ -6487,7 +6508,7 @@ const firstTouch = () => { SFX.init(); playMusic(); };
 document.addEventListener("pointerdown", firstTouch);
 document.addEventListener("keydown", firstTouch);
 markMusic(); markSfx();
-setMusicZone(inBattle ? "battle" : "town");
+setMusicZone("title");
 
 // ---------- Loop ----------
 let frameDt = 0, wizClock = 0, plateT = 0, smithT = 0;
@@ -6518,8 +6539,72 @@ function loop(t) {
 function markSpeed() { const on = !!META.fast; $("speedBtn").textContent = on ? "Speed 2×" : "Speed 1×"; $("speedBtn").setAttribute("aria-pressed", on ? "true" : "false"); $("speedBtn").hidden = !META.built.chrono; }
 $("speedBtn").addEventListener("click", () => { META.fast = !META.fast; saveMeta(); markSpeed(); say(META.fast ? "The Chrono Crystal hums. Everything moves twice as fast. Try to keep up." : "Back to normal speed. The kobolds look relieved."); });
 $("verTown").textContent = "v" + VERSION; $("verBattle").textContent = "The Summonancer v" + VERSION;
-// a brand-new wizard wakes up in the middle of a battle; everyone else starts in town
-if (META.stage === "intro") startBattle("hillside");
-else { TOWN.seq = { kind: "appear", e: 0 }; showView("town"); }
+// ---------- Title screen: the wizard hovers over the Septagram while his summons spiral out of it ----------
+const TITLE = { on: true, t: 0, last: null, spawnT: 0, flock: [], motes: [], st: null };
+const TITLE_KINDS = ["skeleton_warrior", "skeleton_archer", "wraith", "golem", "spirit", "wisp", "ghost", "skeleton_warrior", "wisp"];
+$("startVer").textContent = "Version " + VERSION;
+function titleFrame(now) {
+  if (!TITLE.on) return;
+  const dt = TITLE.last === null ? 0.016 : Math.min(0.05, (now - TITLE.last) / 1000); TITLE.last = now; TITLE.t += dt;
+  const cv = $("startCv"), ctx = cv.getContext("2d"), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const t = TITLE.t, u = Math.min(W, H * 0.9), cx = W / 2, sgY = H * 0.6, R0 = u * 0.27;
+  // stars
+  for (let i = 0; i < 70; i++) { const x = (i * 137.5 % 100) / 100 * W, y = (i * 61.8 % 100) / 100 * H * 0.8; ctx.globalAlpha = 0.25 + 0.25 * Math.sin(t * 1.3 + i); ctx.fillStyle = "#e8f2ff"; ctx.beginPath(); ctx.arc(x, y, 0.6 + (i % 3) * 0.5, 0, Math.PI * 2); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  // the title, large and faint, behind everything
+  let fs = H / 4.2;
+  ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "700 " + fs + "px 'Grenze Gotisch', Georgia, serif";
+  const tw = ctx.measureText("The Summonancer").width; if (tw > W * 0.92) { fs *= W * 0.92 / tw; ctx.font = "700 " + fs + "px 'Grenze Gotisch', Georgia, serif"; }   // always fits
+  const tg = ctx.createLinearGradient(0, H * 0.2 - fs / 2, 0, H * 0.2 + fs / 2); tg.addColorStop(0, "rgba(236,227,207,.55)"); tg.addColorStop(1, "rgba(150,120,220,.35)");
+  ctx.shadowColor = "rgba(111,168,255,.6)"; ctx.shadowBlur = 30 + 10 * Math.sin(t * 1.5); ctx.fillStyle = tg; ctx.fillText("The Summonancer", cx, H * 0.2); ctx.restore();
+  // the Septagram, glowing on the ground
+  ctx.save(); ctx.translate(cx, sgY); ctx.scale(1, 0.32);
+  const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, R0 * 1.5); sg.addColorStop(0, "rgba(111,168,255,.45)"); sg.addColorStop(1, "rgba(111,168,255,0)");
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, R0 * 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.rotate(t * 0.35); ctx.shadowColor = "#6fa8ff"; ctx.shadowBlur = 18; ctx.strokeStyle = "rgba(170,210,255," + (0.8 + 0.2 * Math.sin(t * 2.5)) + ")"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(0, 0, R0, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, R0 * 0.88, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); for (let k = 0; k <= 7; k++) { const a = -Math.PI / 2 + ((k * 3) % 7) * Math.PI * 2 / 7; const px = Math.cos(a) * R0 * 0.88, py = Math.sin(a) * R0 * 0.88; k ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke();
+  ctx.fillStyle = "#e8f2ff"; for (let k = 0; k < 7; k++) { const a = -Math.PI / 2 + k * Math.PI * 2 / 7; ctx.beginPath(); ctx.arc(Math.cos(a) * R0 * 0.94, Math.sin(a) * R0 * 0.94, 4, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  // the vortex: summons spiral up and out of the Septagram
+  if ((TITLE.spawnT -= dt) <= 0) {
+    TITLE.spawnT = 0.3 + Math.random() * 0.25; const kind = TITLE_KINDS[Math.floor(Math.random() * TITLE_KINDS.length)];
+    TITLE.flock.push({ kind, look: ART.looks(kind), born: t, life: 6.5 + Math.random() * 2, a0: Math.random() * Math.PI * 2, spin: 2.2 + Math.random() * 0.8, ph: Math.random() * 10 });
+  }
+  if (TITLE.motes.length < 90) TITLE.motes.push({ born: t, life: 3 + Math.random() * 2, a0: Math.random() * Math.PI * 2, c: Math.random() < 0.5 ? "159,208,255" : "199,155,255" });
+  const place = (p, scaleR, lift) => {
+    const k = (t - p.born) / p.life, ang = p.a0 + k * p.spin * Math.PI * 2, r = R0 * (0.15 + k * scaleR);
+    return { k, ang, x: cx + Math.cos(ang) * r, y: sgY - k * lift + Math.sin(ang) * r * 0.32, front: Math.sin(ang) > 0 };
+  };
+  for (const m of TITLE.motes) { const q = place(m, 1.1, H * 0.55); ctx.fillStyle = "rgba(" + m.c + "," + (Math.sin(q.k * Math.PI) * 0.7) + ")"; ctx.beginPath(); ctx.arc(q.x, q.y, 1.5 + q.k * 1.5, 0, Math.PI * 2); ctx.fill(); }
+  TITLE.motes = TITLE.motes.filter(m => t - m.born < m.life);
+  TITLE.flock = TITLE.flock.filter(p => t - p.born < p.life);
+  const sBase = u / 1150, drawOne = p => {
+    const q = place(p, 1.35, H * 0.62), grow = Math.min(1, q.k * 5), fade = Math.min(1, (1 - q.k) * 4);
+    const ks = { golem: 0.75, wraith: 0.8, wisp: 1.2 }[p.kind] || 1, s = sBase * ks * (0.35 + 0.65 * grow) * (0.85 + 0.3 * (q.front ? 1 : 0.6));
+    ctx.save(); ctx.globalAlpha = grow * fade * (q.front ? 1 : 0.75);
+    ART.drawAt(p.kind, ctx, q.x, q.y, s, t + p.ph, p.look, "walk", Math.cos(q.ang + Math.PI / 2) < 0); ctx.restore();
+  };
+  const order = TITLE.flock.map(p => ({ p, q: place(p, 1.35, H * 0.62) })).sort((a, b) => a.q.y - b.q.y);
+  for (const o of order) if (!o.q.front) drawOne(o.p);
+  // the wizard, hovering over the middle of it all
+  TITLE.st = TITLE.st || Object.assign(wizLook(), { lev: 1 });
+  ART.drawWizard(ctx, cx, sgY - u * 0.06, u / 520, t, TITLE.st, null, dt, dpr);
+  for (const o of order) if (o.q.front) drawOne(o.p);
+  requestAnimationFrame(titleFrame);
+}
+requestAnimationFrame(titleFrame);
+// the first tap anywhere wakes the music (browsers won't play sound before it)
+const titleHint = () => { $("startHint").textContent = musicOn && bgm.paused ? "♪ Tap anywhere for music" : ""; };
+setInterval(() => { if (TITLE.on) titleHint(); }, 500); titleHint();
+$("startBtn").addEventListener("click", () => {
+  if (!TITLE.on) return;
+  TITLE.on = false; $("startScreen").hidden = true;
+  // a brand-new wizard wakes up in the middle of a battle; everyone else starts in town
+  if (META.stage === "intro") startBattle("hillside");
+  else { TOWN.seq = { kind: "appear", e: 0 }; showView("town"); }
+});
 requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
 </script>
