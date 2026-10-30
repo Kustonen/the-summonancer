@@ -706,7 +706,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.10.1-alpha";
+const VERSION = "0.11.0-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -1154,9 +1154,11 @@ const DATA = {
       common:    { name: "Common",    n: [1, 1], mult: 1,   sell: 20,  color: "#c9c1b1", adj: ["Slightly Used", "Lightly Dented", "Second-Hand", "Budget"] },
       uncommon:  { name: "Uncommon",  n: [1, 2], mult: 1.5, sell: 60,  color: "#8fd06a", adj: ["Respectable", "Freshly Laundered", "Almost Fashionable", "Lightly Enchanted"] },
       rare:      { name: "Rare",      n: [2, 2], mult: 2.2, sell: 200, color: "#6fa8ff", adj: ["Gleaming", "Rather Impressive", "Suspiciously Shiny", "Well-Loved"] },
+      epic:      { name: "Epic",      n: [2, 3], mult: 2.7, sell: 350, color: "#b97cf0", adj: ["Heroic", "Overly Dramatic", "Bardworthy", "Remarkably Ornate"] },
       legendary: { name: "Legendary", n: [3, 3], mult: 3.2, sell: 600, color: "#e8a040", adj: ["Legendary", "Unreasonably Glorious", "Mythic", "Absurdly Expensive"] }
     },
-    odds: { easy: [0.6, 0.3, 0.09, 0.01], normal: [0.4, 0.38, 0.18, 0.04], hard: [0.2, 0.4, 0.3, 0.1] },
+    // per piece: common, uncommon, rare, epic, legendary
+    odds: { easy: [0.6, 0.3, 0.08, 0.017, 0.003], normal: [0.4, 0.37, 0.16, 0.05, 0.02], hard: [0.2, 0.38, 0.27, 0.1, 0.05], extreme: [0, 0, 0.6, 0.3, 0.1], insane: [0, 0, 0, 0.7, 0.3] },
     // bonuses an item can roll; "base" is the common-quality amount
     bonus: {
       mana:  { base: 3,    text: v => "+" + v + " max mana" },
@@ -1195,7 +1197,10 @@ const DATA = {
     diffs: {
       easy:   { name: "Easy",   kills: 25, gap: 5,   strength: 1.0, boss: 1.0, reward: { exp: 60,  gold: 60 },  second: 0.1 },
       normal: { name: "Normal", kills: 45, gap: 4,   strength: 1.3, boss: 1.4, reward: { exp: 150, gold: 150 }, second: 0.2 },
-      hard:   { name: "Hard",   kills: 70, gap: 3.2, strength: 1.7, boss: 2.0, reward: { exp: 350, gold: 350 }, second: 0.35 }
+      hard:   { name: "Hard",   kills: 70, gap: 3.2, strength: 1.7, boss: 2.0, reward: { exp: 350, gold: 350 }, second: 0.35 },
+      // opened hall by hall: Extreme once its chief has fallen on Hard, Insane once it has fallen on Extreme
+      extreme: { name: "Extreme", kills: 100, gap: 2.6, strength: 2.3, boss: 2.8, reward: { exp: 800, gold: 800 }, second: 0.5, after: "hard" },
+      insane:  { name: "Insane",  kills: 140, gap: 2.1, strength: 3.0, boss: 3.8, reward: { exp: 1800, gold: 1800 }, second: 0.7, after: "extreme" }
     }
   },
   // Assault difficulty: the enemy ward's health, seconds between waves, and how much tougher the enemies are
@@ -3569,13 +3574,23 @@ for (const k in DATA.levels) {
   b.className = "mapbtn"; b.id = "map_" + k; if (!multi) b.type = "button";
   b.innerHTML = "<b>" + DATA.levels[k].name + "</b><span>" + DATA.levels[k].note + "</span><span class='bestline'></span>" +
     (k === "raid" ? "<div class='diffs' id='raidFactions'>" + Object.entries(DATA.raid.factions).map(([fk, f]) => "<button class='btn' type='button' data-faction='" + fk + "' aria-pressed='" + (fk === raidPick) + "'>" + f.name + "</button>").join("") + "</div>" : "") +
-    (multi ? "<div class='diffs'>" + Object.entries(DATA.assault).map(([dk, dd]) => "<button class='btn' type='button' id='" + k + "_" + dk + "' data-diff='" + dk + "'>" + dd.name + "</button>").join("") + "</div>" : "");
+    (multi ? "<div class='diffs'>" + Object.entries(k === "raid" ? DATA.raid.diffs : DATA.assault).map(([dk, dd]) => "<button class='btn' type='button' id='" + k + "_" + dk + "' data-diff='" + dk + "'>" + dd.name + "</button>").join("") + "</div>" : "");
   if (multi) for (const db of b.querySelectorAll("[data-diff]")) db.addEventListener("click", () => goBattle(k, k === "raid" ? raidPick + ":" + db.dataset.diff : db.dataset.diff));
   else b.addEventListener("click", () => goBattle(k));
-  for (const fb of b.querySelectorAll("[data-faction]")) fb.addEventListener("click", () => { raidPick = fb.dataset.faction; for (const o of b.querySelectorAll("[data-faction]")) o.setAttribute("aria-pressed", o === fb ? "true" : "false"); });
+  for (const fb of b.querySelectorAll("[data-faction]")) fb.addEventListener("click", () => { raidPick = fb.dataset.faction; for (const o of b.querySelectorAll("[data-faction]")) o.setAttribute("aria-pressed", o === fb ? "true" : "false"); markRaidLocks(); });
   maps.appendChild(b);
 }
 
+// Extreme and Insane open hall by hall, once the chief has fallen on the difficulty before
+function markRaidLocks() {
+  for (const [dk, dd] of Object.entries(DATA.raid.diffs)) {
+    const btn = $("raid_" + dk); if (!btn) continue;
+    const open = !dd.after || ((META.raidBeat || {})[raidPick + ":" + dd.after] || 0) > 0;
+    btn.disabled = !open; btn.title = open ? "" : "Beat the " + DATA.raid.factions[raidPick].boss.name + " on " + DATA.raid.diffs[dd.after].name + " first";
+    btn.textContent = open ? dd.name : dd.name + " 🔒";
+  }
+}
+setTimeout(markRaidLocks, 0);
 // ---------- Quests: story quests from DATA.quests, common quests made up by the villagers ----------
 const killsNow = k => kills(k) + (S && !S.tallied ? (S.slain[k] || 0) : 0);
 const live = () => inBattle && S && !S.tallied;
@@ -3839,7 +3854,7 @@ function renderTown() {
   $("b_septagram").classList.toggle("glow", META.stage === "septagram");
   renderBuilder(); renderSeptagram();
   for (const w of ["lab", "well", "golematorium", "library", "stones", "spiritstones", "lanterns", "cloister"]) renderResearch(w);
-  renderMarket(); renderSpellBook(); renderLoadout(); renderLedger(); renderAcademy(); renderSmithRecipes(); renderSmithQueue();
+  markRaidLocks(); renderMarket(); renderSpellBook(); renderLoadout(); renderLedger(); renderAcademy(); renderSmithRecipes(); renderSmithQueue();
   $("b_wagon").hidden = !META.sainaMet;
   renderUnits(); renderQuests(); if (!TALK) showTalk();
   $("b_tavern").classList.toggle("glow", META.stage === "done" && !META.quests.hero || anyQuestReady());

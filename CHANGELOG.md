@@ -2,6 +2,12 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.11.0-alpha
+- New gear rarity **Epic** (purple) between Rare and Legendary: 2-3 bonuses at 2.7x strength, sells for 350 gold. Drop odds per piece: Easy 60/30/8/1.7/0.3 %, Normal 40/37/16/5/2 %, Hard 20/38/27/10/5 % (common/uncommon/rare/epic/legendary).
+- New Raid difficulties, opened hall by hall:
+  - **Extreme** (after beating that chief on Hard): 100 guards, 2.3x enemies, 2.8x chief, 800 exp and gold, 50 % second piece; drops only Rare 60 %, Epic 30 %, Legendary 10 %.
+  - **Insane** (after beating that chief on Extreme): 140 guards, 3.0x enemies, 3.8x chief, 1,800 exp and gold, 70 % second piece; drops only Epic 70 %, Legendary 30 %.
+
 ## 0.10.1-alpha
 - Extended Loan is now **Strict Curfew** (4 levels): summons only leave the Command beacon for enemies within 3, 2.5, 2, 1.5 or 1 tile.
 - New **Overdue Amnesty** (3 levels): Command costs 1 less mana per level, on top of Late Fee Waiver (down to 2 mana).
