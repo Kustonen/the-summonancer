@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.12.3-alpha
+- The title screen's stone crack (about 1.8x) and vortex whoosh (about 2.6x) are louder.
+
 ## 0.12.2-alpha
 - Title screen sounds: a resounding stone crack as the button splits, then a long, rising mystical whoosh as you are drawn into the Septagram.
 
