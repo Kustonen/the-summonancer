@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.12.5-alpha
+- The title button now breaks in stages: the lettering turns to grey stone from the middle out, a crack runs down the middle (crack!), more cracks spread to the sides (crack!), then it crumbles into six pieces that tumble off the screen in a shower of grit with a resounding crunch. Only then does the Septagram spin up. The title song no longer ducks; it fades gently as you fall in.
+
 ## 0.12.4-alpha
 - The title screen's stone crack is a proper "crrrack": a run of sharp snaps in the frequencies that cut through, a bigger boom and longer rumble, and the title song ducks for a moment so it can be heard.
 
