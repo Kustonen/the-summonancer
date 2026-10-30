@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.12.4-alpha
+- The title screen's stone crack is a proper "crrrack": a run of sharp snaps in the frequencies that cut through, a bigger boom and longer rumble, and the title song ducks for a moment so it can be heard.
+
 ## 0.12.3-alpha
 - The title screen's stone crack (about 1.8x) and vortex whoosh (about 2.6x) are louder.
 
