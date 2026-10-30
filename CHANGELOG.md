@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.11.1-alpha
+- The town has its own music: "Lanterns Over the Village", a mellow D-minor waltz on loop (composed in code). Battles keep playing Ghost of Sherwood and Shadowy Loops.
+
 ## 0.11.0-alpha
 - New gear rarity **Epic** (purple) between Rare and Legendary: 2-3 bonuses at 2.7x strength, sells for 350 gold. Drop odds per piece: Easy 60/30/8/1.7/0.3 %, Normal 40/37/16/5/2 %, Hard 20/38/27/10/5 % (common/uncommon/rare/epic/legendary).
 - New Raid difficulties, opened hall by hall:
