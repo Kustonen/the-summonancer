@@ -404,6 +404,10 @@ div.mapbtn { cursor: default; }
       <button class="btn" id="upSlot" type="button"></button>
     </div>
     <div class="opt">
+      <div class="what"><b>Far Reach</b><span id="upReachInfo"></span></div>
+      <button class="btn" id="upReach" type="button"></button>
+    </div>
+    <div class="opt">
       <div class="what"><b>Spell Slots</b><span id="upSpellInfo"></span></div>
       <button class="btn" id="upSpell" type="button"></button>
     </div>
@@ -501,7 +505,7 @@ div.mapbtn { cursor: default; }
   <section class="panel" id="p_stones" hidden>
     <h2>Protective Stone Circle</h2>
     <p class="quote">“Stonehenge? We just keep our sheep penned here. They do tend to attract druids though...”</p>
-    <p>The ward draws its strength from these stones. Thicker stones take more hits, and the circle can learn to shove enemies away from the ward.</p>
+    <p>The ward draws its strength from these stones. Each kind of battlefield has its own way of making the ward hold more hits, the circle can learn to shove enemies away, and summons can be posted as ward guards.</p>
     <div id="stonesList"></div>
   </section>
 
@@ -597,10 +601,10 @@ div.mapbtn { cursor: default; }
       <h2>Field notes</h2>
       <p>Pick a summon below and tap a lit tile near the ward. The ward holds as long as nothing reaches it.</p>
       <h3>Summons</h3>
-      <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it drifts to them and mends their bones instead. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
+      <p><b>Wisp</b> floats through anything. Alone it pokes at enemies; once other summons are around, it keeps to the back, behind something sturdy, and mends their bones instead. Wisps are far too flighty to stand guard. Wisps find swamps irresistible and sometimes wander off to admire one.</p>
       <p><b>Skeleton</b> walks around obstacles and hits hard. <b>Archer</b> shoots from two tiles away but is slow and fragile. <b>Golem</b> is slow, very tough and takes two summon slots: nearby enemies can't help attacking it, and every fourth blow is a ground slam that shoves them back. A <b>Spirit</b> drifts through anything and keeps sweeping through the enemy, hurting everything it passes over; badly hurt, it falls back to a wisp to mend. A <b>Ghost</b> never fights: it hangs back behind your summons and haunts the ground, so everyone near it hits harder and moves faster. A <b>Wraith</b> casts slow Frost Bolts from two tiles away that chill what they hit; it takes two slots. New summons are bound at the Summoning Septagram in town.</p>
       <h3>Spells</h3>
-      <p><b>Command</b> calls every summon toward a tile for a moment. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward. A <b>Guardstone</b> keeps the first summons to step into its circle on guard there. <b>Freeze</b> chills an area and slows everything in it; <b>Nurture</b> grows bare earth into grass, grass into bushes and bushes into trees.</p>
+      <p><b>Command</b> plants a beacon that stays until you press Command again: summons with no enemy within 3 tiles head there. <b>Nemesis</b> marks one enemy, and every summon goes after it. Once the Stone Circle has learned it, <b>Shove</b> pushes enemies away from the ward. A <b>Guardstone</b> keeps the first summons to step into its circle on guard there. Once the Stone Circle teaches Ward Guard, summon onto the wizard to post a <b>ward guard</b>: it patrols just outside the danger ring and goes for anything that comes close; <b>Release guards</b> sets them loose. <b>Freeze</b> chills an area and slows everything in it; <b>Nurture</b> grows bare earth into grass, grass into bushes and bushes into trees.</p>
       <h3>Assault</h3>
       <p>On the Assault field the enemies pour out of a <b>red ward</b> at the top. Summons with nothing to fight nearby march up and attack it. It is armoured (wisps barely scratch it; wards are built to keep spirits out), it pulses to hurt summons right next to it, and every third of its health lost it spits out a squad of defenders. Break it to win; spells that hit a tile can't touch it.</p>
       <h3>Gauntlet and Raid</h3>
@@ -626,6 +630,7 @@ div.mapbtn { cursor: default; }
     <button class="spell" id="spell_nurture" type="button" aria-pressed="false" hidden><b>Nurture</b><span>10 mana</span></button>
     <button class="spell" id="spell_guardstone" type="button" aria-pressed="false" hidden><b>Guardstone</b><span>10 mana</span></button>
     <button class="spell" id="spell_shove" type="button" aria-pressed="false" hidden><b>Shove</b><span>ready</span></button>
+    <button class="spell" id="spell_release" type="button" aria-pressed="false" hidden><b>Release guards</b><span>0 / 0</span></button>
   </div>
   <div class="bar">
     <button class="card" id="card_wisp" type="button" aria-pressed="true">
@@ -701,7 +706,7 @@ div.mapbtn { cursor: default; }
 
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>
-const VERSION = "0.9.9-alpha";
+const VERSION = "0.10.0-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -715,7 +720,8 @@ const DATA = {
   tower: {
     mana:  { per: 5,    cost: lv => 3 + 4 * lv + lv * lv },                 // 3, 8, 15, 24 ... level 16: 323
     regen: { per: 0.15, cost: lv => Math.round(4 + 5 * lv + 1.5 * lv * lv) },// 4, 11, 20, 32 ... level 24: 988
-    slots: { per: 1,    cost: lv => lv < 4 ? 25 * (lv + 1) : 150 + (lv - 4) * 50 }   // 25, 50, 75, 100, 150, then +50 per slot
+    slots: { per: 1,    cost: lv => lv < 4 ? 25 * (lv + 1) : 150 + (lv - 4) * 50 },  // 25, 50, 75, 100, 150, then +50 per slot
+    reach: { per: 1, max: 3, costs: [100, 1000, 2000] }                     // Far Reach: summon 1 tile from the ward, then 2, 3 and 4
   },
   // buildings the Builder can put up, and the research they offer
   // "needs": a summon that has to be unlocked first
@@ -778,7 +784,7 @@ const DATA = {
       { key: "skillSlot", name: "Deeper Thoughts",  max: 1, costs: [{ gold: 1000, stone: 100, iron: 100, crystal: 50 }], fx: lv => (1 + lv) + " skill slot" + (lv ? "s" : "") + " for golems" }
     ],
     library: [
-      { key: "cmdDur",  name: "Extended Loan",   max: 6, gold: 10, fx: lv => "Command lasts " + fmt(1 + lv * 0.25) + " s" },
+      { key: "cmdDur",  name: "Extended Loan",   max: 6, gold: 10, soon: true, fx: lv => "being reworked for the Command beacon" },
       { key: "cmdCost", name: "Late Fee Waiver", max: 5, gold: 12, fx: lv => "Command costs " + (10 - lv) + " mana" },
       { key: "nemDur",  name: "Grudge Ledger",   max: 6, gold: 10, fx: lv => "Nemesis lasts " + (5 + lv) + " s" },
       { key: "nemCost", name: "Bulk Borrowing",  max: 5, gold: 12, fx: lv => "Nemesis costs " + (20 - 2 * lv) + " mana" },
@@ -827,7 +833,16 @@ const DATA = {
       { key: "deep",  name: "Deep Cold",         max: 5,  gold: 35, fx: lv => "Frost Bolts chill " + (40 + 5 * lv) + " % for " + fmt(3 + 0.5 * lv) + " s" }
     ],
     stones: [
-      { key: "ward",  name: "Thicker Stones",  max: 5, gold: 15, fx: lv => "the ward holds " + (DATA.wizard.ward + lv) + " hits" },
+      { key: "ward",  name: "Thicker Stones",  max: 45, gold: 15, fx: lv => "on the Hillside, Crossroads and Outpost the ward holds " + (DATA.wizard.ward + lv) + " hits" },
+      { key: "siege", name: "Siege Stones",    max: 10, gold: 30, fx: lv => "on the Assault the ward holds " + (DATA.wizard.ward + lv) + " hits" },
+      { key: "stalac", name: "Suspicious Stalactites", max: 10, gold: 60, fx: lv => "in the Gauntlet the ward holds " + (DATA.wizard.ward + lv) + " hits" },
+      { key: "monolith", name: "Ominous Monolith", max: 10, gold: 90, fx: lv => "in a Raid the ward holds " + (DATA.wizard.ward + lv) + " hits" },
+      { key: "wguard", name: "Ward Guard",     max: 10, costs: [{ gold: 50 }, { gold: 100, stone: 10 }, { gold: 200, stone: 25 }, { gold: 500, stone: 50 }, { gold: 900, stone: 80, ingot: 5 }, { gold: 1500, stone: 120, ingot: 10 },
+        { gold: 2300, stone: 160, ingot: 15 }, { gold: 3300, stone: 200, ingot: 20 }, { gold: 4600, stone: 250, ingot: 30 }, { gold: 6000, stone: 300, ingot: 40 }],
+        fx: lv => lv ? lv + " ward guard" + (lv > 1 ? "s" : "") + ": summon on the wizard (or the ward) to post a guard" : "no ward guards" },
+      { key: "watch", name: "Watchful Eyes",   max: 2, costs: [{ gold: 400, stone: 40 }, { gold: 1500, stone: 100, ingot: 10 }], fx: lv => "ward guards go for enemies within " + (2 + lv) + " tiles of the ward" },
+      { key: "wskin", name: "Warded Skin",     max: 5, gold: 40, fx: lv => lv ? "ward guards block " + fmt(lv * 0.3) + " damage per hit" : "no extra armour" },
+      { key: "wheal", name: "Ward's Embrace",  max: 4, gold: 50, fx: lv => lv ? "ward guards mend 1 HP every " + (6 - lv) + " s" : "no mending" },
       { key: "shove", name: "Shove",           max: 6, gold: 20, fx: lv => lv ? "pushes nearby enemies back, every " + shoveCooldown(lv) + " s" : "not learned yet" },
       { key: "mend",  name: "Mending Stones",  max: 4, gold: 25, fx: lv => lv ? "the ward mends 1 hit every " + (90 - 15 * lv) + " s" : "no mending" }
     ],
@@ -837,7 +852,7 @@ const DATA = {
       : ({ gold: Math.round(r.gold * (lv + 1) * (1 + lv * 0.25)), bones: lv >= 2 ? lv * 2 : 0, skulls: lv >= 6 ? lv - 5 : 0 })
   },
   spells: {
-    command:  { name: "Command",  mana: 10, duration: 1, about: "Calls every summon to a tile for a moment." },
+    command:  { name: "Command",  mana: 10, duration: 1, about: "Plants a beacon that stays until you press Command again. Summons with no enemy within 3 tiles home in on it; tap elsewhere to move it for free." },
     nemesis:  { name: "Nemesis",  mana: 20, duration: 5, about: "Marks one enemy; every summon goes after it." },
     // hits one tile for 1 damage and sets flammable ground alight: anyone walking on it burns for 5 s (1 damage a second) and panics
     firebolt: { name: "Firebolt", school: "fire", about: "Hits a tile and sets grass, bushes and trees on fire.", mana: 2, damage: 1, tileBurn: 8, burn: 5, burnDps: 1 },
@@ -943,8 +958,8 @@ const DATA = {
       wisp: {
         lore: "A small, glowing something that agreed to help. Nobody, including the wisp, knows what it is made of. It does not touch the ground on principle.",
         attacks: "A small electric zap",
-        behaviour: "Alone, a wisp pokes at enemies. With other summons around it drifts to the most battered one and mends its bones. Swamps are a weakness: sometimes it just floats off to admire one.",
-        notes: "Wisps hum when they think nobody is listening. The hum is in a minor key."
+        behaviour: "Alone, a wisp pokes at enemies. With other summons around it keeps to the back, slipping in behind the most battered one (with that one between it and the enemy) to mend its bones. Swamps are a weakness: sometimes it just floats off to admire one.",
+        notes: "Wisps hum when they think nobody is listening. The hum is in a minor key. They are far too flighty and air-headed to guard anything that doesn't do something interesting, so they keep themselves safe behind the front line and patch up whoever is in it."
       },
       skeleton_warrior: {
         lore: "A perfectly ordinary pile of bones, summoned (not raised, summoned) into a perfectly ordinary skeleton. Each one is missing a few different teeth.",
@@ -1149,7 +1164,7 @@ const DATA = {
       sdmg:  { base: 4,    text: v => "+" + v + " % summon damage" },
       shp:   { base: 5,    text: v => "+" + v + " % summon health" },
       spell: { base: 4,    text: v => v + " % cheaper spells" },
-      ward:  { base: 1,    text: v => "+" + v + " ward", rareOnly: true },
+      ward:  { base: 1,    text: v => "+" + v * 10 + " % ward hits", rareOnly: true },
       bgold: { base: 5,    text: v => "+" + v + " % gold from battles" },
       bexp:  { base: 5,    text: v => "+" + v + " % experience from battles" },
       drop:  { base: 10,   text: v => "+" + v + " % chance of crystals and skulls" }
@@ -1158,7 +1173,7 @@ const DATA = {
       ember:   { name: "Ember Regalia", word: "Smouldering", 2: "Firebolt costs 1 less mana, fire spells 20 % less", 3: "burning lasts 2 s longer", 5: "burning deals double damage (trolls take four times as much)" },
       frost:   { name: "Frostbound Attire", word: "Frostbound", 2: "cold spells cost 20 % less", 3: "the chill lasts 2 s longer", 5: "Freeze covers 1 more tile in every direction" },
       necro:   { name: "Definitely Not a Necromancer's Outfit", word: "Not-At-All-Necromantic", 2: "skeletons have 15 % more health and damage", 3: "skeletons attack 15 % faster, archers reach 1 tile further", 5: "a fallen skeleton sometimes (25 %) pulls itself back together at half health, once, without taking a summon slot" },
-      stone:   { name: "Stonewarden's Garb", word: "Stonewarden's", 2: "golems block 1 more damage, earth spells cost 20 % less", 3: "summons on guard move 20 % faster", 5: "the ward holds 1 more hit" },
+      stone:   { name: "Stonewarden's Garb", word: "Stonewarden's", 2: "golems block 1 more damage, earth spells cost 20 % less", 3: "summons on guard move 20 % faster", 5: "the ward holds 20 % more hits" },
       warlord: { name: "Warlord's Hand-Me-Downs", word: "Warlord's", 2: "Nemesis costs 20 % less and lasts 2 s longer", 3: "summons deal 10 % more damage", 5: "summons move 50 % faster while the Nemesis target lives" }
     }
   },
@@ -1256,11 +1271,15 @@ function setCount(set) { return worn().filter(it => it.set === set).length; }
 const setOn = (set, n) => setCount(set) >= n;
 const wizManaMax = () => DATA.wizard.manaMax + META.manaLv * DATA.tower.mana.per + gearStat("mana");
 const wizRegen = () => DATA.wizard.manaRegen + META.regenLv * DATA.tower.regen.per + gearStat("regen");
+const summonReach = () => 1 + Math.min(DATA.tower.reach.max, META.reachLv || 0);
 const wizSlots = () => DATA.wizard.summonSlots + META.slotLv * DATA.tower.slots.per + gearStat("slots");
 // skills: how many a summon may use, and whether one is in use
 const skillSlots = kind => 1 + (kind === "golem" ? rlv("golematorium", "skillSlot") : kind === "skeleton_warrior" || kind === "skeleton_archer" ? rlv("lab", "skillSlot") : 0);
 const skillOn = (kind, sk) => !!(META.skills.unlocked[sk] && (META.skills.equip[kind] || []).includes(sk));
-const wardHits = () => DATA.wizard.ward + rlv("stones", "ward") + gearStat("ward") + (setOn("stone", 5) ? 1 : 0);
+// each kind of field has its own ward upgrade; equipment adds a percentage on top (rounded up)
+const WARD_LINE = { assault: "siege", gauntlet: "stalac", raid: "monolith" };
+const wardPct = () => gearStat("ward") * 10 + (setOn("stone", 5) ? 20 : 0);
+const wardHits = () => { const base = DATA.wizard.ward + rlv("stones", WARD_LINE[levelKey] || "ward"), p = wardPct(); return p ? Math.ceil(base * (1 + p / 100)) : base; };
 // make a new piece of equipment from a set, its rarity rolled by the difficulty
 function makeGear(set, diff) {
   const G = DATA.gear, odds = G.odds[diff] || G.odds.easy, keys = Object.keys(G.rarity);
@@ -1314,7 +1333,7 @@ const shoveCooldown = lv => Math.max(30, 60 - 6 * (lv - 1));
 // spell costs and durations for this battle, with the Overdue Library applied
 function spellsNow() {
   return {
-    command: { name: "Command", mana: spellMana("command", 10 - rlv("library", "cmdCost")), duration: 1 + 0.25 * rlv("library", "cmdDur") },
+    command: { name: "Command", mana: spellMana("command", 10 - rlv("library", "cmdCost")), sight: 3 },     // summons with no enemy within "sight" tiles home in on the beacon
     nemesis: { name: "Nemesis", mana: spellMana("nemesis", 20 - 2 * rlv("library", "nemCost")), duration: 5 + rlv("library", "nemDur") + (setOn("warlord", 2) ? 2 : 0), exposed: 0.1 * rlv("library", "exposed") },
     firebolt: Object.assign({}, DATA.spells.firebolt, { mana: spellMana("firebolt", DATA.spells.firebolt.mana) }),
     nurture: Object.assign({}, DATA.spells.nurture, { mana: spellMana("nurture", DATA.spells.nurture.mana) }),
@@ -1661,7 +1680,7 @@ function buildLevel(key) {
   const wdist = d.arena ? (x, y) => Math.min(...structs.map(s => Math.max(Math.abs(s.x - x), Math.abs(s.y - y)))) : wardDist;
   return { key, d, terrain, structs, wardDist: wdist, swamps, foeWard: foeWard.length ? foeWard : null, under: terrain.under || {}, arena: d.arena || null,
     reach: (x, y) => terrain[y][x] !== "structure" && wdist(x, y) <= reachAt,
-    summon: (x, y) => terrain[y][x] !== "structure" && wdist(x, y) <= d.summonRange };
+    summon: (x, y) => terrain[y][x] !== "structure" && wdist(x, y) <= summonReach() };
 }
 
 function startBattle(key, diff) {
@@ -1676,7 +1695,8 @@ function startBattle(key, diff) {
     mana: Math.min(DATA.wizard.manaStart, wizManaMax()), manaMax: wizManaMax(), regen: wizRegen(), slots: wizSlots(),
     bones: 0, carried, skulls: 0, gold: 0, loot: Object.fromEntries(Object.keys(DATA.materials).map(k => [k, 0])), foeDefs: {},
     gathered: Object.assign({ bones: 0, skulls: 0, gold: 0 }, Object.fromEntries(Object.keys(DATA.materials).map(k => [k, 0]))), ward: wardHits(), wardMax: wardHits(),
-    sp: spellsNow(), shoveLv: rlv("stones", "shove"), shoveCd: 0, mendLv: rlv("stones", "mend"), mendT: 0, shoveFx: 0,
+    sp: spellsNow(), wardGuards: rlv("stones", "wguard"), wardWatch: 2 + rlv("stones", "watch"), wardSkin: 0.3 * rlv("stones", "wskin"), wardHeal: rlv("stones", "wheal") ? 6 - rlv("stones", "wheal") : 0,
+    shoveLv: rlv("stones", "shove"), shoveCd: 0, mendLv: rlv("stones", "mend"), mendT: 0, shoveFx: 0,
     tutorial: META.stage === "intro", fire: {}, bolts: [], freezes: [], stones: [], grows: [], hinted: {}, cheered: true, overShown: false,
     wiz: { st: wizLook(), seq: { kind: "appear", e: 0 }, until: 0 },
     assault: L.foeWard ? DATA.assault[diff || "easy"] : null, diff: L.foeWard ? diff || "easy" : null, wardFlash: 0,
@@ -1710,7 +1730,7 @@ function startBattle(key, diff) {
   select("wisp");
   for (const k of ["command", "nemesis", "firebolt", "freeze", "nurture", "guardstone"]) $("spell_" + k).querySelector("span").textContent = S.sp[k].mana + " mana";
   for (const k of SPELL_ORDER) $("spell_" + k).hidden = !(knowsSpell(k) && META.loadout.includes(k));
-  $("spell_shove").hidden = !S.shoveLv;
+  $("spell_shove").hidden = !S.shoveLv; $("spell_release").hidden = !S.wardGuards;
   document.querySelector(".spells").style.setProperty("--n", [...document.querySelectorAll(".spells .spell")].filter(b => !b.hidden).length);
   say(S.tutorial ? "You wake up mid-battle on a strange hillside. Tap a lit tile near the bottom to summon a wisp!" : L.arena === "raid" ? "The hall of the " + S.raid.f.name.toLowerCase() + ". Beat " + S.arenaTarget + " guards and the " + S.raid.f.boss.name + " will come for you. Move shifts the ward." : L.arena ? "The Gauntlet. " + S.arenaTarget + " enemies stand between you and the great gate. Move shifts the ward." : L.d.note + " Start with a wisp.");
   showView("battle");
@@ -1954,6 +1974,16 @@ function makeActor(side, kind, x, y) {
 
 function summonAt(cx, cy) {
   const d = DATA.units[selected];
+  // summoning on the wizard (or the ward itself) posts a ward guard on the nearest danger tile
+  let post = false;
+  if (S.wardGuards > 0 && ((inGrid(cx, cy) && L.terrain[cy][cx] === "structure") || (!L.structs.length && cy >= R))) {     // (on the Hillside: tap the wizard's strip)
+    if (selected === "wisp" || d.support) return say(d.name + "s are far too flighty to stand guard. They'll keep to the back instead.");
+    if (S.units.filter(u => u.wardGuard && u.hp > 0).length >= S.wardGuards) return say("All " + S.wardGuards + " ward guard post" + (S.wardGuards > 1 ? "s are" : " is") + " taken. Release the guards to post new ones.");
+    let best = null;
+    for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) if (L.reach(x, y) && passable(x, y, d.move) && (!best || Math.hypot(x - cx, y - cy) < Math.hypot(best.x - cx, best.y - cy))) best = { x, y };
+    if (!best) return say("There's no room around the ward for a guard.");
+    cx = best.x; cy = best.y; post = true;
+  }
   if (!META.unlocked[selected]) return say("That summon hasn't been bound at the Septagram yet.");
   if (S.move) return say("Not while the ward is moving. Summoning needs a steady floor.");
   if (S.stageClear) return say("Everyone's heading for the gate. No time for new friends.");
@@ -1966,7 +1996,8 @@ function summonAt(cx, cy) {
   S.mana -= d.cost.mana; tally("mana", "summons", d.cost.mana); if (d.cost.bone) tally("used", "bones", d.cost.bone);
   const fromField = Math.min(S.bones, d.cost.bone);           // found bones first, bought bones after
   S.bones -= fromField; S.carried -= d.cost.bone - fromField;
-  S.units.push(makeActor("ally", selected, cx, cy));
+  const nu = makeActor("ally", selected, cx, cy); S.units.push(nu);
+  if (post) { nu.wardGuard = true; float(cx, cy - 0.3, "ward guard", "#e0904a"); }
   S.summonedNow[selected] = (S.summonedNow[selected] || 0) + 1;
   META.summoned[selected] = (META.summoned[selected] || 0) + 1;
   if (d.cost.bone) float(cx, cy, "-" + d.cost.bone + " bone" + (d.cost.bone > 1 ? "s" : ""), "#ece3cf");
@@ -2031,10 +2062,12 @@ function castAt0(fx, fy) {
   }
   if (spellMode === "command") {
     const x = Math.max(0, Math.min(C - 1, Math.floor(fx))), y = Math.max(0, Math.min(R - 1, Math.floor(fy)));
-    S.mana -= sp.mana; S.command = { x, y, t: sp.duration };
+    if (!S.command) S.mana -= sp.mana;              // moving a beacon that is already up is free
+    const moved = !!S.command; S.command = { x, y, t: 0 };
     for (const u of S.units) { u.path = []; u.repath = 0; }
     wizDo("cast", 1.6); SFX.play("zap");
-    say("Command! Everyone to that spot.");
+    say(moved ? "The beacon moves. Press Command to take it down." : "Command beacon! Anyone with nothing to fight heads there. Tap elsewhere to move it; press Command to take it down.");
+    setSpell("command"); return;                     // stays selected, so the next tap moves it
   } else {
     const pt = { x: fx - 0.5, y: fy - 0.5 };
     const target = nearest(pt, S.enemies, 1.2);
@@ -2066,6 +2099,13 @@ function shove() {
   say(n ? "Shove! The stones push back." : "Shove! Nobody was close enough to notice.");
 }
 $("spell_shove").addEventListener("click", shove);
+$("spell_release").addEventListener("click", () => {
+  if (!S || S.over || paused) return;
+  const g = S.units.filter(u => u.wardGuard && u.hp > 0);
+  if (!g.length) return say("No ward guards to release. Summon onto the wizard to post one.");
+  for (const u of g) { u.wardGuard = false; u.path = []; u.wander = null; }
+  say(g.length === 1 ? "The guard is released. Off it goes." : g.length + " guards released. Off they go.");
+});
 $("spell_move").addEventListener("click", () => {
   if (!S || S.over || paused || !L.arena) return;
   if (spellMode === "move") { setSpell(null); say("Move cancelled."); return; }
@@ -2077,9 +2117,10 @@ function knock(e, fromX, fromY, d) {
 }
 for (const s in DATA.spells) $("spell_" + s).addEventListener("click", () => {
   if ($("spell_" + s).hidden) return;                 // not taken along this time
+  if (s === "command" && S && S.command) { S.command = null; setSpell(null); for (const u of S.units) { u.path = []; u.repath = 0; } say("The beacon goes dark. Everyone back to business."); return; }
   if (spellMode === s) { setSpell(null); say("Spell cancelled."); return; }
   setSpell(s);
-  say(s === "command" ? "Command: tap any tile to call your summons there." : s === "nurture" ? "Nurture: tap bare earth, grass or a bush to grow it a step. Tap the button again to stop." : s === "guardstone" ? "Guardstone: tap a tile for the crystal. Summons that step into its circle stay and guard it." : s === "freeze" ? "Freeze: tap the middle of the area to chill." : s === "firebolt" ? "Firebolt: tap a tile. Grass, bushes and trees catch fire. Tap the button again to stop." : "Nemesis: tap the enemy you want hunted down.");
+  say(s === "command" ? "Command: tap a tile to plant a beacon. Summons with nothing to fight head there." : s === "nurture" ? "Nurture: tap bare earth, grass or a bush to grow it a step. Tap the button again to stop." : s === "guardstone" ? "Guardstone: tap a tile for the crystal. Summons that step into its circle stay and guard it." : s === "freeze" ? "Freeze: tap the middle of the area to chill." : s === "firebolt" ? "Firebolt: tap a tile. Grass, bushes and trees catch fire. Tap the button again to stop." : "Nemesis: tap the enemy you want hunted down.");
 });
 
 // ---------- Waves ----------
@@ -2297,7 +2338,8 @@ function hurt(t, dmg, color) {
   if (t.phaseT > 0) return;                                                   // a phasing spirit: nothing to hit
   if (S.nemesis && S.nemesis.target === t && S.sp.nemesis.exposed) dmg *= 1 + S.sp.nemesis.exposed;   // Exposed
   const aura = t.guard && S.sp.guardstone.armor && Math.hypot(t.x - t.guard.x, t.y - t.guard.y) <= t.guard.r ? S.sp.guardstone.armor : 0;   // Stoneskin Aura
-  if (t.d.armor || aura) dmg = Math.max(dmg * 0.25, dmg - (t.d.armor || 0) - aura);            // Calcium Plating, Granite Skin
+  const wskin = t.wardGuard ? S.wardSkin : 0;                                  // Warded Skin
+  if (t.d.armor || aura || wskin) dmg = Math.max(dmg * 0.25, dmg - (t.d.armor || 0) - aura - wskin);            // Calcium Plating, Granite Skin
   t.hp -= dmg; t.hit = 0.15; float(t.x, t.y, "-" + fmt(Math.round(dmg * 10) / 10), color);
   if (t.d.phasing && t.hp > 0) { t.phaseT = t.d.phasing; SFX.play("phase"); }
 }
@@ -2333,13 +2375,32 @@ function updateStones(dt) {
     // the first summons inside the circle take up the post
     for (const u of S.units) {
       if (g.guards.length >= g.keepers) break;
-      if (u.hp > 0 && !u.guard && !u.enter && !u.d.support && Math.hypot(u.x - g.x, u.y - g.y) <= g.r) { u.guard = g; u.path = []; g.guards.push(u); float(u.x, u.y - 0.3, "on guard", "#e8c45a"); }
+      if (u.hp > 0 && !u.guard && !u.wardGuard && !u.enter && !u.d.support && u.kind !== "wisp" && Math.hypot(u.x - g.x, u.y - g.y) <= g.r) { u.guard = g; u.path = []; g.guards.push(u); float(u.x, u.y - 0.3, "on guard", "#e8c45a"); }
     }
     if (sp.healEvery && (g.healT += dt) >= sp.healEvery) {
       g.healT = 0;
       for (const u of g.guards) if (u.hp < u.d.hp && Math.hypot(u.x - g.x, u.y - g.y) <= g.r) { u.hp = Math.min(u.d.hp, u.hp + 1); float(u.x, u.y, "+1", "#7fd67a"); }
     }
   }
+}
+// a ward guard: patrols the ring of tiles just outside the danger ring and goes for any enemy that comes within "watch" tiles of the ward
+function wardDuty(a, dt) {
+  const foe = nearest(a, S.enemies, 99, e => !e.enter && e.hp > 0 && L.wardDist(Math.round(e.x), Math.round(e.y)) <= S.wardWatch);
+  if (foe) {
+    a.wander = null;
+    if (dist(a, foe) <= a.d.range) { a.path = []; if (a.cd === 0) strike(a, foe); return; }
+    approach(a, foe, dt); return;
+  }
+  const ring = (x, y) => inGrid(x, y) && L.wardDist(x, y) === 2 && passable(x, y, a.d.move);
+  if (!a.wander || a.wander.wait <= 0 || !ring(a.wander.x, a.wander.y)) {
+    const opts = []; for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) if (ring(x, y)) opts.push({ x, y });
+    opts.sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y));
+    const pickFrom = opts.slice(1, 6);            // the next stretch of the ring, not straight across it
+    const w = pickFrom.length ? pickFrom[rnd(pickFrom.length)] : opts[0];
+    a.wander = w ? { x: w.x, y: w.y, wait: 0.4 + Math.random() * 0.8, t: 0 } : { x: Math.round(a.x), y: Math.round(a.y), wait: 1, t: 0 };
+  }
+  if (dist(a, a.wander) < 0.65 || (a.wander.t += dt) > 6) { a.wander.wait -= dt; a.path = []; return; }
+  goToTile(a, a.wander.x, a.wander.y, dt);
 }
 const burning = (x, y) => !!(S.fire && S.fire[y * C + x] > 0);
 function updateAlly(a, dt) {
@@ -2377,8 +2438,12 @@ function updateAlly(a, dt) {
   }
   if (S.stageClear) { goToTile(a, 4, 0, dt); return; }
   if (a.d.retreat && spiritRetreat(a, dt)) return;
-  if (S.command) { goToTile(a, S.command.x, S.command.y, dt); return; }
+  if (a.wardGuard) { wardDuty(a, dt); return; }
   if (a.d.support) { hauntDrift(a, dt); return; }        // a ghost never fights
+  const nem0 = S.nemesis && S.nemesis.target.hp > 0;
+  if (S.command && !nem0 && !a.guard && a.kind !== "wisp" && !nearest(a, S.enemies, S.sp.command.sight, e => !e.enter)) {   // the beacon: nothing to fight nearby, so head there
+    goToTile(a, S.command.x, S.command.y, dt); return;
+  }
   if (a.d.aura && skirmish(a, dt)) return;               // a spirit never stops: it sweeps through the enemy and hurts whatever it passes over
   const nem = S.nemesis && S.nemesis.target.hp > 0 ? S.nemesis.target : null;
   if (nem) {
@@ -2386,23 +2451,8 @@ function updateAlly(a, dt) {
     approach(a, nem, dt); return;
   }
   if (a.guard) { guardDuty(a, dt); return; }
-  // a wisp with company becomes a medic
-  if (a.kind === "wisp") {
-    const others = S.units.filter(u => u.kind !== "wisp" && u.hp > 0);
-    if (others.length) {
-      const hurtOnes = others.filter(u => u.hp < u.d.hp);
-      const patient = nearest(a, hurtOnes.length ? hurtOnes : others, 99);
-      if (!patient) return;
-      if (dist(a, patient) > a.d.heal.range) { approach(a, patient, dt); return; }
-      a.path = [];
-      const H = a.d.heal;
-      if (a.cd === 0) {
-        const near = others.filter(u => u.hp < u.d.hp && dist(a, u) <= H.range).sort((p, q) => p.hp / p.d.hp - q.hp / q.d.hp)[0];
-        if (near) { const amt = H.amount + (near.d.healBonus || 0); near.hp = Math.min(near.d.hp, near.hp + amt); a.cd = H.every; float(near.x, near.y, "+" + fmt(amt), "#7fd67a"); }   // Warmth Sponge soaks up a little extra
-      }
-      return;
-    }
-  }
+  // a wisp with company becomes a medic, and keeps to the back with something sturdy between it and the enemy
+  if (a.kind === "wisp" && S.units.some(u => u.kind !== "wisp" && !u.d.support && u.hp > 0)) { medic(a, dt); return; }
   const target = nearest(a, S.enemies, 99);
   if (S.assault && S.foeWardHp > 0 && (!target || dist(a, target) > 3)) {
     const w = S.wardTargets.reduce((p, q) => dist(a, q) < dist(a, p) ? q : p);
@@ -2444,7 +2494,7 @@ function spiritRetreat(a, dt) {
   const T = a.d.retreat;
   if (a.hp < a.d.hp * T.at) { if (!a.fading) float(a.x, a.y - 0.4, "fading...", "#cfe0ff"); a.fading = true; }
   else if (a.hp >= a.d.hp * T.back) a.fading = false;
-  if (!a.fading || S.command) return false;
+  if (!a.fading) return false;
   const w = nearest(a, S.units, 99, u => u.kind === "wisp");
   if (w) { if (dist(a, w) > 0.6) moveDirect(a, w.x, w.y, dt, true, 0.5); }
   else { const c = wardCentre(); goToTile(a, c.x, c.y, dt); }
@@ -2505,6 +2555,27 @@ function panicGoblins() {
   if (n) say("The goblins panic! Even goblins can count to four.");
 }
 
+// the medic: heal the worst-off summon in reach; if someone hurt is out of reach, slip in behind them (away from the enemies) close enough to heal;
+// with nobody hurt, hang back behind the group like a ghost
+function medic(a, dt) {
+  const H = a.d.heal, others = S.units.filter(u => u !== a && u.kind !== "wisp" && !u.d.support && u.hp > 0);
+  if (a.cd === 0) {
+    const near = others.filter(u => u.hp < u.d.hp && dist(a, u) <= H.range).sort((p, q) => p.hp / p.d.hp - q.hp / q.d.hp)[0];
+    if (near) { const amt = H.amount + (near.d.healBonus || 0); near.hp = Math.min(near.d.hp, near.hp + amt); a.cd = H.every; float(near.x, near.y, "+" + fmt(amt), "#7fd67a"); }
+  }
+  const hurt = others.filter(u => u.hp < u.d.hp);
+  if (!hurt.length) { hauntDrift(a, dt); return; }
+  const p = hurt.reduce((x, y) => x.hp / x.d.hp - dist(a, x) * 0.03 < y.hp / y.d.hp - dist(a, y) * 0.03 ? x : y);   // the worst off, nearer ones first
+  let vx = 0, vy = 0;
+  for (const e of S.enemies) { if (e.hp <= 0 || e.enter) continue; const d = dist(p, e); if (d > 5) continue; vx += (e.x - p.x) / (d || 1); vy += (e.y - p.y) / (d || 1); }
+  const l = Math.hypot(vx, vy), back = H.range * 0.75;
+  let tx, ty;
+  if (l > 0.01) { tx = p.x - vx / l * back; ty = p.y - vy / l * back; }                 // the patient between the wisp and the enemy
+  else { const dx = a.x - p.x, dy = a.y - p.y, k = Math.hypot(dx, dy) || 1; tx = p.x + dx / k * back; ty = p.y + dy / k * back; }
+  tx = Math.max(0, Math.min(C - 1, tx)); ty = Math.max(0, Math.min(R - 1, ty));
+  if (Math.hypot(tx - a.x, ty - a.y) < 0.2) { a.path = []; return; }
+  if (moveDirect(a, tx, ty, dt, true, 0.15) === "blocked") approach(a, p, dt);
+}
 // ghosts haunt the ground around them: every other summon within reach hits harder, moves faster and (with Eerie Calm) attacks faster.
 // One ghost's aura doesn't add to another's unless they have learned Overlapping Haunting Grounds: then two give 1.5x, three 1.75x ... five or more 2x
 const HAUNT_STACK = [1, 1.5, 1.75, 1.875, 2];
@@ -2522,7 +2593,7 @@ function hauntAll() {
 // a ghost hangs back about a tile and a half behind its group, on the side away from the fighting; when the fight is all around it stays in the middle,
 // and it always backs away from enemies that come within 2 tiles
 function hauntDrift(a, dt) {
-  const foes = S.enemies.filter(e => e.hp > 0 && !e.enter), others = S.units.filter(u => u !== a && u.hp > 0 && !u.d.support);
+  const foes = S.enemies.filter(e => e.hp > 0 && !e.enter), others = S.units.filter(u => u !== a && u.hp > 0 && !u.d.support && u.kind !== "wisp");
   const near = others.filter(u => dist(a, u) <= 5), group = near.length ? near : others;
   let tx, ty;
   if (!group.length) { const c = wardCentre(); tx = c.x; ty = c.y; }
@@ -2562,7 +2633,7 @@ function update(dt) {
       if (hit) { S.pulseFx = 0.5; SFX.play("wardHit"); }
     }
   }
-  if (S.command && (S.command.t -= dt) <= 0) S.command = null;
+  if (S.command) S.command.t += dt;
   S.shoveCd = Math.max(0, S.shoveCd - dt); S.shoveFx = Math.max(0, S.shoveFx - dt);
   if (S.mendLv && S.ward < S.wardMax && (S.mendT += dt) >= 90 - 15 * S.mendLv) { S.mendT = 0; S.ward++; say("The stones mend a crack in the ward."); }
   if (S.nemesis && ((S.nemesis.t -= dt) <= 0 || S.nemesis.target.hp <= 0)) S.nemesis = null;
@@ -2582,6 +2653,7 @@ function update(dt) {
     else if (a.enter) { if (moveDirect(a, a.enter.x, a.enter.y, dt, false, 0.2)) a.enter = null; }
     else if (a.side === "ally") updateAlly(a, dt); else updateFoe(a, dt);
     if (a.d.regen && a.hp > 0 && a.hp < a.d.hp && !(a.burn > 0) && (a.regT = (a.regT || 0) + dt) >= a.d.regen.every) { a.regT = 0; a.hp = Math.min(a.d.hp, a.hp + a.d.regen.amount); float(a.x, a.y, "+" + a.d.regen.amount, "#7fd67a"); }
+    if (a.wardGuard && S.wardHeal && a.hp > 0 && a.hp < a.d.hp && (a.wgT = (a.wgT || 0) + dt) >= S.wardHeal) { a.wgT = 0; a.hp = Math.min(a.d.hp, a.hp + 1); float(a.x, a.y, "+1", "#7fd67a"); }   // Ward's Embrace
     if (a.d.selfHeal && a.hp < a.d.hp && (a.selfT = (a.selfT || 0) + dt) >= a.d.selfHeal) { a.selfT = 0; a.hp = Math.min(a.d.hp, a.hp + 1); float(a.x, a.y, "+1", "#7fd67a"); }
     if (!a.moved) a.spd = Math.max(0, a.spd - speedAt(a) / DATA.movement.brakeTime * dt);   // holding still: brake, keep heading
   }
@@ -3175,7 +3247,7 @@ function drawActorArt(a) {
   else ART.drawAt(a.kind, ctx, px, gy, s, t, a.look, m, a.flip);
   if (a.burn > 0) drawFlame(px, gy - 60 * s * (ART_SCALE[a.kind] || 1), T * 0.22, S.time * 1.3 + a.phase);
 
-  if (a.guard) { ctx.fillStyle = "#e8c45a"; ctx.strokeStyle = "#2a1f2e"; ctx.lineWidth = 1; const yy = (FLOATY[a.kind] ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1)) - 12; ctx.beginPath(); ctx.moveTo(px, yy - 4); ctx.lineTo(px + 3, yy); ctx.lineTo(px, yy + 4); ctx.lineTo(px - 3, yy); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  if (a.guard || a.wardGuard) { ctx.fillStyle = a.wardGuard ? "#e0904a" : "#e8c45a"; ctx.strokeStyle = "#2a1f2e"; ctx.lineWidth = 1; const yy = (FLOATY[a.kind] ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1)) - 12; ctx.beginPath(); ctx.moveTo(px, yy - 4); ctx.lineTo(px + 3, yy); ctx.lineTo(px, yy + 4); ctx.lineTo(px - 3, yy); ctx.closePath(); ctx.fill(); ctx.stroke(); }
   // health bar and nemesis mark on top
   const top = FLOATY[a.kind] ? gy - 110 * s : gy - 150 * s * (ART_SCALE[a.kind] || 1), mid = FLOATY[a.kind] ? gy - 62 * s : (top + gy) / 2;
   if (S.nemesis && S.nemesis.target === a) {
@@ -3234,11 +3306,11 @@ function draw() {
   }
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, C * T, R * T); ctx.clip();
   if (S.command) {
-    const cx = S.command.x * T + T / 2, cy = S.command.y * T + T / 2, k = 1 - S.command.t / S.sp.command.duration;
-    ctx.strokeStyle = "#6fa8ff"; ctx.lineWidth = 2; ctx.globalAlpha = 1 - k * .6;
-    ctx.beginPath(); ctx.arc(cx, cy, T * (.2 + .35 * k), 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, T * .1, 0, Math.PI * 2); ctx.fillStyle = "#6fa8ff"; ctx.fill();
-    ctx.globalAlpha = 1;
+    const cx = S.command.x * T + T / 2, cy = S.command.y * T + T / 2, k = (S.command.t % 1.6) / 1.6;      // a beacon: rings pulsing out of a steady light
+    ctx.strokeStyle = "#6fa8ff"; ctx.lineWidth = 2; ctx.globalAlpha = 1 - k * .8;
+    ctx.beginPath(); ctx.arc(cx, cy, T * (.15 + .4 * k), 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, T * .25); g.addColorStop(0, "#e8f2ff"); g.addColorStop(.5, "rgba(111,168,255,.8)"); g.addColorStop(1, "rgba(111,168,255,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, T * .25, 0, Math.PI * 2); ctx.fill();
   }
   for (const g of S.stones) {
     const cx = g.x * T + T / 2, cy = g.y * T + T / 2, grow = Math.min(1, g.t / 0.5), r = g.r * T * grow, pulse = 0.5 + 0.25 * Math.sin(S.time * 2.5 + g.x);
@@ -3340,6 +3412,7 @@ function hud() {
     $("card_" + k).style.opacity = free >= (DATA.units[k].slots || 1) && S.mana >= c.mana && S.bones + S.carried >= c.bone ? 1 : .55;
   }
   for (const s in DATA.spells) $("spell_" + s).style.opacity = S.mana >= S.sp[s].mana ? 1 : .55;
+  if (S.wardGuards) $("spell_release").querySelector("span").textContent = S.units.filter(u => u.wardGuard && u.hp > 0).length + " / " + S.wardGuards;
   if (S.shoveLv) { const sh = $("spell_shove"); sh.querySelector("span").textContent = S.shoveCd > 0 ? Math.ceil(S.shoveCd) + " s" : "ready"; sh.style.opacity = S.shoveCd > 0 ? .55 : 1; }
 }
 
@@ -3775,6 +3848,9 @@ function renderTown() {
   $("upMana").textContent = "Upgrade · " + mCost + " exp"; $("upMana").disabled = META.exp < mCost;
   $("upRegenInfo").textContent = "Level " + META.regenLv + " · " + fmt(wizRegen()) + " → " + fmt(wizRegen() + T.regen.per) + " mana per second";
   $("upRegen").textContent = "Upgrade · " + rCost + " exp"; $("upRegen").disabled = META.exp < rCost;
+  const RL = META.reachLv || 0, rc = DATA.tower.reach.costs[RL];
+  $("upReachInfo").textContent = "summon up to " + summonReach() + " tile" + (summonReach() > 1 ? "s" : "") + " from the ward" + (rc ? " → " + (summonReach() + 1) : " (the furthest there is)");
+  $("upReach").textContent = rc ? "Upgrade · " + rc + " exp" : "Mastered"; $("upReach").disabled = !rc || META.exp < rc;
   $("upSlotInfo").textContent = wizSlots() + " summons on the field at once → " + (wizSlots() + T.slots.per);
   const nextSlot = DATA.spellSlots.extra[META.spellSlots];
   $("upSpellInfo").textContent = spellSlots() + " spells taken into battle" + (nextSlot ? " → " + (spellSlots() + 1) : " (the most there is)");
@@ -3797,6 +3873,11 @@ function upgrade(key, lvKey) {
 $("upMana").addEventListener("click", () => upgrade("mana", "manaLv"));
 $("upRegen").addEventListener("click", () => upgrade("regen", "regenLv"));
 $("upSlot").addEventListener("click", () => upgrade("slots", "slotLv"));
+$("upReach").addEventListener("click", () => {
+  const c = DATA.tower.reach.costs[META.reachLv || 0]; if (!c || META.exp < c) return;
+  META.exp -= c; META.reachLv = (META.reachLv || 0) + 1; tally("spent", "exp", c); const on = META.ledger.spentOn.tower = META.ledger.spentOn.tower || {}; on.exp = (on.exp || 0) + c;
+  saveMeta(); renderTown();
+});
 $("upSpell").addEventListener("click", () => {
   const c = DATA.spellSlots.extra[META.spellSlots]; if (!c || !canPay(c)) return;
   guardSpend(c, () => { pay(c, "spellSlots"); META.spellSlots++; SFX.play("coins"); saveMeta(); renderTown(); });
@@ -4243,7 +4324,7 @@ $("devApply").addEventListener("click", () => {
   $("devMsg").textContent = "Saved: " + META.exp + " exp and every resource above.";
 });
 $("devResetTower").addEventListener("click", () => {
-  META.manaLv = 0; META.regenLv = 0; META.slotLv = 0; META.research = {}; for (const k of ["lab", "well", "golematorium", "library", "stones", "spiritstones", "lanterns", "cloister"]) META.research[k] = {};
+  META.manaLv = 0; META.regenLv = 0; META.slotLv = 0; META.reachLv = 0; META.research = {}; for (const k of ["lab", "well", "golematorium", "library", "stones", "spiritstones", "lanterns", "cloister"]) META.research[k] = {};
   META.built = { septagram: META.built.septagram }; saveMeta(); renderTown();
   $("devMsg").textContent = "Spelltower abilities, research and buildings reset.";
 });
@@ -6322,6 +6403,7 @@ cv.addEventListener("pointerdown", ev => {
   if (spellMode) { castAt(fx, fy); return; }
   const x = Math.floor(fx), y = Math.floor(fy);
   if (inGrid(x, y)) summonAt(x, y);
+  else if (y >= R && x >= 0 && x < C && !L.structs.length && S.wardGuards > 0) summonAt(x, y);     // the Hillside: the wizard stands below the field
 });
 function togglePause() {
   if (!inBattle || S.over) return; paused = !paused; $("pause").textContent = paused ? "Resume" : "Pause";

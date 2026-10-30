@@ -2,6 +2,17 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.10.0-alpha
+- **Wisps** in healer mode keep to the back: they heal anyone in reach, slip in behind a hurt summon (with it between them and the enemy) when needed, and otherwise hang back behind the group like ghosts. Swamps still distract them.
+- **Command** is now a beacon: it stays until you press Command again, and tapping elsewhere moves it for free. Summons with no enemy within 3 tiles head for it; guards keep guarding; wisps and ghosts stay with their group. Extended Loan is marked for rework.
+- **Wisps can't guard** (Guardstones ignore them, and they can't be ward guards).
+- **Ward package** at the Protective Stone Circle:
+  - Ward Guard (10 levels, a guard slot each): summon onto the wizard (or the ward; on the Hillside, the wizard's strip) to post a guard on the nearest danger tile. Guards patrol just outside the danger ring and attack enemies within 2 tiles of the ward. **Release guards** sets them loose.
+  - Watchful Eyes (2 levels): guards react 3, then 4 tiles from the ward. Warded Skin (armour) and Ward's Embrace (mending) for guards.
+  - Thicker Stones now has 45 levels (up to 50 hits) and covers the Hillside, Crossroads and Outpost. New: Siege Stones (Assault), Suspicious Stalactites (Gauntlet), Ominous Monolith (Raid), 10 levels each.
+  - Equipment ward bonuses are now percentages (+10 % per point, Stonewarden 5-piece +20 %), rounded up.
+- **Far Reach** at the Spelltower: summoning starts 1 tile from the ward; 100 / 1,000 / 2,000 exp for 2, 3 and 4 tiles.
+
 ## 0.9.9-alpha
 - Every battle starts at 1x speed, even if the Chrono Crystal's 2x was on when the last one ended.
 
