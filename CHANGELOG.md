@@ -2,6 +2,15 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.12.1-alpha
+- Title screen overhaul:
+  - The wizard, in full Ember Regalia, raises both hands; his eyes are mean, slanted half-moons burning orange, red and purple, trailing streams of energy like smoke; electricity crackles along his staff and robe; his free hand glows blue and violet and sends purple smoke down to the Septagram, where it circles anticlockwise.
+  - Two golems (one with a mushroom and a mossy back, one with a mossy belly) hold up the title, now carved in cracked stone and twinkling with blue magic.
+  - Everyone stands on a grassy hilltop with seven glowing rune stones along the back; more stars, and a crescent moon drifts across the sky now and then.
+  - Summons spiral out of the Septagram trailing sparks (no golems among them; wraiths are bigger).
+  - The skeleton Builder peeks in from the corner with his hammer and a "Work in Progress!" sign; torches burn either side of the button; the credit sits in the lower left in the title font.
+  - "Begin the Summonance!" is a stone button with rolling ember-coloured lettering. Pressing it breaks it in two, the Septagram spins up and warps the world, the view dives into it and fades to black, and the game begins (town for a saved game, the first battle for a new one).
+
 ## 0.12.0-alpha
 - New title screen before everything else: "The Summonance" plays (on loop) while the wizard hovers over a glowing Septagram and skeletons, archers, golems, wraiths, spirits, wisps and ghosts spiral out of it. Shows the version and "Design by Tarjei the Mad Mage". "Begin the Summonance!" continues a saved game or starts a new one.
 
