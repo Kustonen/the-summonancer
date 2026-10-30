@@ -2,6 +2,9 @@
 
 Versions follow MAJOR.MINOR.PATCH. Before the first release everything is 0.x: the middle number goes up with every content package, the last with fixes in between. 1.0.0 will be the first store release. Versions 0.1–0.5 were numbered afterwards.
 
+## 0.12.2-alpha
+- Title screen sounds: a resounding stone crack as the button splits, then a long, rising mystical whoosh as you are drawn into the Septagram.
+
 ## 0.12.1-alpha
 - Title screen overhaul:
   - The wizard, in full Ember Regalia, raises both hands; his eyes are mean, slanted half-moons burning orange, red and purple, trailing streams of energy like smoke; electricity crackles along his staff and robe; his free hand glows blue and violet and sends purple smoke down to the Septagram, where it circles anticlockwise.

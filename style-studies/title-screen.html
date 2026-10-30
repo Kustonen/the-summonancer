@@ -738,7 +738,7 @@ div.mapbtn { cursor: default; }
 <audio id="bgm" src="music/ghost_of_sherwood.mp3" preload="auto"></audio>
 <script>window.TITLE_PREVIEW = true;
 
-const VERSION = "0.12.1-alpha";
+const VERSION = "0.12.2-alpha";
 // ---------- Data: everything tunable lives here ----------
 const DATA = {
   grid: { cols: 9, rows: 14 },
@@ -1420,7 +1420,7 @@ const SFX = (() => {
     return o;
   }
   function noise(t0, a, dec, peak, type, freq, q, f1) {
-    const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); src.buffer = noiseBuf;
+    const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); src.buffer = noiseBuf; src.loop = a + dec > 0.4;   // long noises loop the buffer
     f.type = type; f.frequency.setValueAtTime(freq, t0); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t0 + a + dec); f.Q.value = q || 1;
     src.connect(f); f.connect(g); g.connect(master); env(g, t0, a, peak, dec); src.start(t0, Math.random() * 0.5); src.stop(t0 + a + dec + 0.05);
   }
@@ -1450,6 +1450,24 @@ const SFX = (() => {
     phase(t) { tone("sine", vary(1600), 600, t, 0.005, 0.25, 0.08); tone("sine", vary(2400), 900, t, 0.005, 0.2, 0.05); },
     wail(t) {            // a spirit's sigh as it fades
       const o = tone("sine", vary(620), 300, t, 0.1, 1.0, 0.16); vibrato(o, t, 1.1, 6, 18); tone("sine", vary(930), 450, t + 0.05, 0.1, 0.9, 0.07);
+    },
+    // the title screen's stone button splitting: a sharp crack, a deep boom and a scatter of grit
+    stoneCrack(t) {
+      noise(t, 0.001, 0.09, 1.0, "highpass", 2200); noise(t, 0.001, 0.05, 0.8, "bandpass", 5200, 1.5);
+      tone("square", 1900, 220, t, 0.001, 0.05, 0.25, ["bandpass", 1600, 2]);
+      tone("sine", 95, 32, t + 0.005, 0.004, 0.9, 1.0); tone("triangle", 62, 28, t + 0.01, 0.01, 1.1, 0.55);
+      noise(t + 0.01, 0.02, 0.9, 0.55, "lowpass", 700, 1, 90);
+      for (let i = 0; i < 9; i++) noise(t + 0.06 + Math.random() * 0.5, 0.001, 0.03 + Math.random() * 0.05, 0.12 + Math.random() * 0.15, "bandpass", 1800 + Math.random() * 3000, 2);
+    },
+    // being drawn into the Septagram: a long rising, swirling whoosh with a choir-like shimmer on top
+    vortex(t) {
+      const D = 2.9;
+      noise(t, 1.6, D - 1.6, 0.6, "bandpass", 260, 1.4, 3800);
+      noise(t + 0.3, 1.8, D - 1.9, 0.35, "bandpass", 900, 3, 7000);
+      const o1 = tone("sawtooth", 70, 420, t, 1.9, D - 1.9, 0.12, ["lowpass", 1400, 1]); vibrato(o1, t, D, 6, 14);
+      const o2 = tone("sine", 220, 1320, t + 0.2, 2.0, D - 2.1, 0.07); vibrato(o2, t, D, 7.5, 18);
+      [523, 659, 784, 1047].forEach((f, i) => { const o = tone("sine", f, f * 2, t + 0.5 + i * 0.25, 1.2, 1.0, 0.035); vibrato(o, t, D, 5 + i, 8); });
+      noise(t + D - 0.15, 0.02, 0.6, 0.35, "lowpass", 300, 1, 60);       // the soft thump as the world falls away
     },
     frostBolt(t) { noise(t, 0.02, 0.35, 0.22, "bandpass", 1800, 1.5, 5200); tone("sine", vary(1500), 900, t, 0.01, 0.3, 0.06); tone("triangle", vary(220), 160, t, 0.02, 0.3, 0.08); },
     frostHit(t) { noise(t, 0.001, 0.18, 0.3, "highpass", 4500); [1, 1.5, 2.25].forEach((m, i) => tone("sine", vary(1900) * m, null, t + i * 0.03, 0.002, 0.25, 0.05)); },
@@ -6865,10 +6883,10 @@ $("startBtn").addEventListener("click", () => {
     document.body.appendChild(h); return h;
   });
   btn.style.visibility = "hidden"; $("startScreen").classList.add("leaving");
-  SFX.play("death", "golem");
+  SFX.init(); SFX.play("stoneCrack");
   requestAnimationFrame(() => TITLE.halves.forEach((h, i) => { const d = i ? 1 : -1; h.style.transform = "translateX(" + d * 5 + "px) rotate(" + d * 3 + "deg)"; }));
   setTimeout(() => TITLE.halves.forEach((h, i) => { const d = i ? 1 : -1; h.style.transition = "transform 1.1s cubic-bezier(.55,0,1,.45)"; h.style.transform = "translate(" + d * 70 + "px, 110vh) rotate(" + d * 38 + "deg)"; }), 160);
-  setTimeout(() => SFX.play("whoosh"), 900);
+  setTimeout(() => SFX.play("vortex"), 900);
 });
 function enterFromTitle() {
   for (const h of TITLE.halves || []) h.remove();
